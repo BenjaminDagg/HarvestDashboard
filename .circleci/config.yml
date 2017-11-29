@@ -1,0 +1,63 @@
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+
+machine:
+  node:
+    version: 6.1.0
+
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:6
+        environment:
+          CHROME_BIN: "/usr/bin/google-chrome-stable"
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - npm-dependencies-{{ .Branch }}-{{ checksum "package.json" }}
+            - npm-dependencies-{{ .Branch }}
+            - npm-dependencies-
+
+      - run:
+          name: Install APT HTTPS package
+          command: sudo apt-get install apt-transport-https
+
+      # Install chrome browser
+      - run:
+          name: Install Google Chrome Stable
+          command: |
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            sudo sh -c 'echo "deb https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+            sudo apt-get update
+            sudo apt-get install google-chrome-stable
+
+      # Download the npm dependencies
+      - run:
+          name: Install NPM dependencies
+          command: npm install --silent
+
+      # Cache the npm dependencies
+      - save_cache:
+          paths:
+            - node_modules
+          key: npm-dependencies-{{ .Branch }}.{{ checksum "package.json" }}
+
+      # Run NPM Tests
+      # This executes clap check which runs linter, unit, and browser tests
+      - run:
+          name: Run NPM Tests
+          command: npm test
