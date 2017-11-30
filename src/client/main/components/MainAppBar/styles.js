@@ -7,6 +7,7 @@ const drawerWidth = 240;
  const styles = (theme) => ({
    appBar: {
      position: 'absolute',
+     paddingLeft: '12px',
      zIndex: theme.zIndex.navDrawer + 1,
      transition: theme.transitions.create(['width', 'margin'], {
        easing: theme.transitions.easing.sharp,

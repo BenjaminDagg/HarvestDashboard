@@ -11,7 +11,8 @@ const styles = (theme) => ({
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen
-    })
+    }),
+    boxShadow: '0 3px 5px 0px rgba(0, 0, 0, .30)'
   },
   drawerPaperClose: {
     width: 60,
@@ -34,7 +35,14 @@ const styles = (theme) => ({
   },
   drawerIcon: {
     display: 'flex',
-    margin: '6px'
+    marginLeft: '6px'
+  },
+  collapseList: {
+    backgroundColor: theme.palette.background.default
+  },
+  collapseListOpen: {
+    display: 'flex',
+    justifyContent: 'flex-end'
   }
 });
 

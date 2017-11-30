@@ -4,10 +4,12 @@ import classNames from 'classnames';
 import { withStyles } from 'material-ui/styles';
 import Drawer from 'material-ui/Drawer';
 import Divider from 'material-ui/Divider';
+import List from 'material-ui/List';
 import IconButton from 'material-ui/IconButton';
 import ChevronLeftIcon from 'material-ui-icons/ChevronLeft';
 import ChevronRightIcon from 'material-ui-icons/ChevronRight';
 import Dashboard from 'material-ui-icons/Dashboard';
+import QueryBuilder from 'material-ui-icons/QueryBuilder';
 import styles from './styles';
 
 
@@ -27,18 +29,40 @@ class MainDrawer extends React.Component {
         <div className={ classes.drawerInner } >
           <div className={ classes.drawerHeader } />
 
-          <IconButton
-            className={ classNames(classes.drawerIcon)}
-          >
-            <Dashboard />
-          </IconButton>
+          <List className={ classNames(this.props.open && classes.hideIcon) } >
+            <IconButton
+              className={ classes.drawerIcon}
+            >
+              <Dashboard />
+            </IconButton>
+          </List>
           <Divider />
-          <IconButton
-            className={ classNames(classes.drawerIcon)}
-            onClick={ this.props.onHandleDrawerClose }
+
+          <List>
+            <IconButton className={ classes.drawerIcon } >
+              <QueryBuilder />
+            </IconButton>
+          </List>
+          <Divider />
+
+          <List
+            className=
+            {
+              classNames(
+                classes.collapseList,
+                this.props.open && classes.collapseListOpen
+              )
+            }
+            onClick={ this.props.onHandleDrawerHide }
           >
-            { theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
+            <IconButton className={ classes.drawerIcon } >
+              {
+                (this.props.open && theme.direction === 'ltr') ?
+                  <ChevronLeftIcon /> : <ChevronRightIcon />
+              }
+            </IconButton>
+          </List>
+          <Divider />
         </div>
       </Drawer>
     );
@@ -46,11 +70,12 @@ class MainDrawer extends React.Component {
 }
 
 MainDrawer.propTypes = {
-  classes: PropTypes.object.isRequired,
+  classes: PropTypes.object,
   theme: PropTypes.object.isRequired,
   open: PropTypes.bool.isRequired,
-  onHandleDrawerClose: PropTypes.func.isRequired,
-  onHandleDrawerOpen: PropTypes.func
+  onHandleDrawerClose: PropTypes.func,
+  onHandleDrawerOpen: PropTypes.func,
+  onHandleDrawerHide: PropTypes.func
 };
 
 export default withStyles(styles, { withTheme: true})(MainDrawer);

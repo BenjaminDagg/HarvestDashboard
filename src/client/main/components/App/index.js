@@ -17,6 +17,7 @@ class App extends React.Component {
 
     this.handleDrawerOpen = this.handleDrawerOpen.bind(this);
     this.handleDrawerClose = this.handleDrawerClose.bind(this);
+    this.handleDrawerHide = this.handleDrawerHide.bind(this);
   }
 
   handleDrawerOpen() {
@@ -25,6 +26,10 @@ class App extends React.Component {
 
   handleDrawerClose() {
     this.setState({ open: false });
+  }
+
+  handleDrawerHide() {
+    this.setState({ open: !this.state.open });
   }
 
   render() {
@@ -41,6 +46,7 @@ class App extends React.Component {
             <MainDrawer
               open={ this.state.open }
               onHandleDrawerClose={ this.handleDrawerClose }
+              onHandleDrawerHide={ this.handleDrawerHide }
             />
             { content }
           </div>
@@ -51,7 +57,7 @@ class App extends React.Component {
 }
 
 App.propTypes = {
-  classes: PropTypes.object.isRequired,
+  classes: PropTypes.object,
   content: PropTypes.element.isRequired
 };
 
