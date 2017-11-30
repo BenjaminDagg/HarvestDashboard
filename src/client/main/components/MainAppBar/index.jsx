@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { withStyles } from 'material-ui/styles';
 import classNames from 'classnames';
 import AppBar from 'material-ui/AppBar';
@@ -19,7 +20,7 @@ class MainAppBar extends React.Component {
           <IconButton
             color="contrast"
             aria-label="open drawer"
-            onClick={this.props.handleDrawerOpen}
+            onClick={this.props.onHandleDrawerOpen}
             className={classNames(classes.menuButton, this.props.open && classes.hide)}
           >
             <MenuIcon />
@@ -32,5 +33,9 @@ class MainAppBar extends React.Component {
     );
   }
 }
+
+MainAppBar.propTypes = {
+  classes: PropTypes.object.required
+};
 
 export default withStyles(styles, { withTheme: true })(MainAppBar);

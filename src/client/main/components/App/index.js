@@ -28,7 +28,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { content, sidebar, classes } = this.props;
+    const { content, classes } = this.props;
 
     return (
       <MuiThemeProvider theme={theme}>
@@ -36,11 +36,11 @@ class App extends React.Component {
           <div className={classes.appFrame}>
             <MainAppBar
               open={ this.state.open }
-              handleDrawerOpen={ this.handleDrawerOpen }
+              onHandleDrawerOpen={ this.handleDrawerOpen }
             />
             <MainDrawer
               open={ this.state.open }
-              handleDrawerClose={ this.handleDrawerClose }
+              onHandleDrawerClose={ this.handleDrawerClose }
             />
             { content }
           </div>
@@ -52,8 +52,7 @@ class App extends React.Component {
 
 App.propTypes = {
   classes: PropTypes.object.isRequired,
-  content: PropTypes.element,
-  sidebar: PropTypes.element
+  content: PropTypes.element.isRequired
 };
 
 export default withStyles(styles, { withTheme: true })(App);

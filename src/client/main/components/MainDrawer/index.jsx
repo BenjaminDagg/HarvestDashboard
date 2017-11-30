@@ -1,12 +1,10 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { withStyles } from 'material-ui/styles';
 import Drawer from 'material-ui/Drawer';
-import List from 'material-ui/List';
-import Typography from 'material-ui/Typography';
 import Divider from 'material-ui/Divider';
 import IconButton from 'material-ui/IconButton';
-import MenuIcon from 'material-ui-icons/Menu';
 import ChevronLeftIcon from 'material-ui-icons/ChevronLeft';
 import ChevronRightIcon from 'material-ui-icons/ChevronRight';
 import Dashboard from 'material-ui-icons/Dashboard';
@@ -37,7 +35,7 @@ class MainDrawer extends React.Component {
           <Divider />
           <IconButton
             className={ classNames(classes.drawerIcon)}
-            onClick={ this.props.handleDrawerClose }
+            onClick={ this.props.onHandleDrawerClose }
           >
             { theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
@@ -46,5 +44,13 @@ class MainDrawer extends React.Component {
     );
   }
 }
+
+MainDrawer.propTypes = {
+  classes: PropTypes.object.isRequired,
+  theme: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired,
+  onHandleDrawerClose: PropTypes.func.isRequired,
+  onHandleDrawerOpen: PropTypes.func
+};
 
 export default withStyles(styles, { withTheme: true})(MainDrawer);
