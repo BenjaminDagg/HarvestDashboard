@@ -10,7 +10,7 @@ class Home extends React.Component {
     const { classes } = this.props;
 
     return (
-      <main className={ classes.content }>
+      <main>
         <Typography type="body1">
           { 'Sorry. This content is not available at the moment...' }
         </Typography>

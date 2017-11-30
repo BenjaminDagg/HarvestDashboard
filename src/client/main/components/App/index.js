@@ -39,16 +39,15 @@ class App extends React.Component {
       <MuiThemeProvider theme={theme}>
         <div className={classes.root}>
           <div className={classes.appFrame}>
-            <MainAppBar
-              open={ this.state.open }
-              onHandleDrawerOpen={ this.handleDrawerOpen }
-            />
+            <MainAppBar />
             <MainDrawer
               open={ this.state.open }
               onHandleDrawerClose={ this.handleDrawerClose }
               onHandleDrawerHide={ this.handleDrawerHide }
             />
-            { content }
+            <div className={ classes.content } >
+              { content }
+            </div>
           </div>
         </div>
       </MuiThemeProvider>

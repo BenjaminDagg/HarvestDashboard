@@ -9,7 +9,7 @@ import IconButton from 'material-ui/IconButton';
 import ChevronLeftIcon from 'material-ui-icons/ChevronLeft';
 import ChevronRightIcon from 'material-ui-icons/ChevronRight';
 import Dashboard from 'material-ui-icons/Dashboard';
-import QueryBuilder from 'material-ui-icons/QueryBuilder';
+import Schedule from 'material-ui-icons/Schedule';
 import styles from './styles';
 
 
@@ -40,7 +40,7 @@ class MainDrawer extends React.Component {
 
           <List>
             <IconButton className={ classes.drawerIcon } >
-              <QueryBuilder />
+              <Schedule />
             </IconButton>
           </List>
           <Divider />

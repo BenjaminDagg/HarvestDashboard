@@ -1,4 +1,3 @@
-const drawerWidth = 240;
 /**
  * The style for the sidebar component.
  * @param {object} theme - A material-ui theme object.
@@ -12,15 +11,8 @@ const drawerWidth = 240;
      transition: theme.transitions.create(['width', 'margin'], {
        easing: theme.transitions.easing.sharp,
        duration: theme.transitions.duration.leavingScreen
-     })
-   },
-   appBarShift: {
-     marginLeft: drawerWidth,
-     width: `calc(100% - ${drawerWidth}px)`,
-     transition: theme.transitions.create(['width', 'margin'], {
-       easing: theme.transitions.easing.sharp,
-       duration: theme.transitions.duration.enteringScreen
-     })
+     }),
+     boxShadow: '0 0px 3px 2px rgba(0, 0, 0, 0.2)'
    },
    menuButton: {
      marginLeft: 7,

@@ -12,7 +12,7 @@ class MainAppBar extends React.Component {
     const { classes } = this.props;
 
     return (
-      <AppBar className={ classes.appBar }>
+      <AppBar className={ classes.appBar } color="secondary" >
         <Toolbar>
           <Typography type="title" color="inherit" noWrap>
             Dashboard

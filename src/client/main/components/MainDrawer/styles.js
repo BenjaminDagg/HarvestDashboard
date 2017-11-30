@@ -1,4 +1,4 @@
-const drawerWidth = 240;
+const drawerWidth = 220;
 /**
  * The style for the sidebar component.
  * @param {object} theme - A material-ui theme object.
@@ -12,7 +12,7 @@ const styles = (theme) => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen
     }),
-    boxShadow: '0 3px 5px 0px rgba(0, 0, 0, .30)'
+    boxShadow: '0 0px 3px 1px rgba(0, 0, 0, .1)'
   },
   drawerPaperClose: {
     width: 60,
