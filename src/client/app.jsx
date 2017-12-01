@@ -31,10 +31,15 @@ require.ensure(
 window.webappStart = () => {
   const initialState = window.__PRELOADED_STATE__;
   const store = createStore(rootReducer, initialState);
+
+  // Serves as temp quick fix for setting the root height
+  const rootNode = document.querySelector('.js-content');
+  rootNode.style.height = '100%';
+
   render(
     <Provider store={store}>
       <Router history={browserHistory}>{routes}</Router>
     </Provider>,
-    document.querySelector('.js-content')
+    rootNode
   );
 };
