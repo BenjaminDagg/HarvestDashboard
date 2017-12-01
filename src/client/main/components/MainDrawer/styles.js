@@ -1,4 +1,4 @@
-const drawerWidth = 220;
+const drawerWidth = 240;
 /**
  * The style for the sidebar component.
  * @param {object} theme - A material-ui theme object.
@@ -6,32 +6,27 @@ const drawerWidth = 220;
  */
 const styles = (theme) => ({
   drawerPaper: {
-    position: 'relative',
+    position: 'static',
     width: drawerWidth,
+    height: '100%',
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen
     }),
-    boxShadow: '0 0px 3px 1px rgba(0, 0, 0, .1)'
+    boxShadow: '0 0px 3px 1px rgba(0, 0, 0, .1)',
+
+    // Hides the scrollbar when the drawer opens
+    overflowX: 'hidden'
   },
   drawerPaperClose: {
     width: 60,
-    overflowX: 'hidden',
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen
     })
   },
   drawerInner: {
-    // Make the items inside not wrap when transitioning:
-    width: drawerWidth
-  },
-  drawerHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '0 8px',
-    ...theme.mixins.toolbar
+    height: '100%'
   },
   drawerIcon: {
     display: 'flex',

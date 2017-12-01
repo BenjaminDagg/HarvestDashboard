@@ -15,17 +15,7 @@ class App extends React.Component {
       open: false
     };
 
-    this.handleDrawerOpen = this.handleDrawerOpen.bind(this);
-    this.handleDrawerClose = this.handleDrawerClose.bind(this);
     this.handleDrawerHide = this.handleDrawerHide.bind(this);
-  }
-
-  handleDrawerOpen() {
-    this.setState({ open: true });
-  }
-
-  handleDrawerClose() {
-    this.setState({ open: false });
   }
 
   handleDrawerHide() {
@@ -35,19 +25,26 @@ class App extends React.Component {
   render() {
     const { content, classes } = this.props;
 
+    const navBar = (
+      <MainDrawer
+        open={ this.state.open }
+        onHandleDrawerClose={ this.handleDrawerClose }
+        onHandleDrawerHide={ this.handleDrawerHide }
+      />
+    );
+
+    const appBar = (
+      <MainAppBar />
+    );
+
     return (
       <MuiThemeProvider theme={theme}>
-        <div className={classes.root}>
-          <div className={classes.appFrame}>
-            <MainAppBar />
-            <MainDrawer
-              open={ this.state.open }
-              onHandleDrawerClose={ this.handleDrawerClose }
-              onHandleDrawerHide={ this.handleDrawerHide }
-            />
-            <div className={ classes.content } >
-              { content }
-            </div>
+        <div className={ classes.root }>
+          { appBar }
+          
+          <div className={ classes.appFrame }>
+            { navBar }
+            { content }
           </div>
         </div>
       </MuiThemeProvider>

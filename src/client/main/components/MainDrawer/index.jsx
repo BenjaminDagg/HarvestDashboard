@@ -8,8 +8,13 @@ import List from 'material-ui/List';
 import IconButton from 'material-ui/IconButton';
 import ChevronLeftIcon from 'material-ui-icons/ChevronLeft';
 import ChevronRightIcon from 'material-ui-icons/ChevronRight';
+import Home from 'material-ui-icons/Home';
 import Dashboard from 'material-ui-icons/Dashboard';
 import Schedule from 'material-ui-icons/Schedule';
+import Timeline from 'material-ui-icons/Timeline';
+import Web from 'material-ui-icons/Web';
+import Settings from 'material-ui-icons/Settings';
+import WbSunny from 'material-ui-icons/WbSunny';
 import styles from './styles';
 
 
@@ -27,13 +32,11 @@ class MainDrawer extends React.Component {
         open={ this.props.open }
       >
         <div className={ classes.drawerInner } >
-          <div className={ classes.drawerHeader } />
-
-          <List className={ classNames(this.props.open && classes.hideIcon) } >
+          <List>
             <IconButton
               className={ classes.drawerIcon}
             >
-              <Dashboard />
+              <Home />
             </IconButton>
           </List>
           <Divider />
@@ -41,6 +44,17 @@ class MainDrawer extends React.Component {
           <List>
             <IconButton className={ classes.drawerIcon } >
               <Schedule />
+            </IconButton>
+
+            <IconButton className={ classes.drawerIcon } >
+              <Timeline />
+            </IconButton>
+          </List>
+          <Divider />
+
+          <List>
+            <IconButton className={ classes.drawerIcon } >
+              <Settings />
             </IconButton>
           </List>
           <Divider />
