@@ -9,9 +9,13 @@
      zIndex: theme.zIndex.navDrawer + 1,
      boxShadow: '0 0px 3px 2px rgba(0, 0, 0, 0.2)'
    },
+   toolbar: {
+     paddingLeft: 15,
+     paddingRight: 15
+   },
    brandIcon: {
      width: 30,
-     paddingRight: 20
+     paddingRight: 15
    }
  });
 

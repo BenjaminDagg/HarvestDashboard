@@ -14,7 +14,7 @@ class MainAppBar extends React.Component {
 
     return (
       <AppBar className={ classes.root } color="secondary" >
-        <Toolbar>
+        <Toolbar className={ classes.toolbar } >
           <img src={ brandIcon } alt={'Food-Origins Logo'} className={ classes.brandIcon } />
           <Typography type="title" color="inherit" noWrap>
             Dashboard
