@@ -5,6 +5,7 @@ import AppBar from 'material-ui/AppBar';
 import Toolbar from 'material-ui/Toolbar';
 import Typography from 'material-ui/Typography';
 import styles from './styles';
+import brandIcon from '../../../images/icons/leaf-plant.svg';
 
 class MainAppBar extends React.Component {
 
@@ -14,6 +15,7 @@ class MainAppBar extends React.Component {
     return (
       <AppBar className={ classes.root } color="secondary" >
         <Toolbar>
+          <img src={ brandIcon } alt={'Food-Origins Logo'} className={ classes.brandIcon } />
           <Typography type="title" color="inherit" noWrap>
             Dashboard
           </Typography>

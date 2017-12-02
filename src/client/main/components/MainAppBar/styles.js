@@ -8,6 +8,10 @@
      position: 'relative',
      zIndex: theme.zIndex.navDrawer + 1,
      boxShadow: '0 0px 3px 2px rgba(0, 0, 0, 0.2)'
+   },
+   brandIcon: {
+     width: 30,
+     paddingRight: 20
    }
  });
 
