@@ -6,20 +6,26 @@ const drawerWidth = 240;
  */
 const styles = (theme) => ({
   drawerPaper: {
-    position: 'static',
+    // The relative position allows rendering the drop shadow
+    // when the content background color is changed
+    position: 'relative',
     width: drawerWidth,
     height: '100%',
+    boxShadow: '0 0px 3px 1px rgba(0, 0, 0, .1)',
+
+    // Hide the scrollbar when the drawer opens
+    overflowX: 'hidden',
+
+    // Creates a transition when the drawer opens
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen
-    }),
-    boxShadow: '0 0px 3px 1px rgba(0, 0, 0, .1)',
-
-    // Hides the scrollbar when the drawer opens
-    overflowX: 'hidden'
+    })
   },
   drawerPaperClose: {
     width: 60,
+
+    // Creates a transition when the drawer closes
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen

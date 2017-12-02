@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 import { MuiThemeProvider, withStyles } from 'material-ui/styles';
 import theme from './theme';
 import styles from './styles';
@@ -15,10 +16,10 @@ class App extends React.Component {
       open: false
     };
 
-    this.handleDrawerHide = this.handleDrawerHide.bind(this);
+    this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
   }
 
-  handleDrawerHide() {
+  handleDrawerToggle() {
     this.setState({ open: !this.state.open });
   }
 
@@ -27,9 +28,9 @@ class App extends React.Component {
 
     const navBar = (
       <MainDrawer
+        className={ classNames(classes.sidebar, !this.state.open && classes.sidebarClose) }
         open={ this.state.open }
-        onHandleDrawerClose={ this.handleDrawerClose }
-        onHandleDrawerHide={ this.handleDrawerHide }
+        onHandleDrawerToggle={ this.handleDrawerToggle }
       />
     );
 
@@ -38,13 +39,16 @@ class App extends React.Component {
     );
 
     return (
-      <MuiThemeProvider theme={theme}>
-        <div className={ classes.root }>
+      <MuiThemeProvider theme={ theme } >
+        <div className={ classes.root } >
           { appBar }
-          
-          <div className={ classes.appFrame }>
+
+          <div className={ classes.appFrame } >
             { navBar }
-            { content }
+
+            <div className={ classes.content } >
+              { content }
+            </div>
           </div>
         </div>
       </MuiThemeProvider>

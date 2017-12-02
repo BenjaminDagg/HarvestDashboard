@@ -6,22 +6,19 @@ import Drawer from 'material-ui/Drawer';
 import Divider from 'material-ui/Divider';
 import List from 'material-ui/List';
 import IconButton from 'material-ui/IconButton';
-import ChevronLeftIcon from 'material-ui-icons/ChevronLeft';
-import ChevronRightIcon from 'material-ui-icons/ChevronRight';
 import Home from 'material-ui-icons/Home';
-import Dashboard from 'material-ui-icons/Dashboard';
 import Schedule from 'material-ui-icons/Schedule';
-import Timeline from 'material-ui-icons/Timeline';
 import Web from 'material-ui-icons/Web';
 import Settings from 'material-ui-icons/Settings';
-import WbSunny from 'material-ui-icons/WbSunny';
 import styles from './styles';
+import { createToggleIcon } from './util';
 
 
 class MainDrawer extends React.Component {
 
   render() {
-    const { classes, theme } = this.props;
+    const { classes } = this.props;
+    const toggleIcon = createToggleIcon(this.props.theme.direction, this.props.open);
 
     return (
       <Drawer
@@ -47,7 +44,7 @@ class MainDrawer extends React.Component {
             </IconButton>
 
             <IconButton className={ classes.drawerIcon } >
-              <Timeline />
+              <Web />
             </IconButton>
           </List>
           <Divider />
@@ -67,13 +64,10 @@ class MainDrawer extends React.Component {
                 this.props.open && classes.collapseListOpen
               )
             }
-            onClick={ this.props.onHandleDrawerHide }
+            onClick={ this.props.onHandleDrawerToggle }
           >
             <IconButton className={ classes.drawerIcon } >
-              {
-                (this.props.open && theme.direction === 'ltr') ?
-                  <ChevronLeftIcon /> : <ChevronRightIcon />
-              }
+              { toggleIcon }
             </IconButton>
           </List>
           <Divider />
@@ -87,9 +81,7 @@ MainDrawer.propTypes = {
   classes: PropTypes.object,
   theme: PropTypes.object.isRequired,
   open: PropTypes.bool.isRequired,
-  onHandleDrawerClose: PropTypes.func,
-  onHandleDrawerOpen: PropTypes.func,
-  onHandleDrawerHide: PropTypes.func
+  onHandleDrawerToggle: PropTypes.func.isRequired
 };
 
 export default withStyles(styles, { withTheme: true})(MainDrawer);

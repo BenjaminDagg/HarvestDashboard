@@ -8,12 +8,19 @@ const styles = (theme) => ({
     width: '100%',
     height: '100%',
     zIndex: 1,
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
   appFrame: {
     display: 'flex',
     width: '100%',
     height: 'calc(100% - 56px)'
+  },
+  content: {
+    width: '100%',
+    height: '100%',
+    flexGrow: 1,
+    backgroundColor: theme.palette.background.default,
+    padding: 24
   }
 });
 
