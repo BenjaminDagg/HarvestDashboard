@@ -5,7 +5,7 @@ import AppBar from 'material-ui/AppBar';
 import Toolbar from 'material-ui/Toolbar';
 import Typography from 'material-ui/Typography';
 import styles from './styles';
-import brandIcon from '../../../images/icons/leaf-plant.svg';
+import brandIcon from '../../../images/icons/sprout.svg';
 
 class MainAppBar extends React.Component {
 
