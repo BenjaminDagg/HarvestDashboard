@@ -15,7 +15,8 @@
    },
    brandIcon: {
      width: 30,
-     paddingRight: 15
+     paddingRight: 15,
+     paddingBottom: 10
    }
  });
 

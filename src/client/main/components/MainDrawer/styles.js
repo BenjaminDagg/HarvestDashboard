@@ -31,17 +31,20 @@ const styles = (theme) => ({
       duration: theme.transitions.duration.leavingScreen
     })
   },
-  drawerInner: {
-    height: '100%'
+  drawerMenu: {
+    height: '100%',
+    // Makes the text in the sidebar not wrap
+    width: drawerWidth
   },
-  drawerIcon: {
+  drawerSettings: {
     display: 'flex',
-    marginLeft: '6px'
+    direction: 'row',
+    alignItems: 'flex-end'
   },
-  collapseList: {
+  toggle: {
     backgroundColor: theme.palette.background.default
   },
-  collapseListOpen: {
+  toggleOpen: {
     display: 'flex',
     justifyContent: 'flex-end'
   }
