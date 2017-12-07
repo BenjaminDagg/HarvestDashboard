@@ -50,8 +50,8 @@ const styles = (theme) => ({
   },
   menuItem: {
     transition: theme.transitions.create('', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.standard
+      easing: theme.transitions.easing.easeIn,
+      duration: theme.transitions.duration.complex
     })
   },
   menuItemHover: {
@@ -59,9 +59,12 @@ const styles = (theme) => ({
       color: theme.palette.primary[500]
     },
     transition: theme.transitions.create('', {
-      easing: theme.transitions.easing.sharp,
+      easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.standard
     })
+  },
+  menuList: {
+    paddingTop: 0
   }
 });
 

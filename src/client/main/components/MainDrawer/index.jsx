@@ -30,7 +30,7 @@ class MainDrawer extends React.Component {
         open={ this.props.open }
       >
         <div className={ classes.drawerMenu } >
-          <List>
+          <List className={ classes.menuList } >
             <ListItem button divider className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Home />
@@ -62,7 +62,7 @@ class MainDrawer extends React.Component {
         </div>
 
         <div className={ classes.drawerSettings } >
-          <List>
+          <List className={ classes.menuList } >
             <Divider />
             <ListItem button divider className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
