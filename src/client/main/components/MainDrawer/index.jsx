@@ -6,6 +6,7 @@ import Drawer from 'material-ui/Drawer';
 import Divider from 'material-ui/Divider';
 import List, { ListItem, ListItemIcon, ListItemText } from 'material-ui/List';
 import IconButton from 'material-ui/IconButton';
+import Typography from 'material-ui/Typography';
 import Home from 'material-ui-icons/Home';
 import Schedule from 'material-ui-icons/Schedule';
 import Web from 'material-ui-icons/Web';
@@ -18,8 +19,8 @@ import { createToggleIcon } from './util';
 class MainDrawer extends React.Component {
 
   render() {
-    const { classes } = this.props;
-    const toggleIcon = createToggleIcon(this.props.theme.direction, this.props.open);
+    const { classes, theme } = this.props;
+    const toggleIcon = createToggleIcon(theme.direction, this.props.open);
 
     return (
       <Drawer
@@ -35,28 +36,28 @@ class MainDrawer extends React.Component {
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
-              <ListItemText primary="HOME" />
+              <ListItemText primary="HOME" classes={{ text: classes.menuItemText }} />
             </ListItem>
 
             <ListItem button  className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Schedule />
               </ListItemIcon>
-              <ListItemText primary="REAL-TIME" />
+              <ListItemText primary="REAL-TIME" classes={{ text: classes.menuItemText }} />
             </ListItem>
 
             <ListItem button  className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Map />
               </ListItemIcon>
-              <ListItemText primary="MAPS" />
+              <ListItemText primary="MAPS" classes={{ text: classes.menuItemText }} />
             </ListItem>
 
             <ListItem button className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Web />
               </ListItemIcon>
-              <ListItemText primary="HARVESTS" />
+              <ListItemText primary="HARVESTS" classes={{ text: classes.menuItemText }} />
             </ListItem>
           </List>
         </div>
@@ -68,7 +69,7 @@ class MainDrawer extends React.Component {
               <ListItemIcon>
                 <Settings />
               </ListItemIcon>
-              <ListItemText primary="ADMIN" />
+              <ListItemText primary="ADMIN" classes={{ text: classes.menuItemText }} />
             </ListItem>
 
             <ListItem button disableRipple

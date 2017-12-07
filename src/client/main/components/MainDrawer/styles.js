@@ -55,7 +55,7 @@ const styles = (theme) => ({
     })
   },
   menuItemHover: {
-    '&:hover:not($disabled) svg': {
+    '&:hover:not($disabled) *': {
       color: theme.palette.primary[500]
     },
     transition: theme.transitions.create('', {
@@ -64,7 +64,11 @@ const styles = (theme) => ({
     })
   },
   menuList: {
-    paddingTop: 0
+    padding: 0
+  },
+  menuItemText: {
+    color: theme.palette.grey[600],
+    fontWeight: 600
   }
 });
 
