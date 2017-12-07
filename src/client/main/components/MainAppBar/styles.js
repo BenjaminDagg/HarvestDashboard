@@ -13,10 +13,14 @@
      paddingLeft: 15,
      paddingRight: 15
    },
-   brandIcon: {
-     width: 30,
-     paddingRight: 15,
-     paddingBottom: 10
+   rightJustified: {
+     width: '100%',
+     display: 'flex',
+     justifyContent: 'flex-end'
+   },
+   avatar: {
+     width: 25,
+     height: 25
    }
  });
 
