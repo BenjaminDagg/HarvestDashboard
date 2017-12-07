@@ -9,6 +9,7 @@ import IconButton from 'material-ui/IconButton';
 import Home from 'material-ui-icons/Home';
 import Schedule from 'material-ui-icons/Schedule';
 import Web from 'material-ui-icons/Web';
+import Map from 'material-ui-icons/Map';
 import Settings from 'material-ui-icons/Settings';
 import styles from './styles';
 import { createToggleIcon } from './util';
@@ -34,21 +35,28 @@ class MainDrawer extends React.Component {
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
-              <ListItemText primary="Home" />
+              <ListItemText primary="HOME" />
             </ListItem>
 
             <ListItem button >
               <ListItemIcon>
                 <Schedule />
               </ListItemIcon>
-              <ListItemText primary="Real-Time" />
+              <ListItemText primary="REAL-TIME" />
+            </ListItem>
+
+            <ListItem button >
+              <ListItemIcon>
+                <Map />
+              </ListItemIcon>
+              <ListItemText primary="MAPS" />
             </ListItem>
 
             <ListItem button >
               <ListItemIcon>
                 <Web />
               </ListItemIcon>
-              <ListItemText primary="Harvests" />
+              <ListItemText primary="HARVESTS" />
             </ListItem>
           </List>
         </div>
@@ -60,7 +68,7 @@ class MainDrawer extends React.Component {
               <ListItemIcon>
                 <Settings />
               </ListItemIcon>
-              <ListItemText primary="Settings" />
+              <ListItemText primary="ADMIN" />
             </ListItem>
 
             <ListItem button disableRipple
