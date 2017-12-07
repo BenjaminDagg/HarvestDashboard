@@ -47,6 +47,21 @@ const styles = (theme) => ({
   toggleOpen: {
     display: 'flex',
     justifyContent: 'flex-end'
+  },
+  menuItem: {
+    transition: theme.transitions.create('', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.standard
+    })
+  },
+  menuItemHover: {
+    '&:hover:not($disabled) svg': {
+      color: theme.palette.primary[500]
+    },
+    transition: theme.transitions.create('', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.standard
+    })
   }
 });
 

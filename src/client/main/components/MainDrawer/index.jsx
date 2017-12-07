@@ -31,28 +31,28 @@ class MainDrawer extends React.Component {
       >
         <div className={ classes.drawerMenu } >
           <List>
-            <ListItem button divider >
+            <ListItem button divider className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
               <ListItemText primary="HOME" />
             </ListItem>
 
-            <ListItem button >
+            <ListItem button  className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Schedule />
               </ListItemIcon>
               <ListItemText primary="REAL-TIME" />
             </ListItem>
 
-            <ListItem button >
+            <ListItem button  className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Map />
               </ListItemIcon>
               <ListItemText primary="MAPS" />
             </ListItem>
 
-            <ListItem button >
+            <ListItem button className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Web />
               </ListItemIcon>
@@ -64,7 +64,7 @@ class MainDrawer extends React.Component {
         <div className={ classes.drawerSettings } >
           <List>
             <Divider />
-            <ListItem button divider >
+            <ListItem button divider className={ classNames(classes.menuItem, classes.menuItemHover) } >
               <ListItemIcon>
                 <Settings />
               </ListItemIcon>
@@ -74,6 +74,8 @@ class MainDrawer extends React.Component {
             <ListItem button disableRipple
               className={
                 classNames(
+                  classes.menuItem,
+                  classes.menuItemHover,
                   classes.toggle,
                   this.props.open && classes.toggleOpen
                 )
