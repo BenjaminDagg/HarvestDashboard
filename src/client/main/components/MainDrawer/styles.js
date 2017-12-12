@@ -1,4 +1,4 @@
-const drawerWidth = 240;
+const drawerWidth = 210;
 /**
  * The style for the sidebar component.
  * @param {object} theme - A material-ui theme object.
@@ -33,42 +33,23 @@ const styles = (theme) => ({
   },
   drawerMenu: {
     height: '100%',
-    // Makes the text in the sidebar not wrap
-    width: drawerWidth
+    display: 'flex'
   },
   drawerSettings: {
+    height: '100%',
     display: 'flex',
-    direction: 'row',
-    alignItems: 'flex-end'
+    alignItems: 'flex-end',
+  },
+  menuList: {
+    width: '100%',
+    paddingTop: 0
   },
   toggle: {
-    backgroundColor: theme.palette.background.default
+    backgroundColor: theme.palette.grey[200]
   },
   toggleOpen: {
     display: 'flex',
     justifyContent: 'flex-end'
-  },
-  menuItem: {
-    transition: theme.transitions.create('', {
-      easing: theme.transitions.easing.easeIn,
-      duration: theme.transitions.duration.complex
-    })
-  },
-  menuItemHover: {
-    '&:hover:not($disabled) *': {
-      color: theme.palette.primary[500]
-    },
-    transition: theme.transitions.create('', {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.standard
-    })
-  },
-  menuList: {
-    padding: 0
-  },
-  menuItemText: {
-    color: theme.palette.grey[600],
-    fontWeight: 600
   }
 });
 
