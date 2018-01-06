@@ -26,6 +26,7 @@ module.exports = {
       'module': 'electrode-react-webapp/lib/hapi',
       'options': {
         'pageTitle': 'Food-Origins',
+        'htmlFile': 'src/client/index.html',
         'paths': {
           '/{args*}': {
             'content': {
