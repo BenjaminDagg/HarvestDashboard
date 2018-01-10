@@ -5,6 +5,9 @@
 const styles = () => ({
   root: {
     height: '100%'
+  },
+  map: {
+    height: '500px'
   }
 });
 

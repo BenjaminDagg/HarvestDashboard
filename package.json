@@ -35,6 +35,7 @@
     "heroku-postbuild": "clap build"
   },
   "dependencies": {
+    "above-the-fold-only-server-render": "^1.0.3",
     "bluebird": "^3.4.6",
     "electrode-archetype-react-app": "^4.0.0",
     "electrode-confippet": "^1.0.0",
@@ -42,11 +43,15 @@
     "electrode-redux-router-engine": "^1.5.0",
     "electrode-server": "^1.0.0",
     "electrode-static-paths": "^1.0.0",
+    "jsdom": "^11.5.1",
+    "leaflet": "^1.2.0",
+    "leaflet-headless": "^0.2.6",
     "lodash": "^4.10.1",
     "material-ui": "^1.0.0-beta.22",
     "material-ui-icons": "^1.0.0-beta.17",
     "react": "^15.0.0",
     "react-dom": "^15.0.0",
+    "react-leaflet": "^1.7.8",
     "react-notify-toast": "^0.4.0",
     "react-tooltip": "^3.4.0"
   },
