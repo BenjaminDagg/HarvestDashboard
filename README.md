@@ -3,21 +3,20 @@
 
 You will need to install Node.js and NPM/Yarn. To make it easier to manage Node.js installation versions, it is recommended to use the Node Version Manager (NVM). 
 
-### NVM Installation
+#### NVM Installation
 You can learn how to install NVM from their [README][nvm-github-readme]. NPM should come installed with any version of Node.js installed through NVM. 
 
-### Yarn Installation
+#### Yarn Installation
 The installation instructions for Yarn are [here][yarn-install-docs].
 
-
+#### Install Application Dependencies
 ```sh
 $ yarn
 ```
 
 ## Start Application
-
 ```sh
- $ yarn run start
+ $ yarn start
 ```
 
  The application will be running on http://localhost:3000
