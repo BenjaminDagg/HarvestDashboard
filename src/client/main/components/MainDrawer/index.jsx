@@ -4,9 +4,7 @@ import classNames from 'classnames';
 import { withStyles } from 'material-ui/styles';
 import Drawer from 'material-ui/Drawer';
 import Divider from 'material-ui/Divider';
-import List, { ListItem, ListItemIcon, ListItemText } from 'material-ui/List';
-import Tooltip from 'material-ui/Tooltip';
-import Typography from 'material-ui/Typography';
+import List from 'material-ui/List';
 import Home from 'material-ui-icons/Home';
 import Schedule from 'material-ui-icons/Schedule';
 import Web from 'material-ui-icons/Web';
@@ -31,7 +29,7 @@ class MainDrawer extends React.Component {
 
     return (
       <Drawer
-        type="permanent"
+        variant="permanent"
         classes={{
           paper: classNames(classes.drawerPaper, !open && classes.drawerPaperClose)
         }}

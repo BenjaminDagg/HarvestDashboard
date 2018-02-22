@@ -19,7 +19,7 @@ class AccountMenu extends React.Component {
     super(props);
 
     this.state = {
-      open: false,
+      open: false
     };
 
     this.handleClick = this.handleClick.bind(this);
@@ -47,7 +47,7 @@ class AccountMenu extends React.Component {
                 aria-haspopup="true"
                 onClick={ this.handleClick }
               >
-                <Avatar src={ profileImage } className={ classes.avatar } />
+                <Avatar src={ profileImage } className={ classes.avatar }/>
               </IconButton>
             </Target>
             <Popper

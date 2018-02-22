@@ -6,7 +6,7 @@
  const styles = (theme) => ({
    root: {
      position: 'relative',
-     zIndex: theme.zIndex.navDrawer + 1,
+     zIndex: theme.zIndex.drawer + 1,
      boxShadow: '0 0px 3px 2px rgba(0, 0, 0, 0.2)'
    },
    toolbar: {
@@ -17,10 +17,6 @@
      width: '100%',
      display: 'flex',
      justifyContent: 'flex-end'
-   },
-   avatar: {
-     width: 25,
-     height: 25
    }
  });
 

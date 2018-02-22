@@ -1,9 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from 'material-ui/styles';
-import Typography from 'material-ui/Typography';
 import styles from './styles';
-import { AboveTheFoldOnlyServerRender } from "above-the-fold-only-server-render";
 import Test from '../Test';
 
 class Home extends React.Component {
@@ -13,9 +11,7 @@ class Home extends React.Component {
 
     return (
       <main className={ classes.root } >
-        <AboveTheFoldOnlyServerRender skip={true}>
-          <Test></Test>
-        </AboveTheFoldOnlyServerRender>
+        <Test/>
       </main>
     );
   }

@@ -1,4 +1,4 @@
-const drawerWidth = 210;
+const drawerWidth = 240;
 /**
  * The style for the sidebar component.
  * @param {object} theme - A material-ui theme object.
@@ -38,7 +38,7 @@ const styles = (theme) => ({
   drawerSettings: {
     height: '100%',
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'flex-end'
   },
   menuList: {
     width: '100%',

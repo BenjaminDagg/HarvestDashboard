@@ -1,9 +1,8 @@
 /**
 * The style for the sidebar component.
-* @param {object} theme - A material-ui theme object.
 * @returns {object} A material-ui component sytle object.
 */
-const styles = (theme) => ({
+const styles = () => ({
   root: {
     display: 'flex'
   },
@@ -11,7 +10,8 @@ const styles = (theme) => ({
     pointerEvents: 'none'
   },
   avatar: {
-    width: 25
+    width: 30,
+    height: 30
   }
 });
 

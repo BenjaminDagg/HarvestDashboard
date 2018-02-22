@@ -19,10 +19,10 @@ class MenuItem extends React.Component {
       <ListItemText
         primary={ primary }
         classes={{
-          text: classes.menuItemText
+          primary: classes.menuItemText
         }}
       />
-    )
+    );
 
     return (
       <ListItem
@@ -46,6 +46,8 @@ class MenuItem extends React.Component {
 
 MenuItem.propTypes = {
   classes: PropTypes.object.isRequired,
+  className: PropTypes.string,
+  primary: PropTypes.string,
   children: PropTypes.element.isRequired
 };
 
