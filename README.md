@@ -18,5 +18,5 @@ $ yarn
 
  The application will be running on http://localhost:3000
  
- [nvm-github-readme]: https://yarnpkg.com/lang/en/docs/install/
+ [nvm-github-readme]: https://github.com/creationix/nvm#installation
  [yarn-install-docs]: https://yarnpkg.com/lang/en/docs/install/
