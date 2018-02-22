@@ -9,10 +9,6 @@ You can learn how to install NVM from their [README][nvm-github-readme]. NPM sho
 #### Yarn Installation
 The installation instructions for Yarn are [here][yarn-install-docs].
 
-#### Install Application Dependencies
-```sh
-$ yarn
-```
 
 ## Setup and Run
 
