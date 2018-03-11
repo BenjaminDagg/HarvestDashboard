@@ -16,8 +16,19 @@ import { createToggleIcon } from './util';
 
 import MenuItem from '../MenuItem';
 
+import MapComponent from '../../../components/Map/components';
+
 
 class MainDrawer extends React.Component {
+
+
+  gotoMaps() {
+  	window.location.assign("/map");
+  };
+  
+  gotoLogin() {
+  	window.location.assign("/login");
+  };
 
   render() {
     const {
@@ -38,7 +49,7 @@ class MainDrawer extends React.Component {
         <ReactTooltip place="right" effect="solid" disable={open} delayShow={100} />
         <div className={ classes.drawerMenu } >
           <List className={ classes.menuList } >
-            <MenuItem primary="HOME" data-tip="Home" divider >
+            <MenuItem onClick={this.gotoLogin.bind(this)} primary="HOME" data-tip="Home" divider >
               <Home />
             </MenuItem>
 
@@ -46,8 +57,9 @@ class MainDrawer extends React.Component {
               <Schedule />
             </MenuItem>
 
-            <MenuItem primary="MAPS" data-tip="Maps" >
+            <MenuItem onClick={this.gotoMaps.bind(this)} children={MapComponent} primary="MAPS" data-tip="Maps" >
               <Map />
+             
             </MenuItem>
 
             <MenuItem primary="ANALYTICS" data-tip="Analytics" >

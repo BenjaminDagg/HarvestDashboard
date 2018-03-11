@@ -25,19 +25,19 @@ class MenuItem extends React.Component {
     );
 
     return (
-      <ListItem
-        button
+      <ListItem 
+        button 
         { ...other }
         className={ classNames(
           classes.menuItem,
           classes.menuItemHover,
-          className
+          className,
+          
         )}
       >
         <ListItemIcon>
           { children }
         </ListItemIcon>
-
         { primary && text }
       </ListItem>
     );

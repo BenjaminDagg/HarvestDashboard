@@ -5,7 +5,7 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { routes } from './routes';
-import { Router, browserHistory } from 'react-router';
+import { Router, browserHistory, Route } from 'react-router';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import rootReducer from './reducers';
@@ -13,6 +13,8 @@ import rootReducer from './reducers';
 import { notify } from 'react-notify-toast';
 //
 import './styles/base.css';
+
+import Login from './components/Login/components';
 
 //
 // Add the client app start up code to a function as window.webappStart.
@@ -34,7 +36,9 @@ window.webappStart = () => {
 
   render(
     <Provider store={store}>
-      <Router history={browserHistory}>{routes}</Router>
+      <Router history={browserHistory}>
+      	{routes}
+      </Router>
     </Provider>,
     document.querySelector('.js-content')
   );

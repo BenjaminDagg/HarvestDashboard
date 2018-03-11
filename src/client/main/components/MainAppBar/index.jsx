@@ -6,6 +6,7 @@ import Toolbar from 'material-ui/Toolbar';
 import Typography from 'material-ui/Typography';
 import AccountMenu from '../AccountMenu';
 import styles from './styles';
+import { Link } from 'react-router';
 
 class MainAppBar extends React.Component {
 
@@ -22,7 +23,8 @@ class MainAppBar extends React.Component {
           </div>
 
           <div className={ classes.rightJustified }>
-            <AccountMenu />
+           
+            <AccountMenu isLoggedIn={this.props.isLoggedIn} />
           </div>
         </Toolbar>
       </AppBar>

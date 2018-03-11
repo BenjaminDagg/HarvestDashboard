@@ -32,10 +32,32 @@ class AccountMenu extends React.Component {
 
   handleRequestClose() {
     this.setState({ open: false });
+    this.props.task();
   }
+  
+  
 
   render() {
     const { classes } = this.props;
+    
+    var menu;
+    
+    if (this.props.isLoggedIn == true) {
+    	menu = (
+    		<MenuList role="menu" >
+                 <MenuItem onClick={ this.handleRequestClose }>Account Settings</MenuItem>
+                 <MenuItem onClick={ this.handleRequestClose }>Notifications</MenuItem>
+                 <MenuItem onClick={ this.handleRequestClose }>Sign out</MenuItem>
+             </MenuList>
+        );
+    }
+    else {
+    	menu = (
+    		<MenuList role="menu">
+    			<MenuItem onClick={this.handleRequestClose}>Login</MenuItem>
+    		</MenuList>
+    	);
+    }
 
     return (
       <div className={ classes.root } >
@@ -57,11 +79,7 @@ class AccountMenu extends React.Component {
             >
               <Grow in={ this.state.open } id="menu-list" style={{ transformOrigin: '0 0 0' }} >
                 <Paper>
-                  <MenuList role="menu" >
-                    <MenuItem onClick={ this.handleRequestClose }>Account Settings</MenuItem>
-                    <MenuItem onClick={ this.handleRequestClose }>Notifications</MenuItem>
-                    <MenuItem onClick={ this.handleRequestClose }>Sign out</MenuItem>
-                  </MenuList>
+                  {menu}
                 </Paper>
               </Grow>
             </Popper>
