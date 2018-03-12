@@ -5,6 +5,55 @@
 const mongojs = require('mongojs');
 
 
+//This should work in node.js and other ES5 compliant implementations.
+function isEmptyObject(obj) {
+	return !Object.keys(obj).length;
+}
+
+//This should work both there and elsewhere.
+function isEmptyObject(obj) {
+	for (var key in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+//formats date from MMDDYYYY to MM/DD/YYYY
+function formatDate(date) {
+	if (date.length != 8) {
+		return date;
+	}
+	
+	return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+}
+
+//checks if date check is within the dates from and to
+function dateCheck(from,to,check) {
+
+    var fromDate,toDate,currDate;
+    fromDate = Date.parse(from);
+    toDate = Date.parse(to);
+    currDate = Date.parse(check);
+    
+    if (to == '') {
+    	return currDate >= fromDate;
+    }
+    else if (from == '') {
+    	return currDate <= toDate
+    }
+    else {
+    	if((currDate <= toDate && currDate >= fromDate)) {
+            return true;
+        }else {
+        return false;
+        
+        }
+    }
+    
+}
+
 exports.register = function(server, options, next) {
 	
 	const db = server.app.db;
@@ -248,6 +297,14 @@ exports.register = function(server, options, next) {
 	 * Response:
 	 * 		400 - bad request
 	 * 		200 - OK sends array of scan objects in body
+	 * 
+	 * Optional url parameters: can combine all of the queries
+	 * 		id (string) - limit results to only this user
+	 *		from (string) - date in the format MMDDYYYY that is the starting day of the timefram
+	 *		to (string) - date in the format MMDDYYYY that is the end day of the timefram
+	 *	
+	 *		if leave out to, will return all scans after from date
+	 *		if leave out from, will return all scans newer than or equal to to date
 	 */
 	server.route({
 		config: {
@@ -259,21 +316,112 @@ exports.register = function(server, options, next) {
 		method: 'GET',
 		path: '/scans',
 		handler: function (request, reply) {
-			db.collection('scans').find((err, docs) => {
-				if (err) {
-					response = {
-						error: 'Error retrieving user(s) from database'
-					};
-					return reply(response).code(400);
+			
+			//get optional query parameters form url if they exist
+			const params = request.query;
+			
+			//check if any query parameters
+			if (!isEmptyObject(params)) {
+				
+				var from, to, id;
+				
+				//parse start date from query string
+				if ('from' in params) {
+					from = formatDate(params.from);
+				}else {
+					from = '';
 				}
 				
-				const response = {
-						scans: docs
-				};
-				reply((response)).code(200);
-			});
+				if ('to' in params) {
+					to = formatDate(params.to);
+				}else {
+					to = ''
+				}
+				
+				//check if id is a parameter first
+				if ('id' in params) {
+					const id = mongojs.ObjectId(params.id);
+					
+					//get array of this users scans then narrow it down later
+					db.collection('scans').find(function (err, docs) {
+						if (err) {
+							return reply(err).code(500);
+						}
+						else {
+							//if a date frame is given then narrow down result
+							//to only dates in thsi time frame
+							if ('from' in params || 'to' in params) {
+								var scans = docs;
+								var result = new Array();
+			
+								for (var i = 0; i < scans.length;i++) {
+									const date = formatDate(scans[i].datetime);
+				
+									if (dateCheck(from,to,date) == true) {
+										result.push(scans[i]);
+									}
+								}
+								return reply(result);
+							
+							}
+							//no time frame given so return all scane
+							//by this user
+							else {
+								return reply(docs).code(200);
+							}
+						}
+		
+					});
+				}
+				//no specific user given so return scans in the given
+				//time frame
+				else {
+					db.collection('scans').find(function (err, docs) {
+						if (err) {
+							return reply(err).code(500);
+						}
+						else {
+							
+							var scans = docs;
+							var result = new Array();
+							
+							for (var i = 0; i < scans.length;i++) {
+								const date = formatDate(scans[i].datetime);
+								
+								if (dateCheck(from,to,date) == true) {
+									result.push(scans[i]);
+								}
+							}
+							return reply(result);
+						}
+						
+					});
+				}
+				
+			} 
+			//no query parameters given. Return all scans from database
+			else {
+				db.collection('scans').find((err, docs) => {
+					if (err) {
+						response = {
+							error: 'Error retrieving user(s) from database'
+						};
+						return reply(response).code(400);
+					}
+					
+					const response = {
+							scans: docs
+					};
+					return reply((response)).code(200);
+				});
+			}
 		}
 	});
+	
+	
+	
+	//************** Scans *******************
+	
 	
 	
 	/*

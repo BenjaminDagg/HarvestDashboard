@@ -5,6 +5,7 @@
 
 'use strict';
 
+//dependancies
 const Hapi = require('hapi');
 const mongojs = require('mongojs');
 const dbConfig = require('./config/dbConfig');
