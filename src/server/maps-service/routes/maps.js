@@ -664,6 +664,76 @@ exports.register = function(server, options, next) {
 	
 	
 	
+	/*
+	 * Inserts new map into a scans mapIds array
+	 * 
+	 * Request:
+	 * 		POST
+	 * 		Body:
+	 * 		id: id of map to insert
+	 * 
+	 * Response:
+	 * 		400 - given scan id invalid
+	 * 		200 - map was inserted successfully
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			}
+		},
+		method: 'POST',
+		path: '/scans/{id}/maps',
+		handler: function (request, reply) {
+			
+			//get id from url
+			const id = request.params.id;
+			const mapId = request.payload.id;
+			
+			//check valid id
+			if (id.length != 24) {
+				return reply('Invalid map id').code(400);
+			}
+			
+			if (!('id' in request.payload)) {
+				return reply('Invalid reqest. Missing id in body').code(400);
+			}
+			
+			//create mongo id object
+			const objID = mongojs.ObjectId(id);
+			
+			db.collection('scans').findOne({_id: objID}, function (err, doc) {
+				if (err) {
+					return reply(err).code(500);
+				}
+				else if (!doc) {
+					return reply('Invalid scan id.').code(400);
+				}
+				else {
+					var newScan = doc;
+					newScan.mapIds.push(mapId);
+					
+					db.collection('scans').update({_id:objID}, {
+						
+						profileId : doc.profileId,
+						datetime : doc.datetime,
+						mapIds: newScan.mapIds,
+						scannedValue : doc.scannedValue,
+						location: doc.location,
+						data: doc.data
+						
+					}, function () {
+						reply('updated').code(200);
+					});
+					
+				}
+			})
+		}
+	});
+	
+	
+	
 	return next();
 	
 };
