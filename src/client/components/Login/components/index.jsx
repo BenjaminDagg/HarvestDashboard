@@ -34,8 +34,9 @@ class Login extends React.Component {
 			},
 			headers
 		).then(res => {
-			
-			this.props.submit(true);
+			const user = res.data.user;
+			console.log(user);
+			this.props.submit(true, JSON.stringify(user));
 			console.log(res);
 			window.location.assign("/home");
 		})

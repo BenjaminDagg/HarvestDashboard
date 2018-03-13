@@ -24,6 +24,7 @@ function formatDate(date) {
 	return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
 }
 
+
 /* checks if date check is within the dates from and to
  * 
  * Parameters:
@@ -292,6 +293,105 @@ exports.register = function(server, options, next) {
 			})
 			
 			
+		}
+	});
+	
+	
+	
+	/*
+	 * Calculates avg time between crate scans
+	 * 
+	 * Request:
+	 * 		GET
+	 * 		Optional Query parameters:
+	 * 			&from (string) : start date of time frame
+	 * 			&to (string) : end date of time frame
+	 * 			&unit (unit of time) : hours, days. If none given default is hours
+	 * 
+	 * Response:
+	 * 		400 - Bad request. Date format invalid or invalid dates given
+	 * 		200 - Returns meant time between crates in body
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			}
+		},
+		method: 'GET',
+		path: '/harvest/meantime',
+		handler: function (request, reply) {
+			
+			//get query parameters
+			const params = request.query;
+			
+			db.collection('scans').find(function (err,docs) {
+				
+				if (err) {
+					return reply(err).code(500);
+				}
+				
+				var validScans = new Array();
+				
+				//if a date range given in query narrow down results
+				if ('from' in params || 'to' in params) {
+					
+					var fromDate = 'from' in params ? formatDate(params.from) : '';
+					var toDate = 'to' in params ? formatDate(params.to) : '';
+					
+					for (var i = 0; i < docs.length;i++) {
+						var date = formatDate(docs[i].datetime);
+						if (dateCheck(fromDate,toDate,date) == true) {
+							validScans.push(docs[i]);
+						}
+					}
+				} else {
+					validScans = docs;
+				}
+				
+				//sort by date
+				validScans.sort(function (a,b) {
+					return (formatDate(b.datetime)) < (formatDate(a.datetime));
+				});
+				
+				//calculate avg time between crates
+				var time = 0.0;
+				for (var i = validScans.length - 1; i > 0; i--) {
+					
+					var d1 = new Date(formatDate(validScans[i].datetime));
+					var d2 = new Date(formatDate(validScans[i-1].datetime));
+					var diff = Math.abs(d1.getTime() - d2.getTime());
+					
+					if ('unit' in params) {
+						const unit = params.unit;
+						
+						switch(unit) {
+							case 'hours':
+								var hours = Math.ceil(diff / (3600000));
+								time += hours;
+								break;
+							default:
+								var days = Math.ceil(diff / (1000 * 3600 * 24));
+								time += days;
+								
+						}
+					} else {
+						var hours = Math.ceil(diff / (3600000));
+						time += hours;
+					}
+					
+					
+				}
+				
+				var length = validScans.length > 1 ? validScans.length - 1 : 1;
+				var avgTime = time / length;
+				const response = {
+						meantime: avgTime
+				};
+				return reply(response).code(200);
+				
+			})
 		}
 	});
 	

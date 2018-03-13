@@ -15,7 +15,8 @@ class App extends React.Component {
 
     this.state = {
       open: false,
-      isLoggedIn: false
+      isLoggedIn: false,
+      user: null
     };
 
     this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
@@ -29,6 +30,10 @@ class App extends React.Component {
 	  if (status) {
 		  this.setState({isLoggedIn: JSON.parse(status)});
 	  }
+	  const currUser = localStorage.getItem('user');
+	  if(currUser) {
+		  this.setState({user: currUser});
+	  }
   }
   
   
@@ -37,9 +42,11 @@ class App extends React.Component {
     this.setState({ open: !this.state.open });
   }
   
-  login(res) {
-	  this.setState({isLoggedIn: res});
+  login(res, usr) {
+	  prompt('in main user = ' + usr);
+	  this.setState({isLoggedIn: res, user: usr});
 	  localStorage.setItem('isLoggedIn', JSON.stringify(this.state.isLoggedIn));
+	  localStorage.setItem('user', this.state.user);
   };
   
   signOut() {
@@ -73,7 +80,7 @@ class App extends React.Component {
     );
 
     return (
-    		
+    	
       <MuiThemeProvider theme={ theme } >
         <div className={ classes.root } >
           { appBar }
@@ -84,6 +91,7 @@ class App extends React.Component {
             <div className={ classes.content } >
               { content }
               login = {this.state.isLoggedIn.toString()}
+              user = {this.state.user != null && this.state.user.toString()}
               {children}
             </div>
           </div>
