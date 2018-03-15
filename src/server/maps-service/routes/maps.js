@@ -798,6 +798,55 @@ exports.register = function(server, options, next) {
 	
 	
 	
+	/*
+	 * Gets all scans for a given user id
+	 * 
+	 * Request:
+	 * 		GET
+	 * 		no body
+	 * 		user id in url
+	 * 
+	 * Response:
+	 * 		400 - no scans found for this user id
+	 * 		200 - Returns array of scan object for the given user
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			}
+		},
+		method: 'GET',
+		path: '/scans/user/{id}',
+		handler: function (request, reply) {
+			
+			//get id from url
+			const uid = request.params.id;
+			
+			//check if id is valid
+			if (uid.length != 24) {
+				return reply('Invalid user id').code(400);
+			}
+			
+			db.collection('scans').find({profileId: uid}, function(err, docs) {
+				if (err) {
+					return reply('Error searching database').code(500);
+				}
+				
+				const resp = {
+						scans: docs
+				};
+				return reply(resp).code(200);
+				
+			})
+			
+			
+		}
+	});
+	
+	
+	
 	return next();
 	
 };
