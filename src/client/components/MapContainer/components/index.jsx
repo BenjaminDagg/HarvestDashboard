@@ -23,6 +23,7 @@ class MapContainer extends React.Component {
 		
 		this.getMaps = this.getMaps.bind(this);
 		this.getUserScans = this.getUserScans.bind(this);
+		this.getMapCenter = this.getMapCenter.bind(this);
 	};
 	
 	componentDidMount() {
@@ -49,6 +50,17 @@ class MapContainer extends React.Component {
 			this.props.submit(false);
 			console.log('error');
 		});	
+	};
+	
+	
+	getMapCenter(geometry) {
+		
+		if (geometry.type == 'GeometryCollection') {
+			return geometry.geometries[0].coordinates[0];
+		} else {
+			return geometry.coordinates[0];
+		}
+		
 	};
 	
 	
@@ -136,7 +148,10 @@ class MapContainer extends React.Component {
 					this.state.maps.map((data) => {
 						return (
 							
-							<Map title={data.name} center={data.shape.coordinates[0]}/>
+							<Map title={data.name} 
+								center={this.getMapCenter(data.shape)}
+								geometry={data.shape}
+							/>
 						)
 					})
 				}

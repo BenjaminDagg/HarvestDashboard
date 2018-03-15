@@ -10,7 +10,7 @@ import { withStyles } from 'material-ui/styles';
 
   Props:
   	center : center coordinates of map ([lat,lng] [float,float])
-  	markers: array of coordinates representing marker locations
+  	markers: array of coordinates representing marker locations // <-------- not implemented yet
   	geometry: GeoJSON object with structure
   			  {
   			  	Shape: {
@@ -20,8 +20,8 @@ import { withStyles } from 'material-ui/styles';
   			  }
   			  	
   	title: title of map displayed over map
-  	width
-  	height
+  	width // not implemented
+  	height //not implemented
 */
 
 
@@ -38,14 +38,31 @@ class Map extends React.Component {
 		this.drawGeometry = this.drawGeometry.bind(this);
 		this.addMarker = this.addMarker.bind(this);
 	}
-	
+	;
 	
 	addMarker(e) {
 		var marker = new L.marker(e.latlng, {title: e.latlng}).addTo(this.map);
 		marker.bindTooltip(e.latlng.toString()).openTooltip();
-	}
+	};
 	
 	
+	
+	/*
+	* Takes in GeoJson object, parses coordinates and draws it on the map
+	*	Paramaters:
+			geometry (GeoJson object) :
+				obj: {
+					type (string, required) : type of Geojson object (GeometryCollection, Point, Polygon, Line)
+					coordinates ([Float], required) : array of coordinates representing vertices on the shape. If polygon
+											it will be [[Float,Float]] an array of float touples
+	*				geometries ([GeoJson]) : Only used for GeometryCollection tpye. Is an array of other GeoJson shape objects
+	
+				}
+				
+	  Output:
+	  		void
+	  		displays object on map no return value
+	*/
 	drawGeometry(geometry) {
 	
 		switch (geometry.type) {
@@ -60,8 +77,20 @@ class Map extends React.Component {
 				
 			case 'Point':
 				const coords = geometry.coordinates;
-				L.circle(coords, 13).addTo(this.map);
+				L.circle(coords, {radius: 1000, color: 'red'}).addTo(this.map);
 				break;
+				
+			case 'Polygon':
+				const polyCoords = geometry.coordinates;
+				var polygon = L.polygon(polyCoords, {color: 'red'}).addTo(this.map);
+				break;	
+			
+			case 'Line':
+				const lineCoords = geometry.coordinates;
+				var polyLine = L.polyline(lineCoords, {color: 'red'}).addTo(this.map);
+				
+				break;
+				
 			default:
 				console.log('error drawing geometry');
 				return;
@@ -86,7 +115,7 @@ class Map extends React.Component {
     	this.drawGeometry(this.props.geometry);
     }
     
-    //this.map.on('click', this.addMarker);
+    this.map.on('click', this.addMarker);
     
   }
 
