@@ -491,6 +491,70 @@ exports.register = function(server, options, next) {
 	});
 	
 	
+	
+	/*
+	 * Gets coordinates of every scan for a given user id
+	 * 
+	 * Request:
+	 * 		GET
+	 * 		no body
+	 * 
+	 * Response:
+	 * 		400 - Bad Request. Given user not found in database
+	 * 		200 - Returns array of objects structured
+	 * 			{
+	 * 				scanId: (string),
+	 * 				coord: [Float]
+	 * 			{
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			}
+		},
+		method: 'GET',
+		path: '/scans/{userId}/coord',
+		handler: function (request, reply) {
+			
+			//get userid from url
+			const uid = request.params.userId;
+			
+			//check if valid id was given
+			if (uid.length != 24) {
+				return reply('Bad Request. Invalid username').code(400);
+			}
+			
+			//search database for scans by this user
+			db.collection('scans').find({profileId: uid}, function(err, docs) {
+				
+				if (err) {
+					return reply('Error searching database').code(500);
+				}
+				
+				//extract coordinates and id from each doc
+				var coords = new Array();
+				for (var i = 0; i < docs.length;i++) {
+					const res = {
+							coord: docs[i].location.coordinates[0],
+							id: docs[i]._id
+					};
+					coords.push(res);
+				}
+				
+				
+				
+				reply(coords);
+				
+			})
+		}
+			
+	});
+	
+	
+	
+	
 	/*
 	 * Gets specific scan from database by its id
 	 * 
