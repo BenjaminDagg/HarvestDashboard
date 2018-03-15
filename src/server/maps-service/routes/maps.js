@@ -340,10 +340,10 @@ exports.register = function(server, options, next) {
 				
 				//check if id is a parameter first
 				if ('id' in params) {
-					const id = mongojs.ObjectId(params.id);
+					const id = params.id;
 					
 					//get array of this users scans then narrow it down later
-					db.collection('scans').find(function (err, docs) {
+					db.collection('scans').find({profileId: id},function (err, docs) {
 						if (err) {
 							return reply(err).code(500);
 						}
