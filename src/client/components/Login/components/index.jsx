@@ -9,7 +9,8 @@ class Login extends React.Component {
 		
 		this.state = {
 			username: '',
-			password: ''
+			password: '',
+			user: this.props.user || null
 		};
 		
 		this.formIsValid = this.formIsValid.bind(this);
@@ -34,10 +35,8 @@ class Login extends React.Component {
 			},
 			headers
 		).then(res => {
-			const user = res.data.user;
-			console.log(user);
-			this.props.submit(true, JSON.stringify(user));
-			console.log(res);
+			prompt('res: ' + JSON.stringify(res));
+			this.props.submit(true, res.data);
 			window.location.assign("/home");
 		})
 		.catch(error => {
@@ -99,7 +98,7 @@ class Login extends React.Component {
 	
 		return (
 			<div>
-			
+			{this.props.user != null && prompt(this.props.user.data.user._id) }
 			<h1>Login</h1>
 			<br />
 			Username: <input id="usernameField" type="text" value={this.state.username} onChange={this.usernameChange.bind(this)} />

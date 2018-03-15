@@ -43,10 +43,13 @@ class App extends React.Component {
   }
   
   login(res, usr) {
-	  prompt('in main user = ' + usr);
-	  this.setState({isLoggedIn: res, user: usr});
+	  
+	  this.setState({isLoggedIn: res, user: JSON.stringify(usr)});
 	  localStorage.setItem('isLoggedIn', JSON.stringify(this.state.isLoggedIn));
 	  localStorage.setItem('user', this.state.user);
+	  var user = JSON.parse(this.state.user);
+	  var id = user.data.user._id;
+	  prompt('in main user = ' + JSON.stringify(id));
   };
   
   signOut() {
@@ -63,7 +66,9 @@ class App extends React.Component {
 		  })
 	  });
 	  */
-	  var children = React.cloneElement(this.props.children, {submit: this.login});
+	  var children = React.cloneElement(this.props.children, {submit: this.login,
+	  														  isLoggedIn: this.state.isLoggedIn,
+	  														  user: JSON.parse(this.state.user)});
 	  
     const { content, classes } = this.props;
 
@@ -90,8 +95,11 @@ class App extends React.Component {
 
             <div className={ classes.content } >
               { content }
+              
+              
               login = {this.state.isLoggedIn.toString()}
               user = {this.state.user != null && this.state.user.toString()}
+              
               {children}
             </div>
           </div>
