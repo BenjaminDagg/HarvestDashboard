@@ -10,7 +10,8 @@ class Login extends React.Component {
 		this.state = {
 			username: '',
 			password: '',
-			user: this.props.user || null
+			user: this.props.user || null,
+			error: false
 		};
 		
 		this.formIsValid = this.formIsValid.bind(this);
@@ -35,13 +36,18 @@ class Login extends React.Component {
 			},
 			headers
 		).then(res => {
+			console.log('header:' + res.code);
 			prompt('res: ' + JSON.stringify(res));
 			this.props.submit(true, res.data);
 			window.location.assign("/home");
 		})
 		.catch(error => {
-			this.props.submit(false);
-			console.log('error');
+			if (error.response) {
+				this.setState({error: true});
+				this.props.submit(false);
+			}
+			
+			
 		});
 	};
 
@@ -96,6 +102,11 @@ class Login extends React.Component {
 
 	render() {
 	
+		var errStyle = {
+			color: 'red',
+			visibility: this.state.error ? 'visible' : 'hidden'
+		};
+	
 		return (
 			<div>
 			{this.props.user != null && prompt(this.props.user.data.user._id) }
@@ -106,6 +117,8 @@ class Login extends React.Component {
 			Password: <input id="passwordField" type="password" value={this.state.password} onChange={this.pswChange.bind(this)}/>
 			<br />
 			<button onClick={this.onSubmitHandler.bind(this)}>Submit</button>
+			<br />
+			<span id="loginError" style={errStyle}>Incorrect Username or Password</span>
 			<br />
 			<br />
 			<a href="url" >Register</a>

@@ -54,21 +54,19 @@ class App extends React.Component {
   
   signOut() {
 	  console.log('logout pressed');
+	  this.setState({user: null});
 	  this.setState({isLoggedIn: false});
-	  localStorage.setItem('isLoggedIn', JSON.stringify(false));
+	  localStorage.setItem('isLoggedIn', JSON.stringify('false'));
+	  localStorage.setItem('user', null);
+	  window.location.reload();
   };
 
   render() {
-	 /*
-	  var children = React.Children.map(this.props.children, function(child) {
-		  return React.cloneElement(child, {
-			  onCompletion: this.state.isloggedIn
-		  })
-	  });
-	  */
+
 	  var children = React.cloneElement(this.props.children, {submit: this.login,
 	  														  isLoggedIn: this.state.isLoggedIn,
-	  														  user: JSON.parse(this.state.user)});
+	  														  user: JSON.parse(this.state.user),
+	  														  signout: this.signOut});
 	  
     const { content, classes } = this.props;
 
@@ -77,11 +75,12 @@ class App extends React.Component {
         className={ classNames(classes.sidebar, !this.state.open && classes.sidebarClose) }
         open={ this.state.open }
         onHandleDrawerToggle={ this.handleDrawerToggle }
+      	signout = {this.signOut}
       />
     );
 
     const appBar = (
-      <MainAppBar signout={this.signOut} isLoggedIn={this.state.isLoggedIn}/>
+      <MainAppBar signout={this.signOut.bind(this)} isLoggedIn={this.state.isLoggedIn}/>
     );
 
     return (

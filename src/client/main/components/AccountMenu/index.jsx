@@ -24,15 +24,27 @@ class AccountMenu extends React.Component {
 
     this.handleClick = this.handleClick.bind(this);
     this.handleRequestClose = this.handleRequestClose.bind(this);
-  }
+    this.handleRequestSignout = this.handleRequestSignout.bind(this);
+    this.handleRequestLogin = this.handleRequestLogin.bind(this);
+  };
 
   handleClick() {
     this.setState({ open: !this.state.open });
-  }
+  };
 
   handleRequestClose() {
+    
     this.setState({ open: false });
-    this.props.task();
+	
+  };
+  
+  handleRequestSignout() {
+  	this.props.signout();
+  	this.handleRequestClose();
+  };
+  
+  handleRequestLogin() {
+  	window.location.assign("/login");
   }
   
   
@@ -47,14 +59,14 @@ class AccountMenu extends React.Component {
     		<MenuList role="menu" >
                  <MenuItem onClick={ this.handleRequestClose }>Account Settings</MenuItem>
                  <MenuItem onClick={ this.handleRequestClose }>Notifications</MenuItem>
-                 <MenuItem onClick={ this.handleRequestClose }>Sign out</MenuItem>
+                 <MenuItem onClick={ this.handleRequestSignout}>Sign out</MenuItem>
              </MenuList>
         );
     }
     else {
     	menu = (
     		<MenuList role="menu">
-    			<MenuItem onClick={this.handleRequestClose}>Login</MenuItem>
+    			<MenuItem onClick={this.handleRequestLogin}>Login</MenuItem>
     		</MenuList>
     	);
     }

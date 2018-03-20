@@ -24,7 +24,7 @@ class MainAppBar extends React.Component {
 
           <div className={ classes.rightJustified }>
            
-            <AccountMenu isLoggedIn={this.props.isLoggedIn} />
+            <AccountMenu signout={this.props.signout} isLoggedIn={this.props.isLoggedIn} />
           </div>
         </Toolbar>
       </AppBar>

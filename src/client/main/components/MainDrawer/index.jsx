@@ -29,6 +29,11 @@ class MainDrawer extends React.Component {
   gotoLogin() {
   	window.location.assign("/login");
   };
+  
+  
+  gotoHome() {
+  	window.location.assign("/home");
+  };
 
   render() {
     const {
@@ -49,7 +54,7 @@ class MainDrawer extends React.Component {
         <ReactTooltip place="right" effect="solid" disable={open} delayShow={100} />
         <div className={ classes.drawerMenu } >
           <List className={ classes.menuList } >
-            <MenuItem onClick={this.gotoLogin.bind(this)} primary="HOME" data-tip="Home" divider >
+            <MenuItem onClick={this.gotoHome.bind(this)} primary="HOME" data-tip="Home" divider >
               <Home />
             </MenuItem>
 

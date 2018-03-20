@@ -77,7 +77,7 @@ class Map extends React.Component {
 				
 			case 'Point':
 				const coords = geometry.coordinates;
-				L.circle(coords, {radius: 1000, color: 'red'}).addTo(this.map);
+				L.circle(coords, {radius: 1, color: 'red'}).addTo(this.map);
 				break;
 				
 			case 'Polygon':
