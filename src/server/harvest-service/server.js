@@ -7,6 +7,8 @@
 const Hapi = require('hapi');
 const mongojs = require('mongojs');
 const dbConfig = require('./config/dbConfig');
+const plotlyConfig = require('./config/plotly');
+var fs = require('fs');
 
 const port = 2000;
 
@@ -16,6 +18,7 @@ server.connection({
 	port: port,
 	host: 'localhost'
 });
+
 
 
 //connect to mongo database

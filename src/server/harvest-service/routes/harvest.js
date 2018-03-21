@@ -6,6 +6,17 @@
 
 const mongojs = require('mongojs');
 var turf_methods = require('../turf_methods');
+const plotlyConfig = require('../config/plotly');
+var plotly = require('plotly')(plotlyConfig.username,plotlyConfig.apiKey );
+var http = require('http');
+var https = require('https');
+var request = require('request');
+var bodyParser = require('body-parser');
+
+var fs = require('fs');
+
+
+
 
 
 /*formats date from MMDDYYYY to MM/DD/YYYY
@@ -63,6 +74,9 @@ function dateCheck(from,to,check) {
 exports.register = function(server, options, next) {
 	
 	const db = server.app.db;
+	
+
+	
 	
 	
 	/*
@@ -136,6 +150,8 @@ exports.register = function(server, options, next) {
 					return reply('No scans found in this time period').code(400);
 				}
 				
+				var distances = {}
+				
 				//calculate avg dist
 				//sort by date
 				validScans.sort(function (a,b) {
@@ -144,6 +160,7 @@ exports.register = function(server, options, next) {
 			
 				var dist = 0;
 				for (var i = validScans.length - 1; i > 0;i--) {
+					
 					const coords1 = validScans[i].location.coordinates[0];
 					const scan1 = {
 							lat: coords1[0],
@@ -155,9 +172,17 @@ exports.register = function(server, options, next) {
 							lng: coords2[1]
 					};
 					dist += turf_methods.distance(scan1,scan2,'miles');
+					var date2 = validScans[i].datetime;
+					var date1 = validScans[i-1].datetime;
+					
+					date2 = date2.slice(4,10) + '-' + date2.slice(0,2) + '-' + date2.slice(2,4);
+					date1 = date1.slice(4,10) + '-' + date1.slice(0,2) + '-' + date1.slice(2,4);
+					var date = date2 + ' to ' + date1;
+					distances[date] = dist;
 				}
 				const meandist = {
-						"meandist" : dist / validScans.length
+						meandist : dist / validScans.length,
+						distance: distances
 				};
 				reply(meandist).code(200);
 				
@@ -284,9 +309,29 @@ exports.register = function(server, options, next) {
 					}
 				}
 				
+				//get number of crates for each day in the time frame
+				var cratesPerDay = {};
+				for (var i = 0 ; i < validScans.length;i++) {
+					//MMDDYYYY
+					//YYYY-MM-DD
+					var date = validScans[i].datetime;
+					var newDate = date.slice(4,10) + '-' + date.slice(0,2) + '-' + date.slice(2,4);
+					var occurences = 0;
+					for (var j = 0; j < validScans.length;j++) {
+						if (validScans[j].datetime == date) {
+							occurences++;
+							
+						}
+						
+					}
+					
+					cratesPerDay[newDate] = occurences;
+				}
+				
 				const response = {
 						numCrates: validScans.length,
-						crates: validScans
+						crates: validScans,
+						cratesPerDay: cratesPerDay
 				};
 				return reply(response).code(200);
 				
@@ -394,6 +439,8 @@ exports.register = function(server, options, next) {
 			})
 		}
 	});
+	
+	
 	
 	
 	return next();

@@ -26,7 +26,7 @@ exports.distance = function(p1, p2, unit) {
 	
 	var options = {units: unit};
 	
-	var dist = turf.distance(from, to, options);
+	var dist = turf.distance(to, from, options);
 	
 	return dist;
 	
