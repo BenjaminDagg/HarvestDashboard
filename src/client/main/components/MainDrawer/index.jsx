@@ -30,6 +30,10 @@ class MainDrawer extends React.Component {
   	window.location.assign("/login");
   };
   
+  gotoAnalytics() {
+  	window.location.assign("/analytics");
+  };
+  
   
   gotoHome() {
   	window.location.assign("/home");
@@ -67,7 +71,7 @@ class MainDrawer extends React.Component {
              
             </MenuItem>
 
-            <MenuItem primary="ANALYTICS" data-tip="Analytics" >
+            <MenuItem onClick={this.gotoAnalytics.bind(this)} primary="ANALYTICS" data-tip="Analytics" >
               <Web />
             </MenuItem>
           </List>
