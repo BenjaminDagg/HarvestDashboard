@@ -3,7 +3,7 @@
  */
 
 const mongojs = require('mongojs');
-
+var auth = require('../auth/index');
 
 
 
@@ -59,6 +59,7 @@ exports.register = function(server, options, next) {
 	 *  	If no errors the response JSON will be a list of users
 	 */
 	server.route({
+		
 		method: 'GET',
 		path: '/users',
 		handler: function (request, reply) {
@@ -322,7 +323,8 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
-			}
+			},
+			auth: false
 		},
 		method: 'POST',
 		path: '/users/login',
@@ -341,6 +343,7 @@ exports.register = function(server, options, next) {
 				};
 				return reply(response).code(400);
 			}
+			
 			
 			//search database for user and check if credentials correct
 			db.user.findOne({ username: user.username}, (err, doc) => {
@@ -367,10 +370,13 @@ exports.register = function(server, options, next) {
 									user: doc
 								}
 						}
+						request.auth.session.set(doc);
 						reply(response).code(200);
 					}
 				}
 			})
+			
+			
 			
 		}
 	});
