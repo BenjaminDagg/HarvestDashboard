@@ -32,7 +32,7 @@ server.register([
 		register: require('./routes/user')
 	},
 	{
-		register: require('./auth/index')
+		register: require('../plugins/auth/index')
 	}
 	
 	], (err) => {

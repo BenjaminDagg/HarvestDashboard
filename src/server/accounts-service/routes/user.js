@@ -3,7 +3,7 @@
  */
 
 const mongojs = require('mongojs');
-var auth = require('../auth/index');
+
 
 
 

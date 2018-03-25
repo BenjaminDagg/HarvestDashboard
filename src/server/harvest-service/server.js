@@ -25,7 +25,14 @@ server.connection({
 server.app.db = mongojs(dbConfig.url, ['Maps']);
 
 //load hapi plugins
-server.register([require('./routes/harvest')], (err) => {
+server.register([
+	{
+		register: require('./routes/harvest')
+	},
+	{
+		register: require('../plugins/auth/index')
+	}
+	], (err) => {
 	if (err) {
 		console.log(err);
 		throw err;
