@@ -62,6 +62,7 @@ exports.register = function(server, options, next) {
 		
 		method: 'GET',
 		path: '/users',
+		
 		handler: function (request, reply) {
 			
 			//get optional query parameters form url if they exist

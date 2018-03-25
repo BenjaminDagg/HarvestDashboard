@@ -36,13 +36,16 @@ class Login extends React.Component {
 			},
 			headers
 		).then(res => {
-			console.log('header:' + res.code);
+		
 			prompt('res: ' + JSON.stringify(res));
 			this.props.submit(true, res.data);
 			window.location.assign("/home");
 		})
 		.catch(error => {
-			if (error.response) {
+		
+			console.log('response: ' + error.response.status);
+			if (error.code) {
+				console.log(error.code);
 				this.setState({error: true});
 				this.props.submit(false);
 			}
