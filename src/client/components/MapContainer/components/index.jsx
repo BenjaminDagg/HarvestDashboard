@@ -18,7 +18,8 @@ class MapContainer extends React.Component {
 					type: "GeometryCollection",
 					geometries: []
 				}
-			}
+			},
+			bearer: this.props.bearer || null
 		};
 		
 		this.getMaps = this.getMaps.bind(this);
@@ -33,7 +34,8 @@ class MapContainer extends React.Component {
 	
 	getMaps() {
 		var headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer
         };
 		
 		//make HTTP request to account service API
@@ -47,7 +49,7 @@ class MapContainer extends React.Component {
 			console.log(mapData);
 		})
 		.catch(error => {
-			this.props.submit(false);
+			t
 			console.log('error');
 		});	
 	};
@@ -67,18 +69,23 @@ class MapContainer extends React.Component {
 	getUserScans() {
 		
 		//check if user props loaded yet or if scans already gotten
-		if (this.props.user == null || this.state.scans != null) {
-			return;
+		if (this.props.user == null || this.state.scans != null || this.props.bearer === "") {
+			return (<div>You must be logged in to view maps </div>);
 		}
 		
 		const userId = this.props.user.data.user._id;
 		
 		//get users scans from database
 		var headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer.toString()
         };
+        
+        axios.defaults.headers.Authorization = this.props.bearer;
+        
         //make call to maps service api
         axios.get('http://localhost:1234/scans?id=' + userId.toString(),
+        	{ },
 			headers
 		).then(res => {
 		
@@ -111,7 +118,7 @@ class MapContainer extends React.Component {
 				this.setState({maps: mapData});
 			})
 			.catch(error => {
-					this.props.submit(false);
+					
 					console.log('error');
 			});
 			
@@ -122,7 +129,7 @@ class MapContainer extends React.Component {
 			
 		})
 		.catch(error => {
-			this.props.submit(false);
+			
 			console.log('error');
 		});	
 		
@@ -130,12 +137,15 @@ class MapContainer extends React.Component {
 
 	render() {
 		
-		this.getUserScans();
+		var view = this.getUserScans();
 		
 		return (
 		
+		  
 			
 			<div>
+			
+			    
 				{this.state.user != null && this.state.user }
 				{
 				this.state.scans != null &&

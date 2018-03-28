@@ -16,7 +16,8 @@ class App extends React.Component {
     this.state = {
       open: false,
       isLoggedIn: false,
-      user: null
+      user: null,
+      bearer: ""
     };
 
     this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
@@ -34,6 +35,10 @@ class App extends React.Component {
 	  if(currUser) {
 		  this.setState({user: currUser});
 	  }
+	  const bearer = localStorage.getItem('bearer');
+	  if(bearer) {
+		  this.setState({bearer: bearer});
+	  }
   }
   
   
@@ -42,8 +47,10 @@ class App extends React.Component {
     this.setState({ open: !this.state.open });
   }
   
-  login(res, usr) {
-	  
+  login(res, usr, token) {
+	  this.setState({bearer: token.toString()});
+	  localStorage.setItem('bearer', token.toString());
+	  prompt('in main token = ' + this.state.bearer);
 	  this.setState({isLoggedIn: res, user: JSON.stringify(usr)});
 	  localStorage.setItem('isLoggedIn', JSON.stringify(this.state.isLoggedIn));
 	  localStorage.setItem('user', this.state.user);
@@ -56,6 +63,8 @@ class App extends React.Component {
 	  console.log('logout pressed');
 	  this.setState({user: null});
 	  this.setState({isLoggedIn: false});
+	  this.setState({bearer: ""});
+	  localStorage.setItem('bearer', null);
 	  localStorage.setItem('isLoggedIn', JSON.stringify('false'));
 	  localStorage.setItem('user', null);
 	  window.location.reload();
@@ -66,7 +75,8 @@ class App extends React.Component {
 	  var children = React.cloneElement(this.props.children, {submit: this.login,
 	  														  isLoggedIn: this.state.isLoggedIn,
 	  														  user: JSON.parse(this.state.user),
-	  														  signout: this.signOut});
+	  														  signout: this.signOut,
+	  														  bearer: this.state.bearer});
 	  
     const { content, classes } = this.props;
 
@@ -98,6 +108,7 @@ class App extends React.Component {
               
               login = {this.state.isLoggedIn.toString()}
               user = {this.state.user != null && this.state.user.toString()}
+              token = {this.state.bearer != "" ? this.state.bearer : "undefined"}
               
               {children}
             </div>

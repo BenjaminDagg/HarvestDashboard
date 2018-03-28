@@ -371,7 +371,7 @@ exports.register = function(server, options, next) {
 									user: doc
 								}
 						}
-						request.auth.session.set(doc);
+						
 						reply(response).code(200);
 					}
 				}

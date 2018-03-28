@@ -31,9 +31,17 @@ class Analytics extends React.Component {
 	
 	
 	getCrateData() {
+		if (this.props.bearer === "" || this.state.crateData != null) {
+			return;
+		}
+	
+		//get users scans from database
 		var headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer.toString()
         };
+        
+        axios.defaults.headers.Authorization = this.props.bearer;
 		
 		//make HTTP request to account service API
 		axios.get('http://localhost:2000/harvest/numcrates/between?from=03092018&to=03202018', {
@@ -69,9 +77,18 @@ class Analytics extends React.Component {
 	
 	
 	getMeanDistData() {
+	
+		if (this.props.bearer === "" || this.state.meanDistData != null) {
+			return;
+		}
+	
+		//get users scans from database
 		var headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer.toString()
         };
+        
+        axios.defaults.headers.Authorization = this.props.bearer;
 		
 		//make HTTP request to account service API
 		axios.get('http://localhost:2000/harvest/meandist?from=03092018&to=03202018', {
@@ -96,9 +113,16 @@ class Analytics extends React.Component {
 	
 	
 	drawMeanDistGraph() {
+	
+		if (this.props.bearer == "") {
+			return (<div>You must be logged in to view analytics</div>);
+		}
+	
 		if(this.state.meanDistData == null) {
 			return (<div>Loading Data..</div>)
 		}
+		
+		
 		
 		var distData = this.state.meanDistData.distance;
 		var data = {
@@ -213,7 +237,8 @@ class Analytics extends React.Component {
 
 	render() {
 	
-		
+		this.getCrateDate();
+		this.getMeanDistData();
 	    
 	    const data = {
   			columns: [

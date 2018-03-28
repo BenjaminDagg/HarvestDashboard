@@ -25,33 +25,58 @@ class Login extends React.Component {
 	
 	login() {
 	
+		//make a token for authentication 
+		var credentials = this.state.username + ':' + this.state.password;
+		var basic = btoa(credentials);
+		basic = 'Basic ' + basic;
+
+		//put token in authorizatio header
 		var headers = {
-            'Content-Type': 'application/json'
-        };
+			'Content-Type': 'application/json',
+			
+		};
+		axios.defaults.headers.Authorization = basic;
 		
-		//make HTTP request to account service API
-		axios.post('http://localhost:4200/users/login', {
+		//make call to authorize to get bearer token
+		axios.post('http://localhost:4200/authenticate' , {}, headers)
+		.then (res => {
+			console.log(res);
+			var token = res.data.credentials.access_token;
+			
+			//use token to call login and get user info
+			headers = {
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + token
+        	};
+		
+			//make HTTP request to account service API
+			axios.post('http://localhost:4200/users/login', {
 				"username": this.state.username,
 				"password": this.state.password
 			},
 			headers
-		).then(res => {
+			).then(res => {
+				console.log(res);
+				this.props.submit(true, res.data, token);
+				window.location.assign("/home");
+			})
+			.catch(error => {
 		
-			prompt('res: ' + JSON.stringify(res));
-			this.props.submit(true, res.data);
-			window.location.assign("/home");
+			
+				if (error.code) {
+					console.log(error.code);
+					this.setState({error: true});
+				
+				}
+			
+			
+			});
 		})
-		.catch(error => {
-		
-			console.log('response: ' + error.response.status);
-			if (error.code) {
-				console.log(error.code);
-				this.setState({error: true});
-				this.props.submit(false);
-			}
-			
-			
+		.catch (error => {
+			this.setState({error: true});
 		});
+		
+	
 	};
 
 	
