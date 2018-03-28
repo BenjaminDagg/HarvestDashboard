@@ -6,6 +6,7 @@ const Hapi = require('hapi');
 const config = require('./config/index');
 var jwt = require('jsonwebtoken');
 const mongojs = require('mongojs');
+const crypto = require('crypto');
 
 
 exports.register = function(server, options, next){
@@ -74,7 +75,10 @@ exports.register = function(server, options, next){
         		else {
         			//incorrect password
         			//given HTTP basic token is incorrect
-        			if (doc.password != password) {
+        			
+        			var encrPassword = crypto.createHmac('sha256', config.secret).update(password).digest('base64');
+        			
+        			if (doc.password != encrPassword) {
         				
         				return reply({
         						isValid: false,
@@ -86,7 +90,7 @@ exports.register = function(server, options, next){
         			//valid username and password
         			//create a bearer token with json web token
         			//and send it back in repsonse body
-        			else if (doc.password === password) {
+        			else if (doc.password === encrPassword) {
         				
         				const token = getToken(doc._id);
         				return reply({ isValid: true, credentials: {

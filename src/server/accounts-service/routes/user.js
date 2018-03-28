@@ -4,17 +4,18 @@
 
 const mongojs = require('mongojs');
 
+const crypto = require('crypto');
+const secret = 'harvest_dashboard_secret_api_key';
 
 
 
 
-
-// This should work in node.js and other ES5 compliant implementations.
+// Checks if object is empty
 function isEmptyObject(obj) {
   return !Object.keys(obj).length;
 }
 
-// This should work both there and elsewhere.
+
 function isEmptyObject(obj) {
   for (var key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -48,7 +49,7 @@ exports.register = function(server, options, next) {
 	 * 		can have optional parameters in request URL
 	 * 
 	 * Response:
-	 * 		Returns 200 OK HTTP header regardless of outcome
+	 * 		Returns 200 OK on success
 	 * 
 	 * 		If error occured then an error element will be in the repsonse
 	 * 		JSON in the body. A status code element will be in the response body
@@ -57,6 +58,8 @@ exports.register = function(server, options, next) {
 	 * 		If no users found returns an empty users array
 	 * 
 	 *  	If no errors the response JSON will be a list of users
+	 *  
+	 *  	500 - error rerieving users from dattabase
 	 */
 	server.route({
 		
@@ -80,7 +83,7 @@ exports.register = function(server, options, next) {
 							response = {
 								error: 'Error retrieving user(s) from database'
 							};
-							return reply(response).code(200);
+							return reply(response).code(500);
 						}
 						
 						response = {
@@ -96,7 +99,7 @@ exports.register = function(server, options, next) {
 							response = {
 								error: 'Error retrieving user(s) from database'
 							};
-							reply(response).code(200);
+							reply(response).code(500);
 						}
 						response = {
 								users: docs
@@ -112,7 +115,7 @@ exports.register = function(server, options, next) {
 						response = {
 							error: 'Error retrieving user(s) from database'
 						};
-						reply(response).code(200);
+						reply(response).code(500);
 					}
 					
 					
@@ -137,11 +140,11 @@ exports.register = function(server, options, next) {
 	 * 			"id" : string
 	 * 
 	 * Response
-	 * 		Return 200 OK regardless of outcome
+	 * 		Return 200 OK if user found in database
 	 * 
-	 * 		If user found and no error return user object in HTTP body
-	 * 		
-	 * 		If error returns error message in HTTP body
+	 * 		Returns 400 Bad Request if user not found
+	 * 
+	 * 		Returns 
 	 */
 	server.route({
 		method: 'GET',
@@ -150,8 +153,7 @@ exports.register = function(server, options, next) {
 			
 			//create ObjectId to index into database
 			const id = request.params.id;
-			
-			console.log('id length = ' + id.length);
+		
 			
 			//id must be a 24 digit hex number
 			//check for valid ID before creating ObjecctId object
@@ -185,7 +187,7 @@ exports.register = function(server, options, next) {
 							error: 'user not found',
 							user: null
 					};
-					return reply(result).code(200);
+					return reply(result).code(400);
 				}
 				//user found
 				else {
@@ -218,17 +220,20 @@ exports.register = function(server, options, next) {
 	 * 			lastname: string
 	 * 
 	 * Response:
-	 * 		Returns 200 OK
+	 * 		Returns 200 OK if user successfully registered
+	 * 		400 - Bad Request. Fields missing in body or username already exists
+	 * 		500 - error in database lookup
 	 * 		
 	 * 		
 	 */
 	server.route({
+		
 		method: 'POST',
 		path: '/users/register',
 		handler: function (request, reply) {
 			
 			//get user info from request body
-			const user = request.payload;
+			var user = request.payload;
 			
 			//check if HTTP body is valid
 			if (!('username' in user) ||
@@ -239,10 +244,11 @@ exports.register = function(server, options, next) {
 				const response = {
 						error: 'Fields missing. Must include username, password,firstname and lastname in body'
 				};
-				return reply(response).code(200);
+				return reply(response).code(400);
 			}
 			
 			//save date the user registered
+			//format: YYYY-MM-DD
 			var date = new Date();
 			var day = date.getDate();
 			day = (day < 10 ? "0" : "") + day;
@@ -255,8 +261,13 @@ exports.register = function(server, options, next) {
 		    min = (min < 10 ? "0" : "") + min;
 		    var sec  = date.getSeconds();
 		    sec = (sec < 10 ? "0" : "") + sec;
-		    var dateStr = year + ":" + month + ":" + day + ":" + hour + ":" + min + ":" + sec;
+		    var dateStr = year + "-" + month + "-" + day ;
+		    
 		    user.createdAt = dateStr;
+		    
+		    var password = user.password;
+		    const hash = crypto.createHmac('sha256', secret).update(password).digest('base64');
+		    user.password = hash;
 			
 			//check if user already exists in database
 			db.user.findOne({ username: user.username}, (err, doc) => {
@@ -266,14 +277,14 @@ exports.register = function(server, options, next) {
 					const response = {
 							error: err
 					};
-					return reply(response).code(200);
+					return reply(response).code(500);
 				}
 				//username found in databse
 				if (doc) {
 					const response = {
 							error: 'username is in use'
 					};
-					return reply(response).code(200);
+					return reply(response).code(400);
 				}
 				//user does not exist so add them
 				else {
@@ -283,7 +294,7 @@ exports.register = function(server, options, next) {
 							const response = {
 									error: err
 							};
-							reply(response).code(200);
+							reply(response).code(500);
 						}
 						else {
 							const response = {
@@ -344,6 +355,10 @@ exports.register = function(server, options, next) {
 				};
 				return reply(response).code(400);
 			}
+			
+			 var password = user.password;
+			 const hash = crypto.createHmac('sha256', secret).update(password).digest('base64');
+			 user.password = hash;
 			
 			
 			//search database for user and check if credentials correct
