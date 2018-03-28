@@ -148,7 +148,7 @@ exports.register = function(server, options, next){
 
         	return jwt.sign({
         		id: id
-        	}, secret, {expiresIn: 60 * 60});
+        	}, secret, {expiresIn: 60 * 60 * 24});
         }
         
         
