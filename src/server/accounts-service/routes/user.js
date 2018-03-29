@@ -168,7 +168,7 @@ exports.register = function(server, options, next) {
 						error: 'Invalid ID format. User ID must be 24 characters',
 						users: null
 				};
-				return reply(result).code(200);
+				return reply(result).code(400);
 			}
 			
 			const objID = mongojs.ObjectId(id);
