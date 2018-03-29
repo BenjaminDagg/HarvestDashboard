@@ -77,6 +77,11 @@ exports.register = function(server, options, next) {
 					
 					const limit = Number(params.limit);
 					delete params.limit;
+					
+					if (limit <= 0) {
+						return reply({error: "Limit must be a positive integer"}).code(400);
+					}
+					
 					db.user.find(params).limit(limit,  (err, docs) => {
 						if (err) {
 							

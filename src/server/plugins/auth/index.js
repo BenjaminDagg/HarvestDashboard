@@ -64,7 +64,7 @@ exports.register = function(server, options, next){
         		//reply with forbided
         		else if (!doc) {
         			
-        			return neply({
+        			return reply({
 						isValid: false,
 						errors: [{
 							message: "Unable to verify your credentials"
