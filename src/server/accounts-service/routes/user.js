@@ -232,13 +232,24 @@ exports.register = function(server, options, next) {
 	 * 		
 	 */
 	server.route({
-		
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			auth: false
+		},
 		method: 'POST',
 		path: '/users/register',
 		handler: function (request, reply) {
 			
 			//get user info from request body
 			var user = request.payload;
+			
+			//no body given in request. Return 400 Bad Request
+			if (!user) {
+				return reply({error: 'Bad Request. Missing request body'}).code(400);
+			}
 			
 			//check if HTTP body is valid
 			if (!('username' in user) ||
@@ -340,8 +351,7 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
-			},
-			auth: false
+			}
 		},
 		method: 'POST',
 		path: '/users/login',
@@ -351,6 +361,12 @@ exports.register = function(server, options, next) {
 			var error = {
 					error: ''
 			};
+			
+			//no body given in request. Return Bad Request 400
+			if (!user) {
+				error.error = 'Invalid request. No body given';
+				return reply(error).code(400);
+			}
 			
 			//login credentials not provided
 			if (!('username' in user) ||
@@ -372,7 +388,7 @@ exports.register = function(server, options, next) {
 				//error occured
 				if (err) {
 					console.log(err);
-					error.error = 'Error. User not found';
+					error.error = 'Incorrect login credentials';
 					reply(error).code(400);
 				}
 				else if (!doc) {

@@ -23,8 +23,6 @@ const testUser = {
 	createdAt: "2018-02-28"
 };
 
-const basic =  (testUser.username + ':' + testUser.password).toString('base64');
-
 
 var token = null;
 
@@ -421,6 +419,327 @@ describe('users', () => {
 					done();
 				});
 		});
+	});
+	
+	
+	
+	/* ================ POST /users/register ================================ */
+	describe('POST users/register', () => {
+				
+		
+		it('it should insert a new user object into the database when valid credenials are given' , (done) => {
+		chai.request(url)
+				.post('/users/register')
+				.send({
+					'username' : new Date(),
+					'password' : 'password',
+					'firstname' : 'firstname',
+					'lastname' : 'lastname'
+				})
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('messege');
+					res.body.should.have.property('user');
+					
+					var user = res.body.user;
+					user.should.have.property('username');
+					user.should.have.property('password');
+					user.should.have.property('firstname');
+					user.should.have.property('lastname');
+					user.should.have.property('createdAt');
+					user.should.have.property('_id');
+					
+					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a Bad Request when no request body given' , (done) => {
+			chai.request(url)
+					.post('/users/register')
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request if lastname field missing in the body' , (done) => {
+			chai.request(url)
+			.post('/users/register')
+			.send({
+				'username' : new Date(),
+				'password' : 'password',
+				'firstname' : 'firstname'
+			})
+			.end((err, res) => {
+				res.should.have.status(400);
+				res.body.should.be.a('object');
+				res.should.have.property('error');
+						
+				done();
+			})
+		});
+		
+		
+		
+		it('it should return a Bad Request if firstname field missing in the body' , (done) => {
+			chai.request(url)
+			.post('/users/register')
+			.send({
+				'username' : new Date(),
+				'password' : 'password',
+				'lastname' : 'lastname'
+			})
+			.end((err, res) => {
+				res.should.have.status(400);
+				res.body.should.be.a('object');
+				res.should.have.property('error');
+						
+				done();
+			})
+		});
+		
+		
+		
+		it('it should return a Bad Request if password field missing in the body' , (done) => {
+			chai.request(url)
+			.post('/users/register')
+			.send({
+				'username' : new Date(),
+				'firstname' : 'firstname',
+				'lastname' : 'lastname'
+			})
+			.end((err, res) => {
+				res.should.have.status(400);
+				res.body.should.be.a('object');
+				res.should.have.property('error');
+						
+				done();
+			})
+		});
+		
+		
+		
+		it('it should return a Bad Request if username field missing in the body' , (done) => {
+			chai.request(url)
+			.post('/users/register')
+			.send({
+				'password' : 'password',
+				'firstname' : 'firstname',
+				'lastname' : 'lastname'
+			})
+			.end((err, res) => {
+				res.should.have.status(400);
+				res.body.should.be.a('object');
+				res.should.have.property('error');
+						
+				done();
+			})
+		});
+		
+		
+		
+		it('it should return a Bad Request if a user is already registered with the given username' , (done) => {
+			chai.request(url)
+			.post('/users/register')
+			.send(testUser)
+			.end((err, res) => {
+				res.should.have.status(400);
+				res.body.should.be.a('object');
+				res.should.have.property('error');
+						
+				done();
+			})
+		});
+	});
+	
+	
+	
+	/* ================ POST /users/login ================================ */
+	describe('POST users/login', () => {
+				
+		
+		it('it should return a user object in the body whwen valid user credentials given' , (done) => {
+		chai.request(url)
+				.post('/users/login')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'username' : testUser.username,
+					'password' : testUser.password
+				})
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('messege');
+					res.body.should.have.property('data');
+					res.body.data.should.have.property('user');
+					
+					var user = res.body.data.user;
+					user.should.have.property('username');
+					user.should.have.property('password');
+					user.should.have.property('firstname');
+					user.should.have.property('lastname');
+					user.should.have.property('createdAt');
+					user.should.have.property('_id');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a Bad Request when invalid username given' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'username' : testUser.username + 'invalid',
+						'password' : testUser.password
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request when invalid password given' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'username' : testUser.username,
+						'password' : testUser.password + 'invalid'
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request when invalid username and password given' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'username' : testUser.username + 'invalid',
+						'password' : testUser.password + 'invalid'
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request when no request body given' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request when no username field given in body' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'password' : testUser.password + 'invalid'
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return a Bad Request when no password field given in body' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'username' : testUser.username
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return Unauthorized when no bearer token is given in header' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.set('authorization', 'Bearer' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhYmM1Y2ZiNzNkYjkzMzkzODU2ZTM2NSIsImlhdCI6MTUyMjU0ODk3MCwiZXhwIjoxNTIyNjM1MzcwfQ.W6kdOlsR6-G9o-VIyUfa8StBRfrVj7WwNJCOBlMeJws')
+					.send({
+						'username' : testUser.username,
+						'password' : testUser.password
+					})
+					.end((err, res) => {
+						res.should.have.status(401);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return Unauthorized when invalid bearer token is given in header' , (done) => {
+			chai.request(url)
+					.post('/users/login')
+					.send({
+						'username' : testUser.username,
+						'password' : testUser.password
+					})
+					.end((err, res) => {
+						res.should.have.status(401);
+						res.body.should.be.a('object');
+						res.should.have.property('error');
+						
+						done();
+			});
+		});
+	
 	});
 		
 	
