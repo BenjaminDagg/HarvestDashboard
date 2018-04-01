@@ -67,7 +67,10 @@ exports.register = function(server, options, next) {
 	 * Request:
 	 * 		GET
 	 * 		body: none
-	 * 		url param: none
+	 * 		url param: 
+	 * 			from: get all maps after a given date
+	 * 			to: get all maps before a given date
+	 * 			id: get only maps from the given user id
 	 * 
 	 * Response:
 	 * 		200 - Array of map objects
@@ -82,10 +85,11 @@ exports.register = function(server, options, next) {
 		method: 'GET',
 		path: '/maps',
 		handler: function (request, reply) {
+			
 			db.Maps.find((err, docs) => {
 				if (err) {
 					response = {
-						error: 'Error retrieving user(s) from database'
+						error: 'Error retrieving map(s) from database'
 					};
 					reply(response).code(400);
 				}
@@ -126,20 +130,43 @@ exports.register = function(server, options, next) {
 			
 			//get map object from body
 			const map = request.payload;
-			console.log(map);
+			
+			if (!map) {
+				return reply({error: 'Bad request. Missing body'}).code(400);
+			}
+			
 			//check if map object is valid
 			if (!('type' in map) ||
 				!('name' in map) ||
-				!('shape' in map)) {
+				!('shape' in map) ||
+				!('data' in map)) {
 				
-				return reply('Bad request. Missing perameters').code(400);
+				return reply({error: 'Bad request. Missing fields'}).code(400);
 			}
+			
+			//save date the map was added
+			//format: YYYY-MM-DD
+			var date = new Date();
+			var day = date.getDate();
+			day = (day < 10 ? "0" : "") + day;
+			var month = date.getMonth();
+			month = (month < 10 ? "0" : "") + month;
+			var year = date.getFullYear();
+			var hour = date.getHours();
+		    hour = (hour < 10 ? "0" : "") + hour;
+		    var min  = date.getMinutes();
+		    min = (min < 10 ? "0" : "") + min;
+		    var sec  = date.getSeconds();
+		    sec = (sec < 10 ? "0" : "") + sec;
+		    var dateStr = year + "-" + month + "-" + day ;
+		    
+		    map.createdAt = dateStr;
 			
 			db.Maps.save(map, (err, result) => {
 				if (err) {
 					return reply('Server error. Error adding map').code(500);
 				}
-				reply('Map added').code(200);
+				reply({messege: 'Map added successfully'}).code(200);
 			})
 		}
 	});
@@ -173,7 +200,7 @@ exports.register = function(server, options, next) {
 			
 			//check valid id
 			if (id.length != 24) {
-				return reply('Invalid map id').code(400);
+				return reply({error: 'Bad request. Invalid map id'}).code(400);
 			}
 			
 			//create mongo id object
@@ -181,10 +208,10 @@ exports.register = function(server, options, next) {
 			
 			db.Maps.findOne({_id: objID}, (err, doc) => {
 				if (err) {
-					return reply('Server error').code(500);
+					return reply({error: 'Bad request. Map not found'}).code(400);
 				}
 				else if (!doc) {
-					return reply('Bad request. Map not found').code(400);
+					return reply({error: 'Bad request. Map not found'}).code(400);
 				}
 				else {
 					const response = {
@@ -203,7 +230,9 @@ exports.register = function(server, options, next) {
 	 * Request:
 	 * 		GET
 	 * 		user id in url
-	 * 		no body
+	 * 		query params:
+	 * 			from: get only maps after this date
+	 * 			to: get only maps before this date
 	 * 
 	 * Response:
 	 * 		400 - Bad request (user not found)
@@ -224,12 +253,14 @@ exports.register = function(server, options, next) {
 			//get id from body
 			const id = request.params.id;
 			
+			const params = request.query;
+			
 			//check if id format is valid
 			//must be 24 digit hex number
 			if (id.length != 24) {
 				const result = {
 						error: 'Invalid ID format. User ID must be 24 characters',
-						maps: null
+						maps: []
 				};
 				return reply(result).code(400);
 			}
@@ -241,15 +272,24 @@ exports.register = function(server, options, next) {
 			db.collection('scans').find({profileId: id}, (err, doc) => {
 				if (err) {
 					
-					return reply(err).code(400);
+					return reply({error: 'Error. No maps found for this user'}).code(400);
 				}
 				else if (!doc) {
 					response = {
-						error: 'Error user not found'
+						error: 'Error. No maps found for this user'
 					};
 					return reply(response).code(400);
 				}
 				else {
+					
+					
+					if (doc.length == 0) {
+						response = {
+							error: 'Error. No maps found for this user'
+						};
+						return reply(response).code(400);
+					}
+					
 					//array to hold map ids for every scan
 					var mapIds = new Array();
 					
@@ -276,7 +316,34 @@ exports.register = function(server, options, next) {
 						if (err) {
 							return reply('error').code(500);
 						}
-						reply(docs).code(200);
+						
+						//check if date limiters in url
+						if (!isEmptyObject(params)) {
+							
+							var from = 'from' in params ? formatDate(params.from) : "";
+							var to = 'to' in params ? formatDate(params.to) : "";
+							
+							
+							//list of maps that fall in the date range
+							var validMaps = new Array();
+							
+							for (var i = 0; i < docs.length; i++) {
+								//parse date
+								var date = docs[i].createdAt;
+								var newDate = date.slice(5,7) + '/' + date.slice(8, date.length) + '/' + date.slice(0,4);
+								
+								//if map date is in range then add it to list
+								if (dateCheck(from, to, newDate) == true) {
+									validMaps.push(docs[i]);
+								}
+							}
+							
+							return reply(validMaps).code(200);
+							
+							
+						}
+						
+						return reply(docs).code(200);
 					});
 					
 				}
@@ -367,7 +434,13 @@ exports.register = function(server, options, next) {
 							//no time frame given so return all scane
 							//by this user
 							else {
-								return reply(docs).code(200);
+								
+								if (docs.length == 0) {
+									return reply({error: 'Bad request. No scans found for this user'}).code(400);
+								}
+								else {
+									return reply(docs).code(200);
+								}
 							}
 						}
 		
