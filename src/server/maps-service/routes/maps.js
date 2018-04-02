@@ -511,7 +511,7 @@ exports.register = function(server, options, next) {
 	 * 					type: string
 	 * 					coordinates: [Float]
 	 *				}
-	 *				data: {}
+	 *				
 	 *Response:
 	 *		500 - something went wrong on server end whe trying to add
 	 *		400 - Bad request. You gave an invalid scan obj (missing fields )
@@ -533,15 +533,41 @@ exports.register = function(server, options, next) {
 			
 			//check if passed in scan data is valid
 			if (!('profileId' in scan) ||
-				!('datetime' in scan) ||
 				!('location' in scan) ||
-				!('scannedValue' in scan)) {
+				!('scannedValue' in scan) ||
+				!('mapIds' in scan)) {
 				
 				const response = {
 						error: 'Fields missing.'
 				};
 				return reply(response).code(400);
 			}
+			
+			//check if coordinates given in location
+			var location = scan.location;
+			if (!('coordinates' in location)) {
+				const response = {
+						error: 'Fields missing.'
+				};
+				return reply(response).code(400);
+			}
+			
+			//create datetime field
+			var date = new Date();
+			var day = date.getDate();
+			day = (day < 10 ? "0" : "") + day;
+			var month = date.getMonth() + 1;
+			month = (month < 10 ? "0" : "") + month;
+			var year = date.getFullYear();
+			var hour = date.getHours();
+		    hour = (hour < 10 ? "0" : "") + hour;
+		    var min  = date.getMinutes();
+		    min = (min < 10 ? "0" : "") + min;
+		    var sec  = date.getSeconds();
+		    sec = (sec < 10 ? "0" : "") + sec;
+		    var dateStr = year + "-" + month + "-" + day ;
+		    
+		    scan.datetime = dateStr;
 			
 			//add scan to database
 			db.collection('scans').save(scan, (err, result) => {
@@ -596,28 +622,31 @@ exports.register = function(server, options, next) {
 			
 			//check if valid id was given
 			if (uid.length != 24) {
-				return reply('Bad Request. Invalid username').code(400);
+				return reply({error:'Bad Request. Invalid username'}).code(400);
 			}
 			
 			//search database for scans by this user
 			db.collection('scans').find({profileId: uid}, function(err, docs) {
 				
 				if (err) {
-					return reply('Error searching database').code(500);
+					return reply({error:'Error searching database'}).code(500);
+				}
+				
+				if (docs.length == 0) {
+					return reply({error: 'No scans found for this user'}).code(400);
 				}
 				
 				//extract coordinates and id from each doc
 				var coords = new Array();
 				for (var i = 0; i < docs.length;i++) {
 					const res = {
-							coord: docs[i].location.coordinates[0],
+							coord: docs[i].location.coordinates,
 							id: docs[i]._id
 					};
 					coords.push(res);
 				}
 				
-				
-				
+		
 				reply(coords);
 				
 			})
@@ -656,8 +685,7 @@ exports.register = function(server, options, next) {
 			//must be 24 digit hex number
 			if (id.length != 24) {
 				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters',
-						users: null
+						error: 'Invalid ID format. User ID must be 24 characters'
 				};
 				return reply(result).code(400);
 			}
@@ -672,7 +700,7 @@ exports.register = function(server, options, next) {
 				}
 				else if (!doc) {
 					response = {
-						error: 'Error user not found'
+						error: 'Error scan not found'
 					};
 					return reply(response).code(400);
 				}
@@ -709,28 +737,56 @@ exports.register = function(server, options, next) {
 			//parse id from url
 			const id = request.params.id;
 			
-			//create mongo id object
-			const objID = mongojs.ObjectId(id);
-			
 			//check if id format is valid
 			//must be 24 digit hex number
 			if (id.length != 24) {
 				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters',
-						users: null
+						error: 'Invalid ID format. User ID must be 24 characters'
 				};
 				return reply(result).code(400);
 			}
 			
-			db.collection('scans').update({_id:objID}, {
+			//create mongo id object
+			const objID = mongojs.ObjectId(id);
+			
+			
+			
+			const scan = request.payload;
+			if (!('profileId' in scan) ||
+				!('mapIds' in scan) ||
+				!('scannedValue' in scan) ||
+				!('location' in scan) ||
+				!('datetime' in scan)) {
 				
-				mapIds: request.payload.mapIds,
-				scannedValue: request.payload.scannedValue,
-				location: request.payload.location,
-				data: request.payload.data
-			}, function () {
-				reply('updated').code(200);
-			});
+				return reply({error: 'Bad Request. Missing fields'}).code(400);
+			}
+			
+			//check if location has coordinates field
+			if (!('coordinates' in scan.location)) {
+				return reply({error: 'Bad Request. Missing fields'}).code(400);
+			}
+			
+			
+			db.collection('scans').findAndModify({
+				query: {_id: objID},
+				update: {
+					profileId: scan.profileId,
+					mapIds: request.payload.mapIds,
+					scannedValue: request.payload.scannedValue,
+					location: request.payload.location,
+					datetime: scan.datetime
+				}
+			}, (err, doc, lastErrorObject) => {
+				if (err) {
+					return reply({error: 'Error updating scan'}).code(400);
+				}
+				
+				if (!doc) {
+					return reply({error: 'Error updating scan'}).code(400);
+				}
+				
+				return reply({messege: 'updated', scan: request.payload}).code(200);
+			})
 			
 		}
 	});
@@ -826,45 +882,76 @@ exports.register = function(server, options, next) {
 			
 			//get id from url
 			const id = request.params.id;
+			
+			
+			//check if map id given
+			if (!request.payload) {
+				return reply({error: 'Invalid reqest. Missing id in body'}).code(400);
+			}
+			
 			const mapId = request.payload.id;
 			
 			//check valid id
 			if (id.length != 24) {
-				return reply('Invalid map id').code(400);
+				return reply({error: 'Bad Request. Invalid scan id'}).code(400);
 			}
 			
-			if (!('id' in request.payload)) {
-				return reply('Invalid reqest. Missing id in body').code(400);
+			//check if valid map id
+			if (mapId.length != 24) {
+				return reply({error: 'Bad Request. Invalid scan id'}).code(400);
 			}
 			
-			//create mongo id object
-			const objID = mongojs.ObjectId(id);
-			
-			db.collection('scans').findOne({_id: objID}, function (err, doc) {
-				if (err) {
-					return reply(err).code(500);
+			//searach database for map
+			const mapObjId = mongojs.ObjectId(mapId);
+			db.Maps.findOne({_id : mapObjId}, (mapErr, map) => {
+				if (mapErr) {
+					return reply({error: 'Error searching database for map'}).code(400);
 				}
-				else if (!doc) {
-					return reply('Invalid scan id.').code(400);
+				
+				if (!map) {
+					return reply({error: 'Bad Request. Map id not found in database'}).code(400);
 				}
-				else {
-					var newScan = doc;
-					newScan.mapIds.push(mapId);
-					
-					db.collection('scans').update({_id:objID}, {
+				
+				//map id found now search for scan
+				
+				//create mongo id object
+				const objID = mongojs.ObjectId(id);
+				
+				db.collection('scans').findOne({_id: objID}, function (err, doc) {
+					if (err) {
+						return reply(err).code(400);
+					}
+					if (!doc) {
+						return reply({error: 'Scan id not found'}).code(400);
+					}
+					else {
+						var newScan = doc;
 						
-						profileId : doc.profileId,
-						datetime : doc.datetime,
-						mapIds: newScan.mapIds,
-						scannedValue : doc.scannedValue,
-						location: doc.location,
-						data: doc.data
+						//check if map id is already in the scans mapIds array
+						for (var i = 0; i < doc.mapIds.length;i++) {
+							if (doc.mapIds[i] == mapId) {
+								return reply({error: 'Error adding map. Map id already exists in this scan'}).code(400);
+							}
+						}
 						
-					}, function () {
-						reply('updated').code(200);
-					});
-					
-				}
+						//map id not in scan so insert it
+						newScan.mapIds.push(mapId);
+						
+						db.collection('scans').update({_id:objID}, {
+							
+							profileId : doc.profileId,
+							datetime : doc.datetime,
+							mapIds: newScan.mapIds,
+							scannedValue : doc.scannedValue,
+							location: doc.location,
+							
+						}, function () {
+							reply({messege: 'Map successfully updated'}).code(200);
+						});
+						
+					}
+				})
+				
 			})
 		}
 	});
@@ -878,6 +965,9 @@ exports.register = function(server, options, next) {
 	 * 		GET
 	 * 		no body
 	 * 		user id in url
+	 * 		query parameters:
+	 * 			from: get all scans after this date
+	 * 			to: get all scans before this date
 	 * 
 	 * Response:
 	 * 		400 - no scans found for this user id
@@ -897,6 +987,9 @@ exports.register = function(server, options, next) {
 			//get id from url
 			const uid = request.params.id;
 			
+			//get query parameters
+			const params = request.query;
+			
 			//check if id is valid
 			if (uid.length != 24) {
 				return reply('Invalid user id').code(400);
@@ -905,6 +998,31 @@ exports.register = function(server, options, next) {
 			db.collection('scans').find({profileId: uid}, function(err, docs) {
 				if (err) {
 					return reply('Error searching database').code(500);
+				}
+				
+				if (!isEmptyObject(params)) {
+					var validScans = new Array();
+					
+					var from = 'from' in params ? formatDate(params.from) : "";
+					var to = 'to' in params ? formatDate(params.to) : "";
+					
+					for (var i = 0; i < docs.length;i++) {
+						var oldDate = docs[i].datetime;
+						var newDate;
+						
+						if (oldDate.indexOf('-') > -1) {
+							newDate = oldDate.slice(5,7) + '/' + oldDate.slice(8, oldDate.length) + '/' + oldDate.slice(0,4);
+						}
+						else {
+							newDate = formatDate(docs[i].datetime);
+						}
+						
+						if (dateCheck(from,to,newDate) == true) {
+							validScans.push(docs[i]);
+						}
+					}
+					
+					return reply({scans: validScans}).code(200);
 				}
 				
 				const resp = {
