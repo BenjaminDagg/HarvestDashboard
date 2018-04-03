@@ -1,16 +1,9 @@
 /*
-<<<<<<< HEAD
- * Unit Tests for maps-service api
- * 
- * To run tests type 'mocha' in maps-service directory
- */
-
-=======
 	Unit tests for harvest api
 	
 	To run tests type 'mocha' in harvest-service directory
 */
->>>>>>> 51f2b223bab34bee2d6c2a6311cd669962e4d608
+
 
 let chai = require('chai');
 let chaiHttp = require('chai-http');
