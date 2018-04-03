@@ -1,5 +1,5 @@
 /**
- * 
+ * Routes for the maps api
  */
 
 const mongojs = require('mongojs');
@@ -407,18 +407,8 @@ exports.register = function(server, options, next) {
 				
 				var from, to, id;
 				
-				//parse start date from query string
-				if ('from' in params) {
-					from = formatDate(params.from);
-				}else {
-					from = '';
-				}
-				
-				if ('to' in params) {
-					to = formatDate(params.to);
-				}else {
-					to = ''
-				}
+				from = 'from' in params ? formatDate(params.from) : "";
+				to = 'to' in params ? formatDate(params.to) : "";
 				
 				//check if id is a parameter first
 				if ('id' in params) {
@@ -430,32 +420,29 @@ exports.register = function(server, options, next) {
 							return reply(err).code(500);
 						}
 						else {
+							
 							//if a date frame is given then narrow down result
 							//to only dates in thsi time frame
-							if ('from' in params || 'to' in params) {
+							if (from || to) {
+								console.log('in date');
 								var scans = docs;
 								var result = new Array();
 			
 								for (var i = 0; i < scans.length;i++) {
 									const date = formatDate(scans[i].datetime);
-								    console.log('date = ' + date);
+								    
 									if (dateCheck(from,to,date) == true) {
 										result.push(scans[i]);
 									}
 								}
-								return reply(result);
+								return reply(result).code(200);
 							
 							}
 							//no time frame given so return all scane
 							//by this user
 							else {
 								
-								if (docs.length == 0) {
-									return reply({error: 'Bad request. No scans found for this user'}).code(400);
-								}
-								else {
-									return reply(docs).code(200);
-								}
+								return reply(docs).code(200);
 							}
 						}
 		
@@ -1023,14 +1010,7 @@ exports.register = function(server, options, next) {
 					
 					for (var i = 0; i < docs.length;i++) {
 						var oldDate = docs[i].datetime;
-						var newDate;
-						
-						if (oldDate.indexOf('-') > -1) {
-							newDate = oldDate.slice(5,7) + '/' + oldDate.slice(8, oldDate.length) + '/' + oldDate.slice(0,4);
-						}
-						else {
-							newDate = formatDate(docs[i].datetime);
-						}
+						var newDate = formatDate(oldDate);
 						
 						if (dateCheck(from,to,newDate) == true) {
 							validScans.push(docs[i]);
