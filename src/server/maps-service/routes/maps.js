@@ -20,13 +20,25 @@ function isEmptyObject(obj) {
 	return true;
 }
 
-//formats date from MMDDYYYY to MM/DD/YYYY
+
+//formats date from MMDDYYYY or YYYY-MM-DD to MM/DD/YYYY
 function formatDate(date) {
-	if (date.length != 8) {
+	if (date.length != 8 && date.length != 10) {
 		return date;
 	}
 	
-	return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+	//converting from YYYY-MM-DD to MM/DD/YYYY
+	if (date.indexOf('-') > -1) {
+		
+		newDate = date.slice(5,7) + '/' + date.slice(8, date.length) + '/' + date.slice(0,4);
+		return newDate;
+	}
+	//converting from MMDDYYYY to MM/DD/YYYY
+	else {
+		
+		return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+	}
+	
 }
 
 //checks if date check is within the dates from and to
@@ -68,8 +80,6 @@ exports.register = function(server, options, next) {
 	 * 		GET
 	 * 		body: none
 	 * 		url param: 
-	 * 			from: get all maps after a given date
-	 * 			to: get all maps before a given date
 	 * 			id: get only maps from the given user id
 	 * 
 	 * Response:
@@ -86,18 +96,21 @@ exports.register = function(server, options, next) {
 		path: '/maps',
 		handler: function (request, reply) {
 			
+			const params = request.query;
+			
 			db.Maps.find((err, docs) => {
 				if (err) {
 					response = {
 						error: 'Error retrieving map(s) from database'
 					};
+					
 					reply(response).code(400);
 				}
 				
 				reply((docs)).code(200);
 			});
 		}
-	});
+	}); 
 	
 	
 	/*
@@ -149,7 +162,7 @@ exports.register = function(server, options, next) {
 			var date = new Date();
 			var day = date.getDate();
 			day = (day < 10 ? "0" : "") + day;
-			var month = date.getMonth();
+			var month = date.getMonth() + 1;
 			month = (month < 10 ? "0" : "") + month;
 			var year = date.getFullYear();
 			var hour = date.getHours();
@@ -323,18 +336,20 @@ exports.register = function(server, options, next) {
 							var from = 'from' in params ? formatDate(params.from) : "";
 							var to = 'to' in params ? formatDate(params.to) : "";
 							
-							
 							//list of maps that fall in the date range
 							var validMaps = new Array();
 							
 							for (var i = 0; i < docs.length; i++) {
-								//parse date
-								var date = docs[i].createdAt;
-								var newDate = date.slice(5,7) + '/' + date.slice(8, date.length) + '/' + date.slice(0,4);
 								
-								//if map date is in range then add it to list
-								if (dateCheck(from, to, newDate) == true) {
-									validMaps.push(docs[i]);
+								if ('createdAt' in docs[i]) {
+									//parse date
+									var date = docs[i].createdAt;
+									var newDate = formatDate(date);
+									
+									//if map date is in range then add it to list
+									if (dateCheck(from, to, newDate) == true) {
+										validMaps.push(docs[i]);
+									}
 								}
 							}
 							
@@ -342,7 +357,7 @@ exports.register = function(server, options, next) {
 							
 							
 						}
-						
+					
 						return reply(docs).code(200);
 					});
 					
@@ -423,7 +438,7 @@ exports.register = function(server, options, next) {
 			
 								for (var i = 0; i < scans.length;i++) {
 									const date = formatDate(scans[i].datetime);
-				
+								    console.log('date = ' + date);
 									if (dateCheck(from,to,date) == true) {
 										result.push(scans[i]);
 									}
