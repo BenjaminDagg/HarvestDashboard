@@ -614,6 +614,1026 @@ describe('maps-service', () => {
 				});
 		});
 		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.get('/scans')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.get('/scans')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+	});
+	
+	
+	
+	describe('POST /scans', () => {
+		
+		it('it should add a new scan object to the scans database when valid credentils given' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'scannedValue' : 'scan',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('messege');
+					res.body.should.have.property('scan');
+					
+					var scan = res.body.scan;
+					scan.should.have.property('_id');
+					scan.should.have.property('profileId');
+					scan.should.have.property('datetime');
+					scan.should.have.property('mapIds');
+					scan.should.have.property('location');
+					
+					var location = res.body.scan.location;
+					location.should.have.property('coordinates');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when profileId field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					
+					'mapIds' : [],
+					'scannedValue' : 'scan',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when mapIds field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'scannedValue' : 'scan',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when scannedValue field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when location field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'scannedValue' : 'scan',
+					'mapIds' : []
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when coordinates field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'scannedValue' : 'scan',
+					'mapIds' : [],
+					'location' : {
+						'type' : 'scan'
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'scannedValue' : 'scan',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'scannedValue' : 'scan',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+	});
+	
+	
+	
+	describe('GET /scans/{id}/coord', () => {
+		
+		it('it should return a list of coordinates of every scan for the given user id' , (done) => {
+			chai.request(url)
+				.get('/scans/' + testUser.id + '/coord')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('coord');
+						res.body[i].should.have.property('id');
+					}
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a Bad Request if a malformed user id is given' , (done) => {
+			chai.request(url)
+				.get('/scans/' + testUser.id + '4' + '/coord')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a Bad Request if no scans are found for the user' , (done) => {
+			chai.request(url)
+				.get('/scans/5abc5cfb73db43393856e366/coord')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.get('/scans/' + testUser.id + '/coord')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.get('/scans/' + testUser.id + '/coord')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+	});
+	
+	
+	
+	describe('GET /scans/{id}', () => {
+		
+		it('it should return the scan object of the given scan id' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.should.have.property('_id');
+					scans.should.have.property('profileId');
+					scans.should.have.property('mapIds');
+					scans.should.have.property('scannedValue');
+					scans.should.have.property('location');
+					var location = scans.location;
+					location.should.have.property('coordinates');
+					scans.should.have.property('datetime');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when a malfored id is given' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when an invalid id is given' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f88')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f8')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+	});
+	
+	
+	
+	describe('PUT /scans/{id}', () => {
+		
+		it('it should update a scan object with new values given in the body' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					var oldScan = res.body.scans
+					
+					chai.request(url)
+					.put('/scans/5ac0625bbafa091adc2b12f8')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'profileId' : testUser.id,
+						'mapIds' : oldScan.mapIds,
+						'datetime' : oldScan.datetime,
+						'scannedValue' : new Date(),
+						'location' : oldScan.location
+					})
+					.end((err, res) => {
+						
+						res.should.have.status(200);
+						res.body.should.be.a('object');
+						res.body.should.have.property('messege');
+						res.body.should.have.property('scan');
+						
+						var newScan = res.body.scan;
+						newScan.scannedValue.should.not.eql(oldScan.scannedValue);
+						done();
+					});
+			});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the scan id is not found' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f9')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the scan id is malformed' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if profileid field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if mapIds field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the datetime field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the scannedValue field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the location field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date()
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the coordinates field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan"
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+
+	});
+	
+	
+	
+	describe('POST /scans/{id}/maps', () => {
+		
+		
+		
+		it('it should insert the given map id into the scans mapIds array if the map is not alrady in the array' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('messege');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if the given map id is already in the scans mapIds array' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if no map id is given in the request body' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if the given scan id does not exist' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e83/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if the given scan id is malformed' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if the given map id does not exist' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e64345121'
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should 400 Bad Request if the given map id is malformed' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'id' : '5ac07481551fd72e6434512'
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.send({
+						'id' : '5ac07481551fd72e64345127'
+				})
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+	
+	});
+	
+	
+	
+describe('GET /scans/user/{id}', () => {
+		
+		
+		
+		it('it should return all scans created by the given user id' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id)
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					for (var i = 0; i < scans.length; i++) {
+						scans[i].should.have.property('_id');
+						scans[i].should.have.property('profileId');
+						scans[i].should.have.property('mapIds');
+						scans[i].should.have.property('scannedValue');
+						scans[i].should.have.property('location');
+						
+						var location = scans[i].location;
+						location.should.have.property('coordinates');
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should filter a users scans to only scnas after a certian date' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id + '?from=02302018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.length.should.not.eql(0);
+					for (var i = 0; i < scans.length; i++) {
+						scans[i].should.have.property('_id');
+						scans[i].should.have.property('profileId');
+						scans[i].should.have.property('mapIds');
+						scans[i].should.have.property('scannedValue');
+						scans[i].should.have.property('location');
+						
+						var location = scans[i].location;
+						location.should.have.property('coordinates');
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should filter a users scans to only scnas before a certian date' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id + '?to=04012018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.length.should.not.eql(0);
+					for (var i = 0; i < scans.length; i++) {
+						scans[i].should.have.property('_id');
+						scans[i].should.have.property('profileId');
+						scans[i].should.have.property('mapIds');
+						scans[i].should.have.property('scannedValue');
+						scans[i].should.have.property('location');
+						
+						var location = scans[i].location;
+						location.should.have.property('coordinates');
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should filter a users scans to only scnas in a certain time frame' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id + '?from=02282018&to=04012018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.length.should.not.eql(0);
+					for (var i = 0; i < scans.length; i++) {
+						scans[i].should.have.property('_id');
+						scans[i].should.have.property('profileId');
+						scans[i].should.have.property('mapIds');
+						scans[i].should.have.property('scannedValue');
+						scans[i].should.have.property('location');
+						
+						var location = scans[i].location;
+						location.should.have.property('coordinates');
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return an empty list when an invalid time frame is given' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id + '?from=04282018&to=02012018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.length.should.eql(0);
+					for (var i = 0; i < scans.length; i++) {
+						scans[i].should.have.property('_id');
+						scans[i].should.have.property('profileId');
+						scans[i].should.have.property('mapIds');
+						scans[i].should.have.property('scannedValue');
+						scans[i].should.have.property('location');
+						
+						var location = scans[i].location;
+						location.should.have.property('coordinates');
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauhorized when no bearer tokenn is given' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id)
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 401 unauthorized when an invalid bearer token is given' , (done) => {
+			chai.request(url)
+				.get('/scans/user/' + testUser.id)
+				.set('authorization', 'Bearer' + token + 'invlid')
+				.end((err, res) => {
+					res.should.have.status(401);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					done();
+				});
+		});
+	
 	});
 	
 	

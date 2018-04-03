@@ -28,11 +28,37 @@ var fs = require('fs');
  * 		date: string in format MM/DD/YYYY
  */
 function formatDate(date) {
-	if (date.length != 8) {
+	if (date.length != 8 && date.length != 10) {
 		return date;
 	}
 	
-	return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+	//converting from YYYY-MM-DD to MM/DD/YYYY
+	if (date.indexOf('-') > -1) {
+		
+		newDate = date.slice(5,7) + '/' + date.slice(8, date.length) + '/' + date.slice(0,4);
+		return newDate;
+	}
+	//converting from MMDDYYYY to MM/DD/YYYY
+	else {
+		
+		return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+	}
+	
+}
+
+function formatDateForGraph(date) {
+	
+	if (date.length != 8 && date.length != 10) {
+		return date;
+	}
+	
+	if (date.indexOf('-') > -1) {
+		return date;
+	}
+	else {
+		var newDate = date.slice(4,10) + '-' + date.slice(0,2) + '-' + date.slice(2,4);
+		return newDate
+	}
 }
 
 
@@ -85,6 +111,7 @@ exports.register = function(server, options, next) {
 	 * Request:
 	 * 		GET
 	 * 		Query parameters:
+	 * 			required 'id': id of user who owns the scans
 	 * 			required 'to' (date) : start date in format MMDDYYYY
 	 * 			required 'from' (date) : end date in format MMDDYY
 	 * 
@@ -107,21 +134,22 @@ exports.register = function(server, options, next) {
 			const params = request.query;
 			
 			//check if either data parameter is missing
-			if (!('from' in params) || !('to' in params)) {
-				return reply('Missing parameters.').code(400);
+			if (!('from' in params) || !('to' in params) || !('id' in params)) {
+				return reply({error: 'Missing required parameters'}).code(400);
 			}
 			
 			//parse parameters
 			var from = params.from;
 			var to = params.to;
+			var uid = params.id;
 			
 			//check if invalid dates
 			if (from.length != 8 || to.length != 8 || (formatDate(to) < formatDate(from))) {
-				return reply('Invalid date format').code(400);
+				return reply({error: 'Invalid date format. Date must be in format MMDDYYYY'}).code(400);
 			}
 			
 			//get all scans from database that fir into this time period
-			db.collection('scans').find(function (err, docs) {
+			db.collection('scans').find({profileId: uid}, (err, docs) => {
 				
 				//error searching database
 				if (err) {
@@ -155,33 +183,70 @@ exports.register = function(server, options, next) {
 				//calculate avg dist
 				//sort by date
 				validScans.sort(function (a,b) {
-					return (formatDate(b.datetime)) < (formatDate(a.datetime));
+					var dateA = formatDate(a.datetime);
+					var dateB = formatDate(b.datetime);
+					
+					var a = dateA.split('/');
+					var b = dateB.split('/');
+					
+					return a[2] - b[2] || a[0] - b[0] || a[1] - b[1];
 				});
+				
+				
 			
 				var dist = 0;
+				var num_calculations = 0;
 				for (var i = validScans.length - 1; i > 0;i--) {
+					var coords1, coords2;
 					
-					const coords1 = validScans[i].location.coordinates[0];
+					
+					if (validScans[i].location.coordinates[0] instanceof Array) {
+						coords1 = validScans[i].location.coordinates[0];
+						
+					}
+					else {
+						coords1 = validScans[i].location.coordinates;
+						
+					}
+					
+					if (validScans[i - 1].location.coordinates[0] instanceof Array) {
+						coords2 = validScans[i - 1].location.coordinates[0];
+						
+					}
+					else {
+						coords2 = validScans[i - 1].location.coordinates;
+						
+					}
+					
+					
+					
 					const scan1 = {
 							lat: coords1[0],
 							lng: coords1[1]
 					};
-					const coords2 = validScans[i - 1].location.coordinates[0];
+					
 					const scan2 = {
 							lat: coords2[0],
 							lng: coords2[1]
 					};
-					dist += turf_methods.distance(scan1,scan2,'miles');
-					var date2 = validScans[i].datetime;
-					var date1 = validScans[i-1].datetime;
+					var d = turf_methods.distance(scan1,scan2,'miles');
+					dist += d;
+					var date2 = formatDateForGraph(validScans[i].datetime);
+					var date1 = formatDateForGraph(validScans[i-1].datetime);
 					
-					date2 = date2.slice(4,10) + '-' + date2.slice(0,2) + '-' + date2.slice(2,4);
-					date1 = date1.slice(4,10) + '-' + date1.slice(0,2) + '-' + date1.slice(2,4);
-					var date = date2 + ' to ' + date1;
-					distances[date] = dist;
+					
+					var date = date1 + ' to ' + date2;
+					distances[validScans[i]._id] = {
+							time_frame : date,
+							distance: d
+					}
+					num_calculations ++;
 				}
+				
+				
+				
 				const meandist = {
-						meandist : dist / validScans.length,
+						meandist : dist / num_calculations,
 						distance: distances
 				};
 				reply(meandist).code(200);
