@@ -317,6 +317,7 @@ exports.register = function(server, options, next) {
 	 * Request:
 	 * 		GET
 	 * 		Query Params:
+	 * 			&id : user id of the crate owner
 	 * 			&from: start date of time frame MMDDYYYY
 	 * 			&to: end date of time frame MMDDYYYY
 	 * Response:
@@ -338,29 +339,29 @@ exports.register = function(server, options, next) {
 			const params = request.query;
 			
 			//check if either data parameter is missing
-			if (!('from' in params) || !('to' in params)) {
-				return reply('Missing parameters.').code(400);
+			if (!('from' in params) || !('to' in params) || !('id' in params)) {
+				return reply({error: 'Missing parameters.'}).code(400);
 			}
 			
 			//parse parameters
-			var from = params.from;
-			var to = params.to;
+			var from = formatDate(params.from);
+			var to = formatDate(params.to);
+			var id = params.id;
 			
 			//check if invalid dates
-			if (from.length != 8 || to.length != 8 || (formatDate(to) < formatDate(from))) {
+			if (from.length != 10 || to.length != 10 || (formatDate(to) < formatDate(from))) {
 				return reply('Invalid date format').code(400);
 			}
 			
 			//get all scans from database that fir into this time period
-			db.collection('scans').find(function (err, docs) {
+			db.collection('scans').find({profileId: id}, (err, docs) =>{
 				
 				//error searching database
 				if (err) {
 					return reply(err).code(500);
 				}
 				
-				from = formatDate(from);
-				to = formatDate(to);
+				
 				
 				//get only scans withing the time frame
 				var scans = docs;
@@ -379,24 +380,24 @@ exports.register = function(server, options, next) {
 				for (var i = 0 ; i < validScans.length;i++) {
 					//MMDDYYYY
 					//YYYY-MM-DD
-					var date = validScans[i].datetime;
-					var newDate = date.slice(4,10) + '-' + date.slice(0,2) + '-' + date.slice(2,4);
+					var date = formatDate(validScans[i].datetime);
 					var occurences = 0;
 					for (var j = 0; j < validScans.length;j++) {
-						if (validScans[j].datetime == date) {
+						if (formatDate(validScans[j].datetime) == date) {
 							occurences++;
 							
 						}
 						
 					}
 					
-					cratesPerDay[newDate] = occurences;
+					cratesPerDay[formatDateForGraph(validScans[i].datetime)] = occurences;
 				}
 				
 				const response = {
 						numCrates: validScans.length,
-						crates: validScans,
-						cratesPerDay: cratesPerDay
+						cratesPerDay: cratesPerDay,
+						crates: validScans
+						
 				};
 				return reply(response).code(200);
 				
@@ -414,9 +415,10 @@ exports.register = function(server, options, next) {
 	 * Request:
 	 * 		GET
 	 * 		Optional Query parameters:
-	 * 			&from (string) : start date of time frame
-	 * 			&to (string) : end date of time frame
-	 * 			&unit (unit of time) : hours, days. If none given default is hours
+	 * 			&id (string) required) : id of the user who owns the crates
+	 * 			&from (string) required: start date of time frame
+	 * 			&to (string) required: end date of time frame
+	 * 			&unit (unit of time) required: hours, days, min. If none given default is hours
 	 * 
 	 * Response:
 	 * 		400 - Bad request. Date format invalid or invalid dates given
@@ -436,42 +438,55 @@ exports.register = function(server, options, next) {
 			//get query parameters
 			const params = request.query;
 			
-			db.collection('scans').find(function (err,docs) {
+			//check if paramters missing
+			if (!('from' in params) || !('to' in params) || !('id' in params)) {
+				return reply({error: 'Missing parameters.'}).code(400);
+			}
+			
+			var fromDate = formatDate(params.from);
+			var toDate = formatDate(params.to);
+			var id = params.id;
+			
+			db.collection('scans').find({profileId: id} ,(err,docs) => {
 				
 				if (err) {
 					return reply(err).code(500);
 				}
 				
+				//filter results to only scans falling in the time range
 				var validScans = new Array();
 				
-				//if a date range given in query narrow down results
-				if ('from' in params || 'to' in params) {
-					
-					var fromDate = 'from' in params ? formatDate(params.from) : '';
-					var toDate = 'to' in params ? formatDate(params.to) : '';
-					
-					for (var i = 0; i < docs.length;i++) {
-						var date = formatDate(docs[i].datetime);
-						if (dateCheck(fromDate,toDate,date) == true) {
-							validScans.push(docs[i]);
-						}
+				for (var i = 0; i < docs.length;i++) {
+					var date = formatDate(docs[i].datetime);
+					if (dateCheck(fromDate,toDate,date) == true) {
+						validScans.push(docs[i]);
+						console.log(docs[i]);
 					}
-				} else {
-					validScans = docs;
 				}
 				
-				//sort by date
+				//sort by date ascending
 				validScans.sort(function (a,b) {
-					return (formatDate(b.datetime)) < (formatDate(a.datetime));
+					var dateA = formatDate(a.datetime);
+					var dateB = formatDate(b.datetime);
+					
+					var a = dateA.split('/');
+					var b = dateB.split('/');
+					
+					return a[2] - b[2] || a[0] - b[0] || a[1] - b[1];
 				});
 				
 				//calculate avg time between crates
 				var time = 0.0;
+				var times = {};
 				for (var i = validScans.length - 1; i > 0; i--) {
 					
 					var d1 = new Date(formatDate(validScans[i].datetime));
 					var d2 = new Date(formatDate(validScans[i-1].datetime));
 					var diff = Math.abs(d1.getTime() - d2.getTime());
+					
+					var scanId = validScans[i]._id;
+					var time_frame = formatDateForGraph(validScans[i].datetime) + ' to ' + formatDateForGraph(validScans[i-1].datetime);
+					
 					
 					if ('unit' in params) {
 						const unit = params.unit;
@@ -480,15 +495,35 @@ exports.register = function(server, options, next) {
 							case 'hours':
 								var hours = Math.ceil(diff / (3600000));
 								time += hours;
+								times[scanId] = {
+										time_frame: time_frame,
+										hours: hours
+								};
+								break;
+							case 'min':
+								var min = Math.ceil(diff / 60000);
+								time += min;
+								times[scanId] = {
+										time_frame: time_frame,
+										mins: min
+								}
 								break;
 							default:
 								var days = Math.ceil(diff / (1000 * 3600 * 24));
 								time += days;
+								times[scanId] = {
+										time_frame: time_frame,
+										days: days
+								};
 								
 						}
 					} else {
 						var hours = Math.ceil(diff / (3600000));
 						time += hours;
+						times[scanId] = {
+								time_frame: time_frame,
+								hours: hours
+						};
 					}
 					
 					
@@ -497,7 +532,8 @@ exports.register = function(server, options, next) {
 				var length = validScans.length > 1 ? validScans.length - 1 : 1;
 				var avgTime = time / length;
 				const response = {
-						meantime: avgTime
+						meantime: avgTime,
+						times: times
 				};
 				return reply(response).code(200);
 				

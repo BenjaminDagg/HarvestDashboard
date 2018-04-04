@@ -46,9 +46,10 @@ class Login extends React.Component {
 			//use token to call login and get user info
 			headers = {
             'Content-Type': 'application/json',
-            'Authorization' : 'bearer' + token
+            'Authorization' : 'Bearer ' + token
         	};
-		
+			
+			axios.defaults.headers.Authorization = token;
 			//make HTTP request to account service API
 			axios.post('http://localhost:4200/users/login', {
 				"username": this.state.username,

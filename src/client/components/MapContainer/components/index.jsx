@@ -82,7 +82,7 @@ class MapContainer extends React.Component {
         };
         
         axios.defaults.headers.Authorization = this.props.bearer;
-        
+        console.log('bearer = ' + this.props.bearer);
         //make call to maps service api
         axios.get('http://localhost:1234/scans?id=' + userId.toString(),
         	{ },
