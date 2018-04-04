@@ -14,19 +14,25 @@ class Analytics extends React.Component {
 		
 		this.state = {
 			crateData: null,
-			meanDistData: null
+			meanDistData: null,
+			crateTimeData: null,
+			selectedUnit: 'hour'
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
 		this.getMeanDistData = this.getMeanDistData.bind(this);
 		this.getMax = this.getMax.bind(this);
 		this.getCrateDate = this.getCrateData.bind(this);
 		this.drawCpdGraph = this.drawCpdGraph.bind(this);
+		this.getCrateTimeData = this.getCrateTimeData.bind(this);
+		this.drawMeanTimeGraph = this.drawMeanTimeGraph.bind(this);
+		this.unitChanged = this.unitChanged.bind(this);
 	};
 	
 	
 	componentDidMount() {
 		this.getCrateData();
 		this.getMeanDistData();
+		this.getCrateTimeData();
 	}
 	
 	
@@ -98,7 +104,7 @@ class Analytics extends React.Component {
 			headers
 		).then(res => {
 			var data = res.data;
-			console.log(data);
+			
 			this.setState({meanDistData: data});
 		})
 		.catch(error => {
@@ -137,7 +143,7 @@ class Analytics extends React.Component {
 			data.columns[0].push(distData[key].time_frame);
 			data.columns[1].push(Math.round(parseFloat(distData[key].distance)));
 		}
-		console.log(distData);
+		
 		var axis = {
 			y: {
 				label: {
@@ -165,7 +171,12 @@ class Analytics extends React.Component {
 		};
 		
 		
-		return(<div><h1>Crate Mean Distance</h1><C3Chart  axis={axis} size={size} id="meanDist" data={data} /></div>)
+		return(<div>
+				<h1>Crate Mean Distance</h1>
+				<span>Mean Distance between crates: {this.state.meanDistData.meandist}</span>
+				<C3Chart  axis={axis} size={size} id="meanDist" data={data} />
+				
+			  </div>)
 	}
 	
 	
@@ -176,7 +187,7 @@ class Analytics extends React.Component {
 		}
 		
 		var crateData = this.state.crateData.cratesPerDay;
-		console.log(crateData);
+		
 		
 		var data = {
 			x: 'x',
@@ -234,11 +245,129 @@ class Analytics extends React.Component {
 	}
 	
 	
+	
+	//calls harvest api to get data for time between each crate
+	//then stores it in state
+	getCrateTimeData() {
+		
+		if (this.props.bearer === "" || this.state.crateTimeData != null || !this.props.user) {
+			return;
+		}
+		console.log('in');
+		//set authorization headers
+		var headers = {
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer.toString()
+        };
+        
+        axios.defaults.headers.Authorization = this.props.bearer;
+        
+        //call harvest api meantime api
+        //set query parameters
+        var from = '01012018';
+        var to = '05012018';
+        var uid = this.props.user.data.user._id
+        var unit = this.state.selectedUnit;
+        
+        axios.get('http://localhost:2000/harvest/meantime?from=' + from + '&to=' + to + '&id=' + uid + '&unit=' + unit, {
+				"username": this.state.username,
+				"password": this.state.password
+			},
+			headers
+		).then(res => {
+			var data = res.data;
+			this.setState({crateTimeData: data});
+			
+		})
+		.catch(error => {
+			if (error.response) {
+				this.setState({error: true});
+				this.props.submit(false);
+			}
+			
+			
+		});
+		
+	}
+	
+	
+	
+	drawMeanTimeGraph() {
+		
+		if (this.props.bearer == "") {
+			return (<div>You must be logged in to view analytics</div>);
+		}
+	
+		if(this.state.crateTimeData == null) {
+			return (<div>Loading Data..</div>);
+		}
+		
+		console.log('in drawMeanTimeGraph');
+		
+		var timeData = this.state.crateTimeData.times;
+		var data = {
+			x: 'x',
+			columns: [
+				['x'],
+				['time: ']
+			]
+		};
+		for (var key in timeData) {
+			
+			data.columns[0].push(timeData[key].time_frame);
+			data.columns[1].push(Math.round(parseFloat(timeData[key].time)));
+		}
+		
+		var axis = {
+			y: {
+				label: {
+					text: 'time (' + this.state.selectedUnit + ')',
+					position: 'outer-middle'
+				},
+				tick: {
+					
+				}
+			},
+			x: {
+				type: "category",
+				tick: {
+					
+				},
+				label: {
+					text: 'Date',
+					position: 'outer-center'
+				}
+			}
+		};
+		const size = {
+			
+			height: 500
+		};
+		
+		
+		return(<div>
+				<h1>Mean time between crates</h1>
+				<span> mean time: {this.state.crateTimeData.meantime}</span>
+				<C3Chart  axis={axis} size={size} id="meanDist" data={data} />
+			  </div>)
+	}
+	
+	
+	unitChanged(event) {
+		
+		this.setState({crateTimeData: null});
+		this.setState({selectedUnit: event.target.value});
+		this.getCrateTimeData();
+		
+	}
+	
+	
 
 	render() {
 	
 		this.getCrateDate();
 		this.getMeanDistData();
+		this.getCrateTimeData();
 	    
 	    const data = {
   			columns: [
@@ -271,6 +400,7 @@ class Analytics extends React.Component {
 		
 		var cpdGraph = this.drawCpdGraph();
 		var meanDistGraph = this.drawMeanDistGraph();
+		var meanTimeGraph = this.drawMeanTimeGraph();
 		
 		var style = {
 			'overflow-y': 'auto',
@@ -294,10 +424,20 @@ class Analytics extends React.Component {
               
              
 				<div id="cpdGraph">
+					<input type="date" />
 					{cpdGraph}
 				</div>
 				<div id="meanDist">
 					{meanDistGraph}
+				</div>
+				
+				<div id="meanTime">
+					Select unit: <select onChange={this.unitChanged} value={this.state.selectedUnit}>
+									<option value="hour">Hours</option>
+									<option value="min">Minutes</option>
+									
+								</select>
+					{meanTimeGraph}
 				</div>
 			</div>
 		);

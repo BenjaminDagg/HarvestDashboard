@@ -189,7 +189,7 @@ exports.register = function(server, options, next) {
 					var a = dateA.split('/');
 					var b = dateB.split('/');
 					
-					return a[2] - b[2] || a[0] - b[0] || a[1] - b[1];
+					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
 				});
 				
 				
@@ -235,7 +235,7 @@ exports.register = function(server, options, next) {
 					var date1 = formatDateForGraph(validScans[i-1].datetime);
 					
 					
-					var date = date1 + ' to ' + date2;
+					var date = date2 + ' to ' + date1;
 					distances[validScans[i]._id] = {
 							time_frame : date,
 							distance: d
@@ -418,7 +418,7 @@ exports.register = function(server, options, next) {
 	 * 			&id (string) required) : id of the user who owns the crates
 	 * 			&from (string) required: start date of time frame
 	 * 			&to (string) required: end date of time frame
-	 * 			&unit (unit of time) required: hours, days, min. If none given default is hours
+	 * 			&unit (unit of time) required: hour, days, min. If none given default is hours
 	 * 
 	 * Response:
 	 * 		400 - Bad request. Date format invalid or invalid dates given
@@ -472,7 +472,7 @@ exports.register = function(server, options, next) {
 					var a = dateA.split('/');
 					var b = dateB.split('/');
 					
-					return a[2] - b[2] || a[0] - b[0] || a[1] - b[1];
+					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
 				});
 				
 				//calculate avg time between crates
@@ -492,12 +492,12 @@ exports.register = function(server, options, next) {
 						const unit = params.unit;
 						
 						switch(unit) {
-							case 'hours':
+							case 'hour':
 								var hours = Math.ceil(diff / (3600000));
 								time += hours;
 								times[scanId] = {
 										time_frame: time_frame,
-										hours: hours
+										time: hours
 								};
 								break;
 							case 'min':
@@ -505,7 +505,7 @@ exports.register = function(server, options, next) {
 								time += min;
 								times[scanId] = {
 										time_frame: time_frame,
-										mins: min
+										time: min
 								}
 								break;
 							default:
@@ -513,7 +513,7 @@ exports.register = function(server, options, next) {
 								time += days;
 								times[scanId] = {
 										time_frame: time_frame,
-										days: days
+										time: days
 								};
 								
 						}
@@ -522,12 +522,30 @@ exports.register = function(server, options, next) {
 						time += hours;
 						times[scanId] = {
 								time_frame: time_frame,
-								hours: hours
+								time: hours
 						};
 					}
 					
 					
 				}
+				
+				//sort times in ascneding order before returning
+				var keys = [];
+				for (var key in times) {
+					keys.push(times[key]);
+				}
+				keys.sort(function (a,b) {
+					
+					var dateA = formatDate(a.time_frame.slice(0,10));
+					var dateB = formatDate(b.time_frame.slice(0,10));
+					
+					
+					
+					var a = dateA.split('/');
+					var b = dateB.split('/');
+					
+					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
+				});
 				
 				var length = validScans.length > 1 ? validScans.length - 1 : 1;
 				var avgTime = time / length;
