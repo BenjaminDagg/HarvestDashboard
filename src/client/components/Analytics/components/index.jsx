@@ -44,7 +44,7 @@ class Analytics extends React.Component {
         axios.defaults.headers.Authorization = this.props.bearer;
 		
 		//make HTTP request to account service API
-		axios.get('http://localhost:2000/harvest/numcrates/between?from=03092018&to=03202018', {
+		axios.get('http://localhost:2000/harvest/numcrates/between?from=01092018&to=05202018&id=' + this.props.user.data.user._id, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
@@ -78,7 +78,7 @@ class Analytics extends React.Component {
 	
 	getMeanDistData() {
 	
-		if (this.props.bearer === "" || this.state.meanDistData != null) {
+		if (this.props.bearer === "" || this.state.meanDistData != null || !this.props.user) {
 			return;
 		}
 	
@@ -91,7 +91,7 @@ class Analytics extends React.Component {
         axios.defaults.headers.Authorization = this.props.bearer;
 		
 		//make HTTP request to account service API
-		axios.get('http://localhost:2000/harvest/meandist?from=03092018&to=03202018', {
+		axios.get('http://localhost:2000/harvest/meandist?from=01092018&to=05202018&id=' + this.props.user.data.user._id, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
@@ -134,10 +134,10 @@ class Analytics extends React.Component {
 		};
 		for (var key in distData) {
 			
-			data.columns[0].push(key);
-			data.columns[1].push(Math.round(parseFloat(distData[key])));
+			data.columns[0].push(distData[key].time_frame);
+			data.columns[1].push(Math.round(parseFloat(distData[key].distance)));
 		}
-		console.log(data);
+		console.log(distData);
 		var axis = {
 			y: {
 				label: {

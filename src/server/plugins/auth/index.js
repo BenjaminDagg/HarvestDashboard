@@ -69,6 +69,7 @@ exports.register = function(server, options, next){
 						errors: [{
 							message: "Unable to verify your credentials"
         			}]
+       
         			}).code(403);        		
         		}
         		//user found. Now check if correct password

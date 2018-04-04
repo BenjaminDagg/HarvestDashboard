@@ -100,11 +100,20 @@ class MapContainer extends React.Component {
 			
 			
 			for (var i = 0; i < scans.length;i++) {
-				
-				const coords = scans[i].location.coordinates[0];
-				const point = {
-					type: 'Point',
-					coordinates: coords
+				var coords;
+				var point;
+				if (scans[i].location.coordinates[0] instanceof Array) {
+					coords = scans[i].location.coordinates[0];
+					scans[i].location.coordinates = scans[i].location.coordinates[0];
+				}
+				else {
+					coords = [scans[i].location.coordinates[0], scans[i].location.coordinates[1]];
+					
+				}
+				console.log('coord = ' + coords);
+				point = {
+						type: 'Point',
+						coordinates: coords
 				};
 				points.shape.geometries.push(point);
 			}
@@ -151,7 +160,7 @@ class MapContainer extends React.Component {
 				this.state.scans != null &&
 					<Map title={'Scan Locations'} 
 					geometry={this.state.scanCoords.shape} 
-					center={this.state.scans[0].location.coordinates[0]} />
+					center={this.state.scans[0].location.coordinates} />
 				}
 				
 				{this.state.maps != null && 
