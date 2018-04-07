@@ -142,15 +142,16 @@ exports.register = function(server, options, next) {
 			var from = params.from;
 			var to = params.to;
 			var uid = params.id;
-			
+			var query = null; //TO-DO
 			//check if invalid dates
 			if (from.length != 8 || to.length != 8 || (formatDate(to) < formatDate(from))) {
 				return reply({error: 'Invalid date format. Date must be in format MMDDYYYY'}).code(400);
 			}
 			
+			
 			//get all scans from database that fir into this time period
 			db.collection('scans').find({profileId: uid}, (err, docs) => {
-				
+					
 				//error searching database
 				if (err) {
 					return reply(err).code(500);
@@ -163,6 +164,7 @@ exports.register = function(server, options, next) {
 				
 				//get only scans withing the time frame
 				var scans = docs;
+				console.log("Your docs: " + docs);
 				var validScans = new Array();
 
 				for (var i = 0; i < scans.length;i++) {
@@ -439,21 +441,22 @@ exports.register = function(server, options, next) {
 			const params = request.query;
 			
 			//check if paramters missing
-			if (!('from' in params) || !('to' in params) || !('id' in params)) {
+			if (!('from' in params) || !('to' in params)) {
 				return reply({error: 'Missing parameters.'}).code(400);
 			}
 			
 			var fromDate = formatDate(params.from);
 			var toDate = formatDate(params.to);
-			var id = params.id;
-			
-			db.collection('scans').find({profileId: id} ,(err,docs) => {
+			var uid = params.id;
+			var query = (uid == undefined) ? {} : {profileId: uid}; // check whether one or all user's crates
+			console.log('This query:' + query);
+			db.collection('scans').find(query ,(err,docs) => {
 				
 				if (err) {
 					return reply(err).code(500);
 				}
 				
-				//filter results to only scans falling in the time range
+				//filter results to only show scans falling in the time range
 				var validScans = new Array();
 				
 				for (var i = 0; i < docs.length;i++) {

@@ -124,9 +124,18 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a the mean time for all crates since there is no parameters' , (done) => {
+		it('it should return status code 400 since there is missing parameters' , (done) => {
 			chai.request(url)
 				.get('/harvest/meantime')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					done();
+				});
+		});
+		it('it should return the mean time for all user crates from 03/31/2018 to 04/01/2018' , (done) => {
+			chai.request(url)
+				.get('/harvest/meantime?from=03302018&to=04012018')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.body.should.have.property('meantime');
@@ -134,9 +143,9 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a the mean time for all crates for crates from 03/31/2018 to 04/01/2018' , (done) => {
+		it('it should return the mean time for a specific users crates from 03/31/2018 to 04/01/2018' , (done) => {
 			chai.request(url)
-				.get('/harvest/meantime?from=03302018&to=04012018')
+				.get('/harvest/meantime?from=03302018&to=04012018&id=5abc5cfb73db43393856e365')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.body.should.have.property('meantime');
