@@ -348,6 +348,7 @@ exports.register = function(server, options, next) {
 	 */
 	server.route({
 		config: {
+			auth: false,
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
