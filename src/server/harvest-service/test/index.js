@@ -83,9 +83,20 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a list of all crates for 03/31/2018' , (done) => {
+		it('it should return a list of all crates for all users for 03/31/2018' , (done) => {
 			chai.request(url)
 				.get('/harvest/numcrates?date=03312018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.have.property('numCrates');
+					res.body.should.have.property('crates');
+					done();
+				});
+		});
+		it('it should return a list of all crates for a specific user for 03/31/2018' , (done) => {
+			chai.request(url)
+				.get('/harvest/numcrates?date=03312018&id=5abc5cfb73db43393856e365')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -97,7 +108,29 @@ describe('harvest api', () => {
 		
 	
 	});
-	
+	describe('/GET /harvest/meandist', () => {
+		it('it should return the mean distance between crates for all users from 03/31/2018 to 04/01/2018' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=03302018&to=04012018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					done();
+				});
+		});
+		it('it should return the mean distance between crates for a specific user from 03/31/2018 to 04/01/2018' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=03302018&to=04012018&id=5abc5cfb73db43393856e365')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					done();
+				});
+		});
+		
+		
+		
+	});
 	describe('/GET /harvest/meantime', () => {
 		it('it should return Unauthorized if no bearer token is given in the authorization header' , (done) => {
 			chai.request(url)
@@ -124,9 +157,18 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a the mean time for all crates since there is no parameters' , (done) => {
+		it('it should return status code 400 since there is missing parameters' , (done) => {
 			chai.request(url)
 				.get('/harvest/meantime')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					done();
+				});
+		});
+		it('it should return the mean time for all user crates from 03/31/2018 to 04/01/2018' , (done) => {
+			chai.request(url)
+				.get('/harvest/meantime?from=03302018&to=04012018')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.body.should.have.property('meantime');
@@ -134,9 +176,9 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a the mean time for all crates for crates from 03/31/2018 to 04/01/2018' , (done) => {
+		it('it should return the mean time for a specific users crates from 03/31/2018 to 04/01/2018' , (done) => {
 			chai.request(url)
-				.get('/harvest/meantime?from=03302018&to=04012018')
+				.get('/harvest/meantime?from=03302018&to=04012018&id=5abc5cfb73db43393856e365')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.body.should.have.property('meantime');
@@ -183,9 +225,22 @@ describe('harvest api', () => {
 					done();
 				});
 		});
-		it('it should return a list of all crates for crates from 03/31/2018 to 04/01/2018' , (done) => {
+		it('it should return a list of crates for all users for crates from 03/31/2018 to 04/01/2018' , (done) => {
 			chai.request(url)
 				.get('/harvest/numcrates/between?from=03302018&to=04012018')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.have.property('numCrates');
+					res.body.should.have.property('crates');
+					res.body.should.have.property('cratesPerDay');
+					done();
+				});
+		});
+		it('it should return a list of crates for a specific user for crates from 03/31/2018 to 04/01/2018' , (done) =>
+		{
+			chai.request(url)
+				.get('/harvest/numcrates/between?from=03302018&to=04012018&id=5abc5cfb73db43393856e365')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
