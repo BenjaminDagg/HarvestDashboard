@@ -47,6 +47,10 @@ class AccountMenu extends React.Component {
   	window.location.assign("/login");
   }
   
+  handleRequestRegister() {
+  	window.location.assign("/register");
+  }
+  
   
 
   render() {
@@ -67,6 +71,7 @@ class AccountMenu extends React.Component {
     	menu = (
     		<MenuList role="menu">
     			<MenuItem onClick={this.handleRequestLogin}>Login</MenuItem>
+    			<MenuItem onClick={this.handleRequestRegister}>Register</MenuItem>
     		</MenuList>
     	);
     }

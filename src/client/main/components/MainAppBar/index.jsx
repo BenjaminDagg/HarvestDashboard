@@ -26,6 +26,7 @@ class MainAppBar extends React.Component {
            
             <AccountMenu signout={this.props.signout} isLoggedIn={this.props.isLoggedIn} />
           </div>
+          
         </Toolbar>
       </AppBar>
     );
