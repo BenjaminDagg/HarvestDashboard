@@ -6,6 +6,16 @@ import LineChart from 'react-c3js';
 import 'c3/c3.css';
 import style from './style.css';
 
+function format(date) {
+  date = new Date(date);
+
+  var day = ('0' + date.getDate()).slice(-2);
+  var month = ('0' + (date.getMonth() + 1)).slice(-2);
+  var year = date.getFullYear();
+
+  return year + '-' + month + '-' + day;
+}
+
 
 class Analytics extends React.Component {
 
@@ -16,7 +26,10 @@ class Analytics extends React.Component {
 			crateData: null,
 			meanDistData: null,
 			crateTimeData: null,
-			selectedUnit: 'hour'
+			selectedUnit: 'hour',
+			cpdStartDate: this.props.user != null ? this.props.user.data.user.createdAt : '2018-03-09',
+			cpdEndDate: this.props.user != null ? this.props.user.data.user.createdAt : format(new Date()), 
+			cpdFetchError: false
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
 		this.getMeanDistData = this.getMeanDistData.bind(this);
@@ -26,6 +39,9 @@ class Analytics extends React.Component {
 		this.getCrateTimeData = this.getCrateTimeData.bind(this);
 		this.drawMeanTimeGraph = this.drawMeanTimeGraph.bind(this);
 		this.unitChanged = this.unitChanged.bind(this);
+		this.cpdStartChanged = this.cpdStartChanged.bind(this);
+		this.cpdEndChanged = this.cpdEndChanged.bind(this);
+		this.getCpdWithDates = this.getCpdWithDates.bind(this);
 	};
 	
 	
@@ -37,7 +53,7 @@ class Analytics extends React.Component {
 	
 	
 	getCrateData() {
-		if (this.props.bearer === "" || this.state.crateData != null) {
+		if (this.props.bearer === "" || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
 	
@@ -49,8 +65,12 @@ class Analytics extends React.Component {
         
         axios.defaults.headers.Authorization = this.props.bearer;
 		
+		var from = this.state.cpdStartDate.slice(5,7) + this.state.cpdStartDate.slice(8,10) + this.state.cpdStartDate.slice(0,4);
+		var to = this.state.cpdEndDate.slice(5,7) + this.state.cpdEndDate.slice(8,10) + this.state.cpdEndDate.slice(0,4);
+		console.log('from = ' + from + ' and to = ' + to);
+		
 		//make HTTP request to account service API
-		axios.get('http://localhost:2000/harvest/numcrates/between?from=01092018&to=05202018&id=' + this.props.user.data.user._id, {
+		axios.get('http://localhost:2000/harvest/numcrates/between?from=' + from + '&to=' + to + '&id=' + this.props.user.data.user._id, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
@@ -58,14 +78,14 @@ class Analytics extends React.Component {
 		).then(res => {
 			var data = res.data;
 			this.setState({crateData: data});
+			this.setState({cpdFetchError: false});
 		})
 		.catch(error => {
-			if (error.response) {
-				this.setState({error: true});
-				this.props.submit(false);
-			}
-			
-			
+			if (error.code) {
+					console.log(error.code);
+					this.setState({cpdFetchError: true});
+				
+				}
 		});
 	}
 	
@@ -182,9 +202,15 @@ class Analytics extends React.Component {
 	
 	drawCpdGraph() {
 	
-		if(this.state.crateData == null) {
-			return (<div>Loading data</div>)
+		if (this.state.cpdFetchError == true) {
+			return (<div>Invalid date parameters</div>);
 		}
+	
+		if(this.state.crateData == null) {
+			return (<div>Loading data</div>);
+		}
+		
+		
 		
 		var crateData = this.state.crateData.cratesPerDay;
 		
@@ -362,6 +388,27 @@ class Analytics extends React.Component {
 	}
 	
 	
+	cpdStartChanged(event) {
+		this.setState({cpdStartDate: event.target.value});
+	}
+	
+	
+	cpdEndChanged(event) {
+		this.setState({cpdEndDate: event.target.value});
+	}
+	
+	
+	getCpdWithDates() {
+		if (!this.state.cpdStartDate || !this.state.cpdEndDate) {
+			return;
+		}
+		this.setState({crateData: null});
+		this.setState({cpdFetchError: false});
+		console.log('button pressed');
+		this.getCrateData();
+	}
+	
+	
 
 	render() {
 	
@@ -424,7 +471,11 @@ class Analytics extends React.Component {
               
              
 				<div id="cpdGraph">
-					<input type="date" />
+					Start Date: <input value={this.state.cpdStartDate} onChange={this.cpdStartChanged} type="date" />
+					< br />
+					End Date: <input value={this.state.cpdEndDate} type="date" onChange={this.cpdEndChanged}/>
+					<br />
+					<button onClick={this.getCpdWithDates}>Submit</button>
 					{cpdGraph}
 				</div>
 				<div id="meanDist">
