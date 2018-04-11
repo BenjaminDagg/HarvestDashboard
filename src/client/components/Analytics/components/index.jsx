@@ -27,9 +27,14 @@ class Analytics extends React.Component {
 			meanDistData: null,
 			crateTimeData: null,
 			selectedUnit: 'hour',
+			
 			cpdStartDate: this.props.user != null ? this.props.user.data.user.createdAt : '2018-03-09',
 			cpdEndDate: this.props.user != null ? this.props.user.data.user.createdAt : format(new Date()), 
-			cpdFetchError: false
+			cpdFetchError: false,
+			
+			distFetchError: false,
+			distStartDate: this.props.user != null ? this.props.user.data.user.createdAt : '2018-03-09',
+			distEndDate: this.props.user != null ? this.props.user.data.user.createdAt : format(new Date()), 
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
 		this.getMeanDistData = this.getMeanDistData.bind(this);
@@ -42,6 +47,10 @@ class Analytics extends React.Component {
 		this.cpdStartChanged = this.cpdStartChanged.bind(this);
 		this.cpdEndChanged = this.cpdEndChanged.bind(this);
 		this.getCpdWithDates = this.getCpdWithDates.bind(this);
+		
+		this.distStartChanged = this.distStartChanged.bind(this);
+		this.distEndChanged = this.distEndChanged.bind(this);
+		this.getDistWithDates = this.getDistWithDates.bind(this);
 	};
 	
 	
@@ -104,7 +113,7 @@ class Analytics extends React.Component {
 	
 	getMeanDistData() {
 	
-		if (this.props.bearer === "" || this.state.meanDistData != null || !this.props.user) {
+		if (this.props.bearer === "" || this.state.distFetchError == true || this.state.meanDistData != null || !this.props.user) {
 			return;
 		}
 	
@@ -116,21 +125,24 @@ class Analytics extends React.Component {
         
         axios.defaults.headers.Authorization = this.props.bearer;
 		
+		var from = this.state.distStartDate.slice(5,7) + this.state.distStartDate.slice(8,10) + this.state.distStartDate.slice(0,4);
+		var to = this.state.distEndDate.slice(5,7) + this.state.distEndDate.slice(8,10) + this.state.distEndDate.slice(0,4);
+		console.log('from = ' + from + ' and to = ' + to);
+		
 		//make HTTP request to account service API
-		axios.get('http://localhost:2000/harvest/meandist?from=01092018&to=05202018&id=' + this.props.user.data.user._id, {
+		axios.get('http://localhost:2000/harvest/meandist?from=' + from + '&to=' + to + '&id=' + this.props.user.data.user._id, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
 			headers
 		).then(res => {
 			var data = res.data;
-			
+			this.setState({distFetchError: false});
 			this.setState({meanDistData: data});
 		})
 		.catch(error => {
 			if (error.response) {
-				this.setState({error: true});
-				this.props.submit(false);
+				this.setState({distFetchError: true});
 			}
 			
 			
@@ -139,6 +151,10 @@ class Analytics extends React.Component {
 	
 	
 	drawMeanDistGraph() {
+	
+		if (this.state.distFetchError == true) {
+			return (<div>Invalid date parameters</div>);
+		}
 	
 		if (this.props.bearer == "") {
 			return (<div>You must be logged in to view analytics</div>);
@@ -409,6 +425,26 @@ class Analytics extends React.Component {
 	}
 	
 	
+	distStartChanged(event) {
+		this.setState({distStartDate: event.target.value});
+	}
+	
+	
+	distEndChanged(event) {
+		this.setState({distEndDate: event.target.value});
+	}
+	
+	
+	getDistWithDates() {
+		if (!this.state.distStartDate || !this.state.distEndDate) {
+			return;
+		}
+		this.setState({distFetchError: false});
+		this.setState({meanDistData: null});
+		this.getMeanDistData();
+	}
+	
+	
 
 	render() {
 	
@@ -479,6 +515,11 @@ class Analytics extends React.Component {
 					{cpdGraph}
 				</div>
 				<div id="meanDist">
+				    Start Date: <input value={this.state.distStartDate} onChange={this.distStartChanged} type="date" />
+					< br />
+					End Date: <input value={this.state.distEndDate} type="date" onChange={this.distEndChanged}/>
+					<br />
+					<button onClick={this.getDistWithDates}>Submit</button>
 					{meanDistGraph}
 				</div>
 				
