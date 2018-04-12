@@ -77,7 +77,7 @@ describe('users', () => {
 						users[i].should.have.property('firstname');
 						users[i].should.have.property('lastname');
 						users[i].should.have.property('createdAt');
-					
+						
 						users[i].firstname.should.eql(testUser.firstname);
 					}
 					done();
@@ -188,84 +188,13 @@ describe('users', () => {
 		
 		
 		
-		// get users?limit=3
-		it('it should limit the number of responses to a given limit parameter ' , (done) => {
-			chai.request(url)
-				.get('/users?limit=3')
-				.set('authorization', 'Bearer' + token)
-				.end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					res.body.should.have.property('users');
-					res.body.users.length.should.be.eql(3);
-					done();
-				});	
-		});
 		
-		
-		// get users?limit=100
-		it('it should return all records if the given limit parameter is greater than the number of records ' , (done) => {
-			chai.request(url)
-				.get('/users?limit=100')
-				.set('authorization', 'Bearer' + token)
-				.end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					res.body.should.have.property('users');
-					res.body.users.should.not.be.empty;
-					done();
-				});	
-		});
-		
-		
-		
-		// get users?limit=-1
-		it('it should return a bad request if the given limit parameter is a negative value or zero ' , (done) => {
-			chai.request(url)
-				.get('/users?limit=-1')
-				.set('authorization', 'Bearer' + token)
-				.end((err, res) => {
-					res.should.have.status(400);
-					res.body.should.be.a('object');
-					res.body.should.have.property('error');
-					
-					done();
-				});	
-		});
-		
-		
-		
-		// get users?lastname=doest_exist
-		it('it should be able to search for users with a query and limit parameter ' , (done) => {
-			chai.request(url)
-				.get('/users?username=ben&limit=2')
-				.set('authorization', 'Bearer' + token)
-				.end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					res.body.should.have.property('users');
-					res.body.users.length.should.be.eql(2);
-					
-					var users = res.body.users;
-					for (var i = 0; i < users.length;i++) {
-						users[i].should.have.property('_id');
-						users[i].should.have.property('username');
-						users[i].should.have.property('password');
-						users[i].should.have.property('firstname');
-						users[i].should.have.property('lastname');
-						users[i].should.have.property('createdAt');
-						
-						users[i].username.should.eql('ben');
-					}
-					done();
-				});	
-		});
 		
 		
 		// get users?firstname=ben&username=ben
 		it('it should be able to search for users with multiple query parameters ' , (done) => {
 			chai.request(url)
-				.get('/users?username=ben&firstname=ben&limit=2')
+				.get('/users?username=test&firstname=firstname')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -282,8 +211,8 @@ describe('users', () => {
 						users[i].should.have.property('lastname');
 						users[i].should.have.property('createdAt');
 								
-						users[i].username.should.eql('ben');
-						users[i].firstname.should.eql('ben');
+						users[i].username.should.eql(testUser.username);
+						users[i].firstname.should.eql(testUser.firstname);
 					}
 					done();
 				});	
@@ -321,6 +250,23 @@ describe('users', () => {
 					res.body.should.have.property('message');
 					done();
 				});
+		});
+		
+		
+		
+		it('it should return 404 Bad request when an invalid query parameter is given ' , (done) => {
+			chai.request(url)
+				.get('/users?invalid=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					
+					done();
+				});	
 		});
 		
 		

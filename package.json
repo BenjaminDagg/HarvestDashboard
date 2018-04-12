@@ -52,6 +52,7 @@
     "hapi-auth-cookie": "~2.2.0",
     "hapi-auth-jwt2": "^7.3.0",
     "install": "^0.10.4",
+    "joi": "^13.1.2",
     "jsonwebtoken": "^8.2.0",
     "lodash": "^4.10.1",
     "material-ui": "^1.0.0-beta.34",

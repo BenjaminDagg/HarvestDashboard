@@ -7,6 +7,12 @@ const mongojs = require('mongojs');
 const crypto = require('crypto');
 const secret = 'harvest_dashboard_secret_api_key';
 
+const Joi = require('joi');
+
+//schemas
+var userSchema = require('../schemas/user/user-schema');
+var errorSchema = require('../schemas/error/error-schema');
+
 
 
 
@@ -31,106 +37,118 @@ exports.register = function(server, options, next) {
 	
 	
 	/*
-	 * Returns list of users from database
-	 * 
-	 * Default (no query parameters) : returns every user in database
-	 * 
-	 * Optional Parameters:
-	 * 		&username=usernameOfUser
-	 * 		&firstname=firstnameOfUser
-	 * 		&lastname=lastnameOfUser
-	 * 		&limit=aNumber 		<-- only retrieves this many users on query
-	 * 
-	 * 		can use multiple optional parameters at once
-	 * 
-	 * Request:
-	 * 		HTTP GET message
-	 * 		nothing in the body
-	 * 		can have optional parameters in request URL
-	 * 
-	 * Response:
-	 * 		Returns 200 OK on success
-	 * 
-	 * 		If error occured then an error element will be in the repsonse
-	 * 		JSON in the body. A status code element will be in the response body
-	 * 		telling the result.
-	 * 
-	 * 		If no users found returns an empty users array
-	 * 
-	 *  	If no errors the response JSON will be a list of users
-	 *  
-	 *  	500 - error rerieving users from dattabase
+	 * Searches for all users with the currently signed in users' id
 	 */
 	server.route({
-		
+		config: {
+			validate: {
+				//query parameter structure
+				query: {
+					username: Joi.string().min(1),
+					firstname: Joi.string().min(1),
+					lastname: Joi.string().min(1)
+				}
+			},
+			
+			response: {
+				status: {
+					200: Joi.object().keys({
+						users: Joi.array().items(userSchema)
+					}),
+					400: errorSchema,
+					401: errorSchema
+				}
+			}
+		},
 		method: 'GET',
 		path: '/users',
 		
 		handler: function (request, reply) {
 			
+			//get id from json web token passed in
+			const currUid = request.auth.credentials;
+			
+			const objID = mongojs.ObjectId(currUid.id);
 			//get optional query parameters form url if they exist
 			const params = request.query;
 			
-			//params array not empty so add query paramaters to db lookup
+			//filter by query parameters
 			if (!isEmptyObject(params)) {
-				if ('limit' in params) {
+				params._id = objID;
+				db.user.find(params, (err, docs) => {
 					
-					const limit = Number(params.limit);
-					delete params.limit;
-					
-					if (limit <= 0) {
-						return reply({error: "Limit must be a positive integer"}).code(400);
-					}
-					
-					db.user.find(params).limit(limit,  (err, docs) => {
-						if (err) {
-							
-							response = {
-								error: 'Error retrieving user(s) from database'
-							};
-							return reply(response).code(500);
-						}
-						
-						response = {
-								users: docs
-						};
-						return reply(response).code(200);
-					})
-				}
-				else {
-					db.user.find(params, (err, docs) => {
-						if (err) {
-							
-							response = {
-								error: 'Error retrieving user(s) from database'
-							};
-							reply(response).code(500);
-						}
-						response = {
-								users: docs
-						};
-						reply(response).code(200);
-					})
-				}
-			}
-			//query parameters empty so get all users
-			else {
-				db.user.find((err, docs) => {
+					//error getting users or users not found
 					if (err) {
-						response = {
-							error: 'Error retrieving user(s) from database'
+						var response = {
+								error: 'User(s) not found in database'
 						};
-						reply(response).code(500);
+						return reply(response).code(400);
 					}
 					
 					
 					
-					response = {
-							users: docs
+					//user found or return empty users
+					//build array of user objects to return
+					var users = new Array();
+					for (var i = 0; i < docs.length;i++) {
+						var newUser = {
+								_id: docs[i]._id.toString(),
+								username: docs[i].username,
+								firstname: docs[i].firstname,
+								lastname: docs[i].lastname,
+								password: docs[i].password,
+								createdAt: docs[i].createdAt
+						};
+						users[i] = newUser;
+						
+					}
+					var response = {
+							users: users
 					};
-					reply(response).code(200);
+					return reply(response).code(200);
+					
+				});
+				
+			}
+			//no parameters given return the user object of uid
+			else {
+				console.log('in');
+				db.user.find({_id: objID}, (err, docs) => {
+					
+					//error getting users or users not found
+					if (err) {
+						console.log(err);
+						var response = {
+								error: 'User(s) not found in database'
+						};
+						return reply(response).code(400);
+					}
+					console.log(docs);
+					//user found or return empty users
+					//build array of user objects to return
+					var users = new Array();
+					for (var i = 0; i < docs.length;i++) {
+						console.log('id = ' + docs[i]._id)
+						var newUser = {
+								_id: docs[i]._id.toString(),
+								username: docs[i].username,
+								firstname: docs[i].firstname,
+								lastname: docs[i].lastname,
+								password: docs[i].password,
+								createdAt: docs[i].createdAt
+						};
+						users[i] = newUser;
+						
+					}
+					var response = {
+							users: users
+					};
+					return reply(response).code(200);
+					
 				});
 			}
+			
+			
 			
 		}
 	});
