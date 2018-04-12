@@ -38,6 +38,39 @@ exports.register = function(server, options, next) {
 	
 	/*
 	 * Searches for all users with the currently signed in users' id
+	
+	 Request: 
+	 	GET
+	 	Required headers: 
+			Authorization: Bearer + [your token]
+	 	Body: none
+	 	Query parameters:
+	 		username: username of searched for user
+	 		firstname: firsname of searched for user
+	 		lastname: lastname of searched for user
+	 Response:
+	 	status 200:
+	 	Body (object):
+	 	{
+	 		users (array[object]) [
+				{
+	 				_id (string),
+	 				username (string),
+	 				firstname (string),
+	 				lastname (string),
+	 				createdAt: (date ISO)
+				}
+	 		]
+	 	}
+	 
+	 	status 400:
+	 	Body (object):
+		{
+			statusCode (string),
+	 		error (string),
+	 		messsage (string)
+	 	}
+
 	 */
 	server.route({
 		config: {
@@ -172,23 +205,30 @@ exports.register = function(server, options, next) {
 	server.route({
 		method: 'GET',
 		path: '/users/{id}',
+		config: {
+			validate: {
+				params: {
+					id: Joi.string().length(24)
+				},
+				query: {
+					
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						user: userSchema
+					}),
+					400: errorSchema
+				}
+			}
+		},
 		handler: function (request, reply) {
 			
 			//create ObjectId to index into database
 			const id = request.params.id;
-		
 			
-			//id must be a 24 digit hex number
-			//check for valid ID before creating ObjecctId object
-			//if id not correct lenght then will throw error and crash
-			if (id.length != 24) {
-				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters',
-						users: null
-				};
-				return reply(result).code(400);
-			}
-			
+			//make id objecct for mongo query
 			const objID = mongojs.ObjectId(id);
 				
 			//query databsase passing in objId
@@ -197,29 +237,36 @@ exports.register = function(server, options, next) {
 				//error occured
 				if (err) {
 					const result = {
-							error: err,
-							user: null
+							statusCode: 400,
+							error: 'User query failed',
+							message: 'User not found'
 					};
-					return reply(result).code(200);
+					return reply(result).code(400);
 				}
 				
 				
 				//user not found in databse
 				else if (!doc) {
 					const result = {
-							error: 'user not found',
-							user: null
+							statusCode: 400,
+							error: 'User query failed',
+							message: 'User not found'
 					};
 					return reply(result).code(400);
 				}
 				//user found
 				else {
 					
-					//remove users password befor sending response
-					delete doc.password;
+					var user = {
+							_id: doc._id.toString(),
+							username: doc.username,
+							firstname: doc.firstname,
+							lastname: doc.lastname,
+							createdAt: doc.createdAt
+					};
 					
 					var result = {
-							user: doc
+							user: user
 					}
 					return reply(result).code(200);
 				}
