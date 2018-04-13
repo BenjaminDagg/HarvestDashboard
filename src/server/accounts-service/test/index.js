@@ -313,6 +313,8 @@ describe('users', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -328,6 +330,8 @@ describe('users', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -365,6 +369,22 @@ describe('users', () => {
 					done();
 				});
 		});
+		
+		
+		
+		it('it should return 400 Bad Request when any query parameters are given' , (done) => {
+			chai.request(url)
+					.get('/users/' + testUser.id + '?username=' + testUser.username)
+					.set('authorization', 'Bearer' + token)
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.body.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('message');
+						done();
+					});
+			});
 	});
 	
 	
