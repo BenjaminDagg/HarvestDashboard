@@ -12,6 +12,6 @@ module.exports = Joi.object({
 	firstname: Joi.string(),
 	lastname: Joi.string(),
 	password: Joi.string(),
-	createdAt: Joi.string()
+	createdAt: Joi.date().iso()
 })
 

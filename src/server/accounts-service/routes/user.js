@@ -352,6 +352,7 @@ exports.register = function(server, options, next) {
 			var date = moment().utc(utcOffsetPST).toISOString();
 		    user.createdAt = date;
 		    
+		    
 		    //encrypt user password before putting in database
 		    var password = user.password;
 		    const hash = crypto.createHmac('sha256', secret).update(password).digest('base64');
