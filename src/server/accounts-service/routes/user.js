@@ -15,7 +15,7 @@ var userSchema = require('../schemas/user/user-schema');
 var errorSchema = require('../schemas/error/error-schema');
 
 //utc offset for Pacific Standard Time (8 hours behind)
-const utcOffsetPST = "--8:00"
+const utcOffsetPST = "-8:00"
 
 
 // Checks if object is empty
@@ -351,7 +351,7 @@ exports.register = function(server, options, next) {
 			//creates date in ISO format and assigns it to user createdAt
 			var date = moment().utc(utcOffsetPST).toISOString();
 		    user.createdAt = date;
-		    
+		    console.log('date = ' + date);
 		    
 		    //encrypt user password before putting in database
 		    var password = user.password;
