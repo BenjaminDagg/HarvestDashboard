@@ -147,23 +147,23 @@ exports.register = function(server, options, next) {
 			}
 			//no parameters given return the user object of uid
 			else {
-				console.log('in');
+				
 				db.user.find({_id: objID}, (err, docs) => {
 					
 					//error getting users or users not found
 					if (err) {
-						console.log(err);
+						
 						var response = {
 								error: 'User(s) not found in database'
 						};
 						return reply(response).code(400);
 					}
-					console.log(docs);
+					
 					//user found or return empty users
 					//build array of user objects to return
 					var users = new Array();
 					for (var i = 0; i < docs.length;i++) {
-						console.log('id = ' + docs[i]._id)
+						
 						var newUser = {
 								_id: docs[i]._id.toString(),
 								username: docs[i].username,
@@ -351,7 +351,7 @@ exports.register = function(server, options, next) {
 			//creates date in ISO format and assigns it to user createdAt
 			var date = moment().utc(utcOffsetPST).toISOString();
 		    user.createdAt = date;
-		    console.log('date = ' + date);
+		    
 		    
 		    //encrypt user password before putting in database
 		    var password = user.password;
@@ -387,7 +387,7 @@ exports.register = function(server, options, next) {
 					//insert user into user collection
 					db.user.save(user, (err, result) => {
 						if (err) {
-							console.log('error saving');
+							
 							const response = {
 									statusCode: 500,
 									error: 'Server error',
@@ -396,7 +396,7 @@ exports.register = function(server, options, next) {
 							reply(response).code(500);
 						}
 						else {
-							console.log('success');
+							
 							var resUser = {
 									_id: result._id.toString(),
 									username: result.username,
