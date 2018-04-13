@@ -1,6 +1,7 @@
 /**
  * 
  */
+var moment = require('moment');
 
 const mongojs = require('mongojs');
 
@@ -13,7 +14,8 @@ const Joi = require('joi');
 var userSchema = require('../schemas/user/user-schema');
 var errorSchema = require('../schemas/error/error-schema');
 
-
+//utc offset for Pacific Standard Time (8 hours behind)
+const utcOffsetPST = "--8:00"
 
 
 // Checks if object is empty
@@ -302,7 +304,31 @@ exports.register = function(server, options, next) {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
 			},
-			auth: false
+			auth: false,
+			validate: {
+				params: {
+					//none
+				},
+				query: {
+					//none
+				},
+				payload: {
+					username: Joi.string().required(),
+					password: Joi.string().required(),
+					firstname: Joi.string().required(),
+					lastname: Joi.string().required()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						message: Joi.string(),
+						user: userSchema
+					}),
+					400: errorSchema,
+					500: errorSchema,
+				}
+			}
 		},
 		method: 'POST',
 		path: '/users/register',
@@ -313,39 +339,20 @@ exports.register = function(server, options, next) {
 			
 			//no body given in request. Return 400 Bad Request
 			if (!user) {
-				return reply({error: 'Bad Request. Missing request body'}).code(400);
-			}
-			
-			//check if HTTP body is valid
-			if (!('username' in user) ||
-				!('password' in user) ||
-				!('firstname' in user) ||
-				!('lastname' in user)) {
 				
 				const response = {
-						error: 'Fields missing. Must include username, password,firstname and lastname in body'
+						statusCode: 400,
+						error: 'Bad Reqeust',
+						message: 'No request payload'
 				};
 				return reply(response).code(400);
 			}
 			
-			//save date the user registered
-			//format: YYYY-MM-DD
-			var date = new Date();
-			var day = date.getDate();
-			day = (day < 10 ? "0" : "") + day;
-			var month = date.getMonth();
-			month = (month < 10 ? "0" : "") + month;
-			var year = date.getFullYear();
-			var hour = date.getHours();
-		    hour = (hour < 10 ? "0" : "") + hour;
-		    var min  = date.getMinutes();
-		    min = (min < 10 ? "0" : "") + min;
-		    var sec  = date.getSeconds();
-		    sec = (sec < 10 ? "0" : "") + sec;
-		    var dateStr = year + "-" + month + "-" + day ;
+			//creates date in ISO format and assigns it to user createdAt
+			var date = moment().utc(utcOffsetPST).toISOString();
+		    user.createdAt = date;
 		    
-		    user.createdAt = dateStr;
-		    
+		    //encrypt user password before putting in database
 		    var password = user.password;
 		    const hash = crypto.createHmac('sha256', secret).update(password).digest('base64');
 		    user.password = hash;
@@ -355,32 +362,52 @@ exports.register = function(server, options, next) {
 				
 				//error occured
 				if (err) {
+					
 					const response = {
-							error: err
+							statusCode: 500,
+							error: 'Server error',
+							message: 'Error looking up user in database'
 					};
 					return reply(response).code(500);
 				}
 				//username found in databse
 				if (doc) {
+					
 					const response = {
-							error: 'username is in use'
+							statusCode: 400,
+							error: 'Error registering user',
+							message: 'Username is in use'
 					};
 					return reply(response).code(400);
 				}
 				//user does not exist so add them
 				else {
+					
 					//insert user into user collection
-					db.user.save(user, (err, resul) => {
+					db.user.save(user, (err, result) => {
 						if (err) {
+							console.log('error saving');
 							const response = {
-									error: err
+									statusCode: 500,
+									error: 'Server error',
+									message: 'Error looking up user in database'
 							};
 							reply(response).code(500);
 						}
 						else {
+							console.log('success');
+							var resUser = {
+									_id: result._id.toString(),
+									username: result.username,
+									password: result.password,
+									firstname: result.firstname,
+									lastname: result.lastname,
+									createdAt: result.createdAt
+							};
+							
 							const response = {
-									messege: user.username + ' was registered',
-									user: user
+									message: user.username + ' was registered',
+									user: resUser
 							}
 							reply(response).code(200);
 						}
@@ -413,7 +440,7 @@ exports.register = function(server, options, next) {
 	 */
 	server.route({
 		config: {
-			auth: false,
+			
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']

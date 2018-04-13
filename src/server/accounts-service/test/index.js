@@ -397,7 +397,7 @@ describe('users', () => {
 		chai.request(url)
 				.post('/users/register')
 				.send({
-					'username' : new Date(),
+					'username' : new Date().toString(),
 					'password' : 'password',
 					'firstname' : 'firstname',
 					'lastname' : 'lastname'
@@ -405,7 +405,7 @@ describe('users', () => {
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
-					res.body.should.have.property('messege');
+					res.body.should.have.property('message');
 					res.body.should.have.property('user');
 					
 					var user = res.body.user;
@@ -430,7 +430,10 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -442,14 +445,16 @@ describe('users', () => {
 			chai.request(url)
 			.post('/users/register')
 			.send({
-				'username' : new Date(),
+				'username' : new Date().toString(),
 				'password' : 'password',
 				'firstname' : 'firstname'
 			})
 			.end((err, res) => {
 				res.should.have.status(400);
 				res.body.should.be.a('object');
-				res.should.have.property('error');
+				res.body.should.have.property('statusCode');
+				res.body.should.have.property('error');
+				res.body.should.have.property('message');
 						
 				done();
 			})
@@ -461,15 +466,16 @@ describe('users', () => {
 			chai.request(url)
 			.post('/users/register')
 			.send({
-				'username' : new Date(),
+				'username' : new Date().toString(),
 				'password' : 'password',
 				'lastname' : 'lastname'
 			})
 			.end((err, res) => {
 				res.should.have.status(400);
 				res.body.should.be.a('object');
-				res.should.have.property('error');
-						
+				res.body.should.have.property('statusCode');
+				res.body.should.have.property('error');
+				res.body.should.have.property('message');
 				done();
 			})
 		});
@@ -480,14 +486,16 @@ describe('users', () => {
 			chai.request(url)
 			.post('/users/register')
 			.send({
-				'username' : new Date(),
+				'username' : new Date().toString(),
 				'firstname' : 'firstname',
 				'lastname' : 'lastname'
 			})
 			.end((err, res) => {
 				res.should.have.status(400);
 				res.body.should.be.a('object');
-				res.should.have.property('error');
+				res.body.should.have.property('statusCode');
+				res.body.should.have.property('error');
+				res.body.should.have.property('message');
 						
 				done();
 			})
@@ -506,7 +514,9 @@ describe('users', () => {
 			.end((err, res) => {
 				res.should.have.status(400);
 				res.body.should.be.a('object');
-				res.should.have.property('error');
+				res.body.should.have.property('statusCode');
+				res.body.should.have.property('error');
+				res.body.should.have.property('message');
 						
 				done();
 			})
@@ -521,8 +531,9 @@ describe('users', () => {
 			.end((err, res) => {
 				res.should.have.status(400);
 				res.body.should.be.a('object');
-				res.should.have.property('error');
-						
+				res.body.should.have.property('statusCode');
+				res.body.should.have.property('error');
+				res.body.should.have.property('message');
 				done();
 			})
 		});
