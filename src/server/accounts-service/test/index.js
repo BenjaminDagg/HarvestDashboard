@@ -20,7 +20,7 @@ const testUser = {
 	firstname: "firstname",
 	lastname: "lastname",
 	id: "5abc5cfb73db43393856e365",
-	createdAt: "2018-02-28"
+	createdAt: "2018-04-12T21:56:30.814Z"
 };
 
 
@@ -556,7 +556,7 @@ describe('users', () => {
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
-					res.body.should.have.property('messege');
+					res.body.should.have.property('message');
 					res.body.should.have.property('data');
 					res.body.data.should.have.property('user');
 					
@@ -585,8 +585,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
-						
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						done();
 			});
 		});
@@ -604,7 +605,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -623,7 +626,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -638,7 +643,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -656,7 +663,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -674,7 +683,9 @@ describe('users', () => {
 					.end((err, res) => {
 						res.should.have.status(400);
 						res.body.should.be.a('object');
-						res.should.have.property('error');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});
@@ -712,6 +723,27 @@ describe('users', () => {
 						res.should.have.status(401);
 						res.body.should.be.a('object');
 						res.should.have.property('error');
+						
+						done();
+			});
+		});
+		
+		
+		
+		it('it should return bad request if any query parameters gien' , (done) => {
+			chai.request(url)
+					.post('/users/login?query=invalid')
+					.set('authorization', 'Bearer' + token)
+					.send({
+						'username' : testUser.username,
+						'password' : testUser.password
+					})
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
 						
 						done();
 			});

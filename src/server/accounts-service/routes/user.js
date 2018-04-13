@@ -445,6 +445,30 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				params: {
+					//none
+				},
+				query: {
+					//none
+				},
+				payload: {
+					username: Joi.string().required(),
+					password: Joi.string().required()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						message: Joi.string(),
+						data: Joi.object().keys({
+							user: userSchema
+						})
+					}),
+					400: errorSchema,
+					500: errorSchema,
+				}
 			}
 		},
 		method: 'POST',
@@ -452,55 +476,75 @@ exports.register = function(server, options, next) {
 		handler: function (request, reply) {
 			
 			var user = request.payload;
-			var error = {
-					error: ''
-			};
+			var response;
 			
 			//no body given in request. Return Bad Request 400
 			if (!user) {
-				error.error = 'Invalid request. No body given';
-				return reply(error).code(400);
-			}
-			
-			//login credentials not provided
-			if (!('username' in user) ||
-					!('password' in user) ) {
-				const response = {
-						error: 'Error: Must provide username and password in request body.'
+				response = {
+						statusCode: 400,
+						error: 'Bad Request',
+						message: 'Missing required properties username and password in body',
 				};
 				return reply(response).code(400);
 			}
 			
+			
+			//encrypt passed in password to compate to encrypted password stored in database
 			 var password = user.password;
 			 const hash = crypto.createHmac('sha256', secret).update(password).digest('base64');
 			 user.password = hash;
-			
+			 
+			 
 			
 			//search database for user and check if credentials correct
 			db.user.findOne({ username: user.username}, (err, doc) => {
 				
 				//error occured
 				if (err) {
-					console.log(err);
-					error.error = 'Incorrect login credentials';
-					reply(error).code(400);
+					response = {
+							statusCode: 400,
+							error: 'Bad Request',
+							message: 'Incorrect login credentials',
+					};
+					reply(response).code(400);
 				}
+				//no users found with given username
 				else if (!doc) {
-					error.error = 'User not found';
-					reply(error).code(400);
+					response = {
+							statusCode: 400,
+							error: 'Bad Request',
+							message: 'No users found with this username',
+					};
+					reply(response).code(400);
 				}
 				else {
+					//user found but wrong password
 					if (doc.password != user.password) {
-						error.error = 'Incorrect login credentials';
-						reply(error).code(400);
+						response = {
+								statusCode: 400,
+								error: 'Bad Request',
+								message: 'Incorrect login credentials',
+						};
+						reply(response).code(400);
 					}
+					//user found and credentials match
 					else if (doc.password === user.password) {
+						
+						//copy doc into new object
+						var resUser = {
+								_id: doc._id.toString(),
+								username: doc.username,
+								password: doc.password,
+								firstname: doc.firstname,
+								lastname: doc.lastname,
+								createdAt: doc.createdAt
+						};
 						const response = {
-								messege: 'Login success',
+								message: 'Login success',
 								data: {
-									user: doc
+									user: resUser
 								}
-						}
+						};
 						
 						reply(response).code(200);
 					}
