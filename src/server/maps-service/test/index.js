@@ -429,19 +429,18 @@ describe('maps-service', () => {
 		
 		it('it should return a map object of the given map id whne the id is valid' , (done) => {
 			chai.request(url)
-				.get('/maps/5ac05610a7b69a3b149003b9')
+				.get('/maps/5aa23113734d1d3717fd4c4f')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
-					res.body.should.have.property('map');
 					
-					var map = res.body.map;
-					map.should.have.property('type');
-					map.should.have.property('name');
-					map.should.have.property('shape');
-					map.should.have.property('createdAt');
-					map.should.have.property('data');
+					res.body.should.have.property('type');
+					res.body.should.have.property('name');
+					res.body.should.have.property('shape');
+					res.body.should.have.property('createdAt');
+					res.body.should.have.property('_id');
+					
 					done();
 				});
 		});
@@ -450,12 +449,14 @@ describe('maps-service', () => {
 		
 		it('it should return a 400 Bad Request when an invalid map id is given' , (done) => {
 			chai.request(url)
-				.get('/maps/5ac05610a7b69a3b149003b8')
+				.get('/maps/5aa23113734d1d3717fd4c4a')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -464,12 +465,30 @@ describe('maps-service', () => {
 		
 		it('it should return a 400 Bad Request when a malformed map id is given' , (done) => {
 			chai.request(url)
-				.get('/maps/5ac05610a7b69a3b149003b')
+				.get('/maps/5aa23113734d1d3717fd4c4')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a 400 Bad Request if any query parameters are given' , (done) => {
+			chai.request(url)
+				.get('/maps/5aa23113734d1d3717fd4c4f?query=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});

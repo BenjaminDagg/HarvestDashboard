@@ -282,6 +282,7 @@ exports.register = function(server, options, next) {
 			}
 			//no query parameters given
 			else {
+				
 				//return all maps 
 				db.Maps.find({}, (err, docs) => {
 					
@@ -400,6 +401,20 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				params: {
+					id: Joi.string().length(24).required()
+				},
+				query: {
+					//none
+				}
+			},
+			response: {
+				status: {
+					200: mapSchema,
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -409,26 +424,43 @@ exports.register = function(server, options, next) {
 			//get id from url
 			const id = request.params.id;
 			
-			//check valid id
-			if (id.length != 24) {
-				return reply({error: 'Bad request. Invalid map id'}).code(400);
-			}
+			
 			
 			//create mongo id object
 			const objID = mongojs.ObjectId(id);
 			
+			var response;
+			
 			db.Maps.findOne({_id: objID}, (err, doc) => {
 				if (err) {
-					return reply({error: 'Bad request. Map not found'}).code(400);
+					response = {
+							statusCode: 400,
+							error: 'Error getting map',
+							message: 'Given map id not found'
+					};
+					return reply(response).code(400);
 				}
 				else if (!doc) {
-					return reply({error: 'Bad request. Map not found'}).code(400);
+					response = {
+							statusCode: 400,
+							error: 'Error getting map',
+							message: 'Given map id not found'
+					};
+					return reply(response).code(400);
 				}
 				else {
-					const response = {
-							map: doc
+					var newMap = {
+							_id: doc._id.toString(),
+							type: doc.type,
+							name: doc.name,
+							createdAt: doc.createdAt,
+							shape: doc.shape,
+							
 					};
-					return reply(response).code(200);
+					if (doc.data) {
+						newMap.data = doc.data;
+					}
+					return reply(newMap).code(200);
 				}
 			})
 		}
