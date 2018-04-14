@@ -10,6 +10,7 @@ const utcOffsetPST = "-8:00"
 
 //schemas
 var mapSchema = require('../schemas/map/map-schema');
+var errorSchema = require('../schemas/error/error-schema');
 
 
 //This should work in node.js and other ES5 compliant implementations.
@@ -100,7 +101,7 @@ function formatDateISO(date) {
 	
 	//date is already in ISO format
 	else if (iso.test(date)) {
-		
+		console.log('is iso');
 		return date;
 	}
 	//convert YYYY-MM-dd -> ISO
@@ -320,28 +321,37 @@ exports.register = function(server, options, next) {
 	}); 
 	
 	
-	/*
-	 * Insert new map object into database
-	 * 
-	 * Request:
-	 * 		POST
-	 * 		Body: map object
-	 * 			type: String
-	 * 			name: String
-	 * 			shape: {
-	 * 				type: String (point, LineString, Polygon)
-	 * 				coordinates: [Float]
-	 * 			}
-	 * Response:
-	 * 		400 - Invalid map object
-	 * 		200 - Map was added returns map object back
-	 * 		in body
-	 */
+	
 	server.route({
 		config: {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				payload: {
+					type: Joi.string().required(),
+					name: Joi.string().required(),
+					shape: Joi.object().keys({
+						type: Joi.string(),
+						coordinates: Joi.array()
+					}).required(),
+					data: Joi.object()
+				},
+				params: {
+					//none
+				},
+				query: {
+					//none
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						messege: Joi.string().required()
+					}).required(),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'POST',
@@ -350,44 +360,25 @@ exports.register = function(server, options, next) {
 			
 			//get map object from body
 			const map = request.payload;
+		
+			//creates date in ISO format and assigns it to user createdAt
+			var date = moment().utc(utcOffsetPST).toISOString(); 
+		    map.createdAt = date;
 			
-			if (!map) {
-				return reply({error: 'Bad request. Missing body'}).code(400);
-			}
-			
-			//check if map object is valid
-			if (!('type' in map) ||
-				!('name' in map) ||
-				!('shape' in map) ||
-				!('data' in map)) {
-				
-				return reply({error: 'Bad request. Missing fields'}).code(400);
-			}
-			
-			//save date the map was added
-			//format: YYYY-MM-DD
-			var date = new Date();
-			var day = date.getDate();
-			day = (day < 10 ? "0" : "") + day;
-			var month = date.getMonth() + 1;
-			month = (month < 10 ? "0" : "") + month;
-			var year = date.getFullYear();
-			var hour = date.getHours();
-		    hour = (hour < 10 ? "0" : "") + hour;
-		    var min  = date.getMinutes();
-		    min = (min < 10 ? "0" : "") + min;
-		    var sec  = date.getSeconds();
-		    sec = (sec < 10 ? "0" : "") + sec;
-		    var dateStr = year + "-" + month + "-" + day ;
-		    
-		    map.createdAt = dateStr;
-			
+		    //insert into database
 			db.Maps.save(map, (err, result) => {
 				if (err) {
-					return reply('Server error. Error adding map').code(500);
+					var response = {
+							statusCode: '400',
+							error: 'Error Inserting map into database',
+							message: 'Server error'
+					};
+					return reply(response).code(400);
 				}
-				reply({messege: 'Map added successfully'}).code(200);
+				return reply({messege: 'Map added successfully'}).code(200);
 			})
+			
+		    
 		}
 	});
 	

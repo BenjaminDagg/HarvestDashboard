@@ -55,7 +55,7 @@ describe('maps-service', () => {
 				.set('authorization', 'Bearer' + token)
 				.send({
 					'type' : 'map',
-					'name' : 'testmap',
+					'name' : new Date().toString(),
 					'shape' : {},
 					'data' : {}
 				})
@@ -77,6 +77,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -97,6 +99,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -116,6 +120,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -135,29 +141,33 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
 		
 		
 		
-		it('it should return 400 Bad Request when no data field is given' , (done) => {
+		it('it should return 400 Bad Request when any query parameter is given' , (done) => {
 			chai.request(url)
-				.post('/maps')
+				.post('/maps?query=invalid')
 				.set('authorization', 'Bearer' + token)
 				.send({
 					'type' : 'map',
 					'name' : 'testmap',
-					'shape' : {}
+					'shape': {},
+					'data' : {}
 				})
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
-		
 		
 		
 		it('it should return 401 Unauthorizaed when no bearer token is given' , (done) => {
