@@ -21,7 +21,7 @@ const testUser = {
 		firstname: "firstname",
 		lastname: "lastname",
 		id: "5abc5cfb73db43393856e365",
-		createdAt: "2018-02-28"
+		createdAt: "2018-04-12T21:56:30.814Z"
 };
 
 
@@ -214,6 +214,165 @@ describe('maps-service', () => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should by able to filter maps by id' , (done) => {
+			chai.request(url)
+				.get('/maps?id=5aa23113734d1d3717fd4c4f')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.eql(1);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					
+					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return an empty array when an invalid id is given' , (done) => {
+			chai.request(url)
+				.get('/maps?id=5aa23113734d1d3717fd4c4a')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.eql(0);					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a bad request when a malformed id is given' , (done) => {
+			chai.request(url)
+				.get('/maps?id=5aa23113734d1d3717fd4c4')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should be able to filter maps after a given date' , (done) => {
+			chai.request(url)
+				.get('/maps?from=2018-03-01')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should be able to filter maps before a given date' , (done) => {
+			chai.request(url)
+				.get('/maps?to=2018-03-20')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should be able to filter maps in a given time frame' , (done) => {
+			chai.request(url)
+				.get('/maps?from=2018-03-01&to=2018-04-15')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return an empty array when an invalid time frame is given' , (done) => {
+			chai.request(url)
+				.get('/maps?from=2018-05-01&to=2018-03-15')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.eql(0);
 					
 					
 					

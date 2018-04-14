@@ -3,6 +3,13 @@
  */
 
 const mongojs = require('mongojs');
+var Joi = require('joi');
+var moment = require('moment');
+//utc offset for Pacific Standard Time (8 hours behind)
+const utcOffsetPST = "-8:00"
+
+//schemas
+var mapSchema = require('../schemas/map/map-schema');
 
 
 //This should work in node.js and other ES5 compliant implementations.
@@ -66,9 +73,93 @@ function dateCheck(from,to,check) {
     
 }
 
+//formats andy date string into an ISO date
+function formatDateISO(date) {
+	
+	//iso regex
+	var iso = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d/;
+	
+	
+	
+	if (!date) {
+		var currDay = new Date().getDay();
+		var currMonth = new Date().getMonth() + 1;
+		
+		var month = Math.floor(Math.random() * (4 - 2 + 1)) + 2;
+		var day = Math.floor(Math.random() * (13 - 1 + 1)) + 1;
+		var year = '2018';
+		if (day < 10) {
+			day = '0' + day;
+		}
+		
+		var d = year + '-' + '0' + month + '-' + day;
+		
+		return formatDateISO(d);
+	}
+	
+	
+	//date is already in ISO format
+	else if (iso.test(date)) {
+		
+		return date;
+	}
+	//convert YYYY-MM-dd -> ISO
+	else if(date.indexOf('-') > -1 && date.length == 10) {
+		
+		var isoDate = moment().utc(utcOffsetPST).toISOString();
+		var newDate = date + isoDate.slice(10,isoDate.length);
+		
+		return newDate;
+	}
+	//convert MM/dd/YYYY -> ISO
+	else if (date.indexOf('/') > -1 && date.length == 10) {
+		var d = date.slice(4,10) + '-' + date.slice(0,2) + '-' + date.slice(2,4);
+		return formatDateISO(d);
+	}
+	//convert MMddYYYY -> ISO
+	else if (date.indexOf('-') < 0 && date.indexOf('/') < 0 && date.length == 8) {
+		var d = date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
+		return formatDate(d);
+	}
+	else if (date.indexOf(':') > -1 && date.length == 19) {
+		var newDate = date.slice(0,10).replace(/:/g, '-');
+		var time = 'T' + date.slice(11,19) + '.' + (Math.floor(Math.random() * (999 - 100 + 1)) + 100) + 'z';
+		return formatDate(newDate + time);
+	}
+	
+}
+
 exports.register = function(server, options, next) {
 	
 	const db = server.app.db;
+	
+	/*
+	server.route({
+		method: 'GET',
+		path: '/updatedates',
+		handler: function(request, reply) {
+			var scans = {};
+			db.Maps.find((err, docs) => {
+				for (var i = 0; i < docs.length;i++) {
+					var objID = mongojs.ObjectId(docs[i]._id);
+					var date = formatDateISO(docs[i].createdAt);
+					
+					
+					db.Maps.findAndModify({
+						query: {_id: objID},
+						update: {$set: {createdAt: date}},
+				
+					}, function(err, doc, lastErrorObject) {
+						
+					})
+					
+					
+				}
+				return reply('hello');
+			})
+		}
+	});
+	*/
 	
 	// ******************* Maps **********************
 	
@@ -90,6 +181,14 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				
+				query: {
+					id: Joi.string().length(24),
+					from: Joi.date(),
+					to: Joi.date()
+				}
 			}
 		},
 		method: 'GET',
@@ -98,17 +197,125 @@ exports.register = function(server, options, next) {
 			
 			const params = request.query;
 			
-			db.Maps.find((err, docs) => {
-				if (err) {
-					response = {
-						error: 'Error retrieving map(s) from database'
-					};
-					
-					reply(response).code(400);
+			//query parameters were given
+			if (!isEmptyObject(params)) {
+				
+				//build query object
+				var query = {
+						_id: null,
+						createdAt: null
+				};
+				
+				//check if id was given
+				if ('id' in params) {
+					query._id = mongojs.ObjectId(params.id);
+				}
+				else {
+					//remove _id key from query if no id gien
+					delete query._id;
 				}
 				
-				reply((docs)).code(200);
-			});
+				//delete to and from keys from query if they are not given
+				if (!('from' in params) && !('to' in params)) {
+					delete query.createdAt;
+				}
+				else {
+					
+					//from and to both given
+					if (('from' in params) && ('to' in params)) {
+						query.createdAt = {
+								//create iso string from passed in date
+								$gte: params.from.toISOString(),
+								$lte: params.to.toISOString()
+						}
+					}
+					//only from given
+					else if ('from' in params) {
+						query.createdAt = {
+								$gte: params.from.toISOString()
+						};
+					}
+					//only to given
+					else {
+						query.createdAt = {
+								$lte: params.to.toISOString()
+						};
+					}
+				}
+				
+				//search database pass in query object
+				db.Maps.find(query ,(err, docs) => {
+					
+					if (err) {
+						console.log('in error');
+						var response = {
+							statusCode: 400,
+							error: 'Error Searching for maps',
+							message: 'No maps found'
+						};
+						return reply(response).code(400);
+					}
+					
+					//no results return empty array
+					if (docs.length == 0 || !docs) {
+						return reply(new Array()).code(200);
+					}
+					
+					//copy docs into array before returning
+					var maps = new Array();
+					for (var i = 0; i < docs.length; i++) {
+						
+						
+						var newMap = {
+								_id: docs[i]._id.toString(),
+								type: docs[i].type,
+								name: docs[i].name,
+								createdAt: docs[i].createdAt,
+								shape: docs[i].shape,
+								data: docs[i].data
+						};
+						maps.push(newMap);
+					}
+					return reply(maps).code(200);
+				})
+			}
+			//no query parameters given
+			else {
+				//return all maps 
+				db.Maps.find({}, (err, docs) => {
+					
+					if (err) {
+						var response = {
+								statusCode: 400,
+								error: 'Error Searching for maps',
+								message: 'No maps found'
+							};
+							return reply(response).code(400);
+					}
+					
+					if (docs.length == 0 || !docs) {
+						return reply(new Array()).code(200);
+					}
+					
+					var maps = new Array();
+					for (var i = 0; i < docs.length; i++) {
+						var newMap = {
+								_id: docs[i]._id.toString(),
+								type: docs[i].type,
+								name: docs[i].name,
+								createdAt: docs[i].createdAt,
+								shape: docs[i].shape,
+								data: docs[i].data
+						};
+						maps.push(newMap);
+					}
+					return reply(maps).code(200);
+				})
+			}
+			
+			
+			
+			
 		}
 	}); 
 	
