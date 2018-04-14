@@ -487,6 +487,20 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				params: {
+					id: Joi.string().length(24).required()
+				},
+				query: {
+					from: Joi.date(),
+					to: Joi.date()
+				}
+			},
+			response: {
+				status: {
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -498,37 +512,41 @@ exports.register = function(server, options, next) {
 			
 			const params = request.query;
 			
-			//check if id format is valid
-			//must be 24 digit hex number
-			if (id.length != 24) {
-				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters',
-						maps: []
-				};
-				return reply(result).code(400);
-			}
+			
 			
 			//create mongo id object
 			const objID = mongojs.ObjectId(id);
+			var response;
 			
 			//check database for scans of this id
 			db.collection('scans').find({profileId: id}, (err, doc) => {
 				if (err) {
-					
-					return reply({error: 'Error. No maps found for this user'}).code(400);
-				}
-				else if (!doc) {
+					//error in database lookup
 					response = {
-						error: 'Error. No maps found for this user'
+							statusCode: 400,
+							error: 'Error searching for user maps',
+							message: 'No maps found for this user'
 					};
 					return reply(response).code(400);
 				}
+				//no scans found for given user
+				else if (!doc) {
+					response = {
+							statusCode: 400,
+							error: 'Error searching for user maps',
+							message: 'No maps found for this user'
+					};
+					return reply(response).code(400);
+				}
+				//scans found
 				else {
 					
 					
 					if (doc.length == 0) {
 						response = {
-							error: 'Error. No maps found for this user'
+								statusCode: 400,
+								error: 'Error searching for user maps',
+								message: 'No maps found for this user'
 						};
 						return reply(response).code(400);
 					}
@@ -546,50 +564,78 @@ exports.register = function(server, options, next) {
 						//iterate over map array and insert each id in the array
 						for (var j = 0; j < maps.length;j++) {
 							//create mapId obj then insert
-							mapIds.push(mongojs.ObjectId(maps[j]));
+							mapIds.push(mongojs.ObjectId(maps[j].toString()));
 						}
 					}
 					
-					//now get map object for every fetched map
-					db.Maps.find( {
-						_id: {
-							$in: mapIds
+					console.log(mapIds);
+					var query = {
+							_id: {
+								$in: mapIds
+							},
+							createdAt: null
+					};
+					
+					
+					//delete to and from keys from query if they are not given
+					if (!('from' in params) && !('to' in params)) {
+						delete query.createdAt;
+					}
+					else {
+						
+						//from and to both given
+						if (('from' in params) && ('to' in params)) {
+							query.createdAt = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							}
 						}
-					}, (err,docs) => {
+						//only from given
+						else if ('from' in params) {
+							query.createdAt = {
+									$gte: params.from.toISOString()
+							};
+						}
+						//only to given
+						else {
+							query.createdAt = {
+									$lte: params.to.toISOString()
+							};
+						}
+					}
+					console.log(query);
+					db.Maps.find({_id: {$in: mapIds}}, (err,docs) => {
 						if (err) {
-							return reply('error').code(500);
+							response = {
+									statusCode: 400,
+									error: 'Error searching for user maps',
+									message: 'No maps found for this user'
+							};
+							return reply(response).code(400);
 						}
 						
-						//check if date limiters in url
-						if (!isEmptyObject(params)) {
-							
-							var from = 'from' in params ? formatDate(params.from) : "";
-							var to = 'to' in params ? formatDate(params.to) : "";
-							
-							//list of maps that fall in the date range
-							var validMaps = new Array();
-							
-							for (var i = 0; i < docs.length; i++) {
-								
-								if ('createdAt' in docs[i]) {
-									//parse date
-									var date = docs[i].createdAt;
-									var newDate = formatDate(date);
-									
-									//if map date is in range then add it to list
-									if (dateCheck(from, to, newDate) == true) {
-										validMaps.push(docs[i]);
-									}
-								}
+						if (!docs || docs.length == 0) {
+							return reply(new Array()).code(200);
+						}
+						
+						var results = new Array();
+						for (var i = 0; i < docs.length;i++) {
+							var newMap = {
+									_id: docs[i]._id.toString(),
+									type: docs[i].type,
+									name: docs[i].name,
+									createdAt: docs[i].createdAt,
+									shape: docs[i].shape		
+							};
+							if (docs[i].data) {
+								newMap.data = docs[i].data;
 							}
-							
-							return reply(validMaps).code(200);
-							
+							results.push(newMap);
 							
 						}
-					
-						return reply(docs).code(200);
-					});
+						return reply(results).code(200);
+					})
 					
 				}
 				
