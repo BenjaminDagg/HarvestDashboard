@@ -1260,6 +1260,20 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					//none
+				},
+				params: {
+					id: Joi.string().length(24)
+				}
+			},
+			response: {
+				status: {
+					200: Joi.array().items(mapSchema),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -1269,37 +1283,60 @@ exports.register = function(server, options, next) {
 			//get id from url
 			const id = request.params.id;
 			
-			//check valid id
-			if (id.length != 24) {
-				return reply('Invalid map id').code(400);
-			}
-			
 			//create mongo id object
 			const objID = mongojs.ObjectId(id);
 			
 			db.collection('scans').findOne({_id: objID}, (err, doc) => {
 				if (err) {
-					return reply('Server error').code(500);
+					var response = {
+							statusCode: 400,
+							error: 'Error finding scans',
+							message: 'Given scan id does not exist'
+					};
+					return reply(response).code(400);
 				}
 				else if (!doc) {
-					return reply('Bad request. Map not found').code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error finding scans',
+							message: 'Given scan id does not exist'
+					};
+					return reply(response).code(400);
 				}
 				else {
-					const mapIds = doc.mapIds;
-					for (var i = 0; i < mapIds.length;i++) {
-						mapIds[i] = mongojs.ObjectId(mapIds[i]);
+					const mapIds = new Array();
+					for (var i = 0; i < doc.mapIds.length;i++) {
+						mapIds.push(mongojs.ObjectId(doc.mapIds[i].toString()));
 					}
 					
+					var query = {
+							_id : {
+								$in: mapIds
+							}
+					};
 					//now get map object for every fetched map
-					db.Maps.find( {
-						_id: {
-							$in: mapIds
-						}
-					}, (err,docs) => {
+					db.collection('Maps').find( query, (err,docs) => {
 						if (err) {
-							return reply('error').code(500);
+							var response = {
+									statusCode: 400,
+									error: 'Error finding maps',
+									message: 'Error in searching for this scans maps'
+							};
+							return reply(response).code(400);
 						}
-						reply(docs).code(200);
+						
+						var maps = new Array();
+						for (var i = 0; i < docs.length;i++) {
+							var newMap = {
+									_id: docs[i]._id.toString(),
+									type: docs[i].type,
+									name: docs[i].name,
+									createdAt: docs[i].createdAt,
+									shape: docs[i].shape
+							};
+							maps.push(newMap);
+						}
+						return reply(maps).code(200);
 					});
 				}
 			})

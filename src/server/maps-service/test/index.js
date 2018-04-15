@@ -1796,6 +1796,78 @@ describe('maps-service', () => {
 	
 	
 	
+	describe('GET /scans/{id}/maps', () => {
+		it('it should get the maps for the given scan when the given scan id exists' , (done) => {
+			chai.request(url)
+				.get('/scans/5aa48282f36d28237f19a60a/maps')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					var maps = res.body;
+					for (var i = 0; i < maps.length;i++) {
+						maps[i].should.have.property('_id');
+						maps[i].should.have.property('type');
+						maps[i].should.have.property('name');
+						maps[i].should.have.property('createdAt');
+						maps[i].should.have.property('shape');
+						
+					}
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when the given scan id does not exist' , (done) => {
+			chai.request(url)
+				.get('/scans/5aa48282f36d28237f19a60b/maps')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when the given scan id is malformed' , (done) => {
+			chai.request(url)
+				.get('/scans/5aa48282f36d28237f19a60/maps')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return an mepty array if the given scan does not have any maps' , (done) => {
+			chai.request(url)
+				.get('/scans/5ac17de57b4983104029934e/maps')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.eql(0);
+					done();
+				});
+		});
+	})
+	
+	
+	
 	describe('POST /scans/{id}/maps', () => {
 		
 		
