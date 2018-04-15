@@ -1147,6 +1147,34 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					//none
+				},
+				params: {
+					id: Joi.string().length(24).required()
+				},
+				payload: {
+					profileId: Joi.string().length(24).required(),
+					datetime: Joi.date().required(),
+					mapIds: Joi.array().required(),
+					scannedValue: Joi.string().required(),
+					location: Joi.object().keys({
+						type: Joi.string().required(),
+						coordinates: Joi.array().required()
+					}).required(),
+					data: Joi.object()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						message: Joi.string(),
+						scan: scanSchema
+					}),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'PUT',
@@ -1156,55 +1184,59 @@ exports.register = function(server, options, next) {
 			//parse id from url
 			const id = request.params.id;
 			
-			//check if id format is valid
-			//must be 24 digit hex number
-			if (id.length != 24) {
-				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters'
-				};
-				return reply(result).code(400);
-			}
-			
 			//create mongo id object
 			const objID = mongojs.ObjectId(id);
 			
-			
-			
 			const scan = request.payload;
-			if (!('profileId' in scan) ||
-				!('mapIds' in scan) ||
-				!('scannedValue' in scan) ||
-				!('location' in scan) ||
-				!('datetime' in scan)) {
-				
-				return reply({error: 'Bad Request. Missing fields'}).code(400);
-			}
-			
-			//check if location has coordinates field
-			if (!('coordinates' in scan.location)) {
-				return reply({error: 'Bad Request. Missing fields'}).code(400);
-			}
 			
 			
+			//search for scan and update it with passed in scan if it exists
 			db.collection('scans').findAndModify({
 				query: {_id: objID},
 				update: {
 					profileId: scan.profileId,
-					mapIds: request.payload.mapIds,
-					scannedValue: request.payload.scannedValue,
-					location: request.payload.location,
+					mapIds: scan.mapIds,
+					scannedValue: scan.scannedValue,
+					location: scan.location,
 					datetime: scan.datetime
 				}
 			}, (err, doc, lastErrorObject) => {
+				//error updating doc
 				if (err) {
-					return reply({error: 'Error updating scan'}).code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error updating scan',
+							message: 'Given scan id does not exist'
+					};
+					return reply(response).code(400);
 				}
-				
+				//given scan not found
 				if (!doc) {
-					return reply({error: 'Error updating scan'}).code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error updating scan',
+							message: 'Given scan id does not exist'
+					};
+					return reply(response).code(400);
 				}
 				
-				return reply({messege: 'updated', scan: request.payload}).code(200);
+				//scan exists
+				//copy new scan object from doc
+				var scan = {
+						_id: doc._id.toString(),
+						profileId: doc.profileId,
+						datetime: doc.datetime,
+						mapIds: doc.mapIds,
+						scannedValue: doc.scannedValue,
+						location: {
+							type: doc.location.type,
+							coordinates: doc.location.coordinates
+						}
+				};
+				if (doc.data) {
+					scan.data = doc.data;
+				}
+				return reply({message: 'Scan successfully updated', scan: scan}).code(200);
 			})
 			
 		}

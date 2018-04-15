@@ -1439,7 +1439,7 @@ describe('maps-service', () => {
 				.get('/scans/5ac0625bbafa091adc2b12f8')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
-					var oldScan = res.body.scans
+					var oldScan = res.body.scans;
 					
 					chai.request(url)
 					.put('/scans/5ac0625bbafa091adc2b12f8')
@@ -1455,7 +1455,7 @@ describe('maps-service', () => {
 						
 						res.should.have.status(200);
 						res.body.should.be.a('object');
-						res.body.should.have.property('messege');
+						res.body.should.have.property('message');
 						res.body.should.have.property('scan');
 						
 						var newScan = res.body.scan;
@@ -1488,6 +1488,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1515,6 +1517,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1541,6 +1545,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1567,6 +1573,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1593,6 +1601,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1619,6 +1629,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1639,6 +1651,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1662,6 +1676,65 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if the type field is missing' , (done) => {
+			chai.request(url)
+				.put('/scans/5ac0625bbafa091adc2b12f8')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request if any query parameters given' , (done) => {
+			chai.request(url)
+				.put('/scans/5aa48282f36d28237f19a60a?query=invalid')
+				.set('authorization', 'Bearer' + token)
+				.send({
+						'profileId' : testUser.id,
+						'mapIds' : ["5ac06b2228af972dbca0989b"],
+						'datetime' : new Date(),
+						'scannedValue' : new Date(),
+						'location' : {
+							"type" : "scan",
+							"coordinates" : [
+		                        40.7128,
+		                        -85.42
+		                    ]
+						}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
