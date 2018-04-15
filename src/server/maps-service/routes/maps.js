@@ -958,6 +958,23 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					//none
+				},
+				params: {
+					userId: Joi.string().length(24).required()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.array().items(Joi.object().keys({
+						coord: Joi.array(),
+						id: Joi.string().length(24)
+					})),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -967,36 +984,59 @@ exports.register = function(server, options, next) {
 			//get userid from url
 			const uid = request.params.userId;
 			
-			//check if valid id was given
-			if (uid.length != 24) {
-				return reply({error:'Bad Request. Invalid username'}).code(400);
-			}
+			const id = mongojs.ObjectId(uid);
 			
-			//search database for scans by this user
-			db.collection('scans').find({profileId: uid}, function(err, docs) {
-				
+			db.collection('user').findOne({_id: id}, (err,doc) => {
+				//user not found
 				if (err) {
-					return reply({error:'Error searching database'}).code(500);
-				}
-				
-				if (docs.length == 0) {
-					return reply({error: 'No scans found for this user'}).code(400);
-				}
-				
-				//extract coordinates and id from each doc
-				var coords = new Array();
-				for (var i = 0; i < docs.length;i++) {
-					const res = {
-							coord: docs[i].location.coordinates,
-							id: docs[i]._id
+					var response = {
+							statusCode: 400,
+							error: 'Error getting users scans',
+							message: 'Given user id does not exist'
 					};
-					coords.push(res);
+					return reply(response).code(400);
 				}
+				else if (!doc) {
+					var response = {
+							statusCode: 400,
+							error: 'Error getting users scans',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				else {
+					//search database for scans by this user
+					db.collection('scans').find({profileId: uid}, function(err, docs) {
+						
+						if (err) {
+							var response = {
+									statusCode: 400,
+									error: 'Error getting user scans',
+									message: 'Error in database lookup'
+							};
+							return reply(response).code(400);
+						}
+						
+						
+						
+						//extract coordinates and id from each doc
+						var coords = new Array();
+						for (var i = 0; i < docs.length;i++) {
+							const res = {
+									coord: docs[i].location.coordinates,
+									id: docs[i]._id.toString()
+							};
+							coords.push(res);
+						}
+						
 				
-		
-				reply(coords);
-				
+						return reply(coords).code(200);
+						
+					})
+				}
 			})
+			
+			
 		}
 			
 	});

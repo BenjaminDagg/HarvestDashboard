@@ -1242,13 +1242,15 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
 		
 		
 		
-		it('it should return a Bad Request if no scans are found for the user' , (done) => {
+		it('it should return a Bad Request if the given user id does not exist' , (done) => {
 			chai.request(url)
 				.get('/scans/5abc5cfb73db43393856e366/coord')
 				.set('authorization', 'Bearer' + token)
@@ -1256,9 +1258,42 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
+		
+		
+		
+		it('it should return an empty array if the given user does not have any scans' , (done) => {
+			chai.request(url)
+				.get('/scans/5ad02ada415d0f27341bcfe2/coord')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('array');
+					res.body.length.should.eql(0);
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return a 400 Bad Request if any query parameters are given' , (done) => {
+			chai.request(url)
+				.get('/scans/' + testUser.id + '/coord?query=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		
 		
 		
 		
