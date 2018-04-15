@@ -696,14 +696,29 @@ describe('maps-service', () => {
 	
 	describe('/GET /scans', () => {
 		
-		it('it should return an of all scan objects when no query parameters given' , (done) => {
+		it('it should return an array of all scan objects when no query parameters given' , (done) => {
 			chai.request(url)
 				.get('/scans')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
-					res.body.should.be.a('object');
-								
+					res.body.should.be.a('array');
+					res.body.length.should.not.eql(0);
+					
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						res.body[i].location.coordinates.length.should.not.eql(0);
+						
+					}
 					done();
 				});
 		});
@@ -718,6 +733,20 @@ describe('maps-service', () => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						res.body[i].location.coordinates.length.should.not.eql(0);
+						
+					}
 					done();
 				});
 		});
@@ -732,6 +761,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -740,12 +771,26 @@ describe('maps-service', () => {
 		
 		it('it should be able to filter scan results to scnas after a specified date' , (done) => {
 			chai.request(url)
-				.get('/scans?from=03012018')
+				.get('/scans?from=2018-02-15')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						res.body[i].location.coordinates.length.should.not.eql(0);
+						
+					}
 					done();
 				});
 		});
@@ -754,12 +799,26 @@ describe('maps-service', () => {
 		
 		it('it should be able to filter scan results to scnas before a specified date' , (done) => {
 			chai.request(url)
-				.get('/scans?to=04012018')
+				.get('/scans?to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						res.body[i].location.coordinates.length.should.not.eql(0);
+						
+					}
 					done();
 				});
 		});
@@ -768,12 +827,26 @@ describe('maps-service', () => {
 		
 		it('it should be able to filter scan results scans within a certain time frame' , (done) => {
 			chai.request(url)
-				.get('/scans?from=03312018&to=04012018')
+				.get('/scans?from=2018-03-01&to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						
+						
+					}
 					done();
 				});
 		});
@@ -782,7 +855,7 @@ describe('maps-service', () => {
 		
 		it('it should return an empty array if an invlid time frame is given' , (done) => {
 			chai.request(url)
-				.get('/scans?from=04312018&to=03012018')
+				.get('/scans?from=2018-05-01&to=2018-01-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -796,12 +869,26 @@ describe('maps-service', () => {
 		
 		it('it should be able to get scans from a specific user within a time frame' , (done) => {
 			chai.request(url)
-				.get('/scans?id=' + testUser.id +'&from=03312018&to=04012018')
+				.get('/scans?id=' + testUser.id +'&from=2018-03-01&to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
 					res.body.length.should.not.eql(0);
+					for (var i = 0; i < res.body.length;i++) {
+						res.body[i].should.have.property('_id');
+						res.body[i].should.have.property('profileId');
+						res.body[i].should.have.property('datetime');
+						res.body[i].should.have.property('mapIds');
+						res.body[i].should.have.property('scannedValue');
+						res.body[i].should.have.property('location');
+						res.body[i].location.should.be.a('object');
+						res.body[i].location.should.have.property('type');
+						res.body[i].location.should.have.property('coordinates');
+						res.body[i].location.coordinates.should.be.a('array');
+						res.body[i].location.coordinates.length.should.not.eql(0);
+						
+					}
 					done();
 				});
 		});

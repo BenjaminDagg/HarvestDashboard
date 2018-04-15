@@ -11,6 +11,7 @@ const utcOffsetPST = "-8:00"
 //schemas
 var mapSchema = require('../schemas/map/map-schema');
 var errorSchema = require('../schemas/error/error-schema');
+var scanSchema = require('../schemas/scan/scan-schema');
 
 
 //This should work in node.js and other ES5 compliant implementations.
@@ -683,6 +684,22 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					from: Joi.date(),
+					to: Joi.date(),
+					id: Joi.string().length(24)
+				},
+				params: {
+					//none
+				}
+			},
+			response: {
+				status: {
+					200: Joi.array().items(scanSchema),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -691,95 +708,117 @@ exports.register = function(server, options, next) {
 			
 			//get optional query parameters form url if they exist
 			const params = request.query;
+			var response;
 			
-			//check if any query parameters
-			if (!isEmptyObject(params)) {
-				
-				var from, to, id;
-				
-				from = 'from' in params ? formatDate(params.from) : "";
-				to = 'to' in params ? formatDate(params.to) : "";
-				
-				//check if id is a parameter first
-				if ('id' in params) {
-					const id = params.id;
-					
-					//get array of this users scans then narrow it down later
-					db.collection('scans').find({profileId: id},function (err, docs) {
-						if (err) {
-							return reply(err).code(500);
-						}
-						else {
-							
-							//if a date frame is given then narrow down result
-							//to only dates in thsi time frame
-							if (from || to) {
-								console.log('in date');
-								var scans = docs;
-								var result = new Array();
 			
-								for (var i = 0; i < scans.length;i++) {
-									const date = formatDate(scans[i].datetime);
-								    
-									if (dateCheck(from,to,date) == true) {
-										result.push(scans[i]);
-									}
-								}
-								return reply(result).code(200);
-							
-							}
-							//no time frame given so return all scane
-							//by this user
-							else {
-								
-								return reply(docs).code(200);
-							}
-						}
+			//make search queries to pass to mongo
+			var query = {
+					_id: 'id' in params ? mongojs.ObjectId(params.id) : mongojs.ObjectId(request.auth.credentials.id),
+					profileId: null,
+					datetime: null
+			};
+	
+	
+			//delete to and from keys from query if they are not given
+			if (!('from' in params) && !('to' in params)) {
+				delete query.datetime;
+			}
+			else {
 		
-					});
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					query.datetime = {
+							//create iso string from passed in date
+							$gte: params.from.toISOString(),
+							$lte: params.to.toISOString()
+					}
 				}
-				//no specific user given so return scans in the given
-				//time frame
+				//only from given
+				else if ('from' in params) {
+					query.datetime = {
+							$gte: params.from.toISOString()
+					};
+				}
+				//only to given
 				else {
-					db.collection('scans').find(function (err, docs) {
+					query.datetime = {
+							$lte: params.to.toISOString()
+					};
+				}
+			}
+			//if id passed as a query parameter set profileid to it
+			if ('id' in params) {
+				query.profileId = params.id;
+			}
+			//if no id query paramter delete profileid key from query
+			else {
+				delete query.profileId;
+			}
+			
+			// first check if the given user id exists
+			db.collection('user').findOne({_id: query._id}, (err, doc) => {
+				//id not found return 4o0 bad request
+				if (err) {
+					response = {
+							statusCode: 400,
+							error: 'Error finding scans for given user',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//id not found return 400 bad request
+				else if(!doc) {
+					response = {
+							statusCode: 400,
+							error: 'Error finding scans for given user',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//id found. Now search through scans for scnas with this profle id
+				else {
+					//delete _od key from query so we dont restrict
+					//scans lookup to scans with that id
+					delete query._id;
+					
+					//search through scans to get all scnas with given parameters
+					db.collection('scans').find(query, (err, docs) => {
+						//error
 						if (err) {
-							return reply(err).code(500);
-						}
-						else {
-							
-							var scans = docs;
-							var result = new Array();
-							
-							for (var i = 0; i < scans.length;i++) {
-								const date = formatDate(scans[i].datetime);
-								
-								if (dateCheck(from,to,date) == true) {
-									result.push(scans[i]);
-								}
-							}
-							return reply(result);
+							response = {
+									statusCode: 400,
+									error: 'Error finding scans for given user',
+									message: 'Error in database lookup'
+							};
+							return reply(response).code(400);
 						}
 						
-					});
+						//no error return scans after copying them
+						//into array
+						var scans = new Array();
+						for (var i = 0; i < docs.length;i++) {
+							var newScan = {
+									_id: docs[i]._id.toString(),
+									profileId: docs[i].profileId,
+									datetime: docs[i].datetime,
+									mapIds: docs[i].mapIds,
+									scannedValue: docs[i].scannedValue,
+									location: {
+										type: docs[i].location.type,
+										coordinates: docs[i].location.coordinates
+										
+									}
+							};
+							if (docs[i].data) {
+								newScan.data = docs[i].data;
+							};
+							scans.push(newScan);
+						}
+						return reply(scans).code(200);
+					})
 				}
-				
-			} 
-			//no query parameters given. Return all scans from database
-			else {
-				db.collection('scans').find((err, docs) => {
-					if (err) {
-						response = {
-							error: 'Error retrieving user(s) from database'
-						};
-						return reply(response).code(400);
-					}
-					
-					const response = {
-							scans: docs
-					};
-					return reply((response)).code(200);
-				});
-			}
+			})
+			
 		}
 	});
 	
