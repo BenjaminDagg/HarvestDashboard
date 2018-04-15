@@ -1492,6 +1492,15 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					from: Joi.date(),
+					to: Joi.date()
+				},
+				params: {
+					id: Joi.string().length(24)
+				}
 			}
 		},
 		method: 'GET',
@@ -1504,36 +1513,74 @@ exports.register = function(server, options, next) {
 			//get query parameters
 			const params = request.query;
 			
-			//check if id is valid
-			if (uid.length != 24) {
-				return reply('Invalid user id').code(400);
+			var query = {
+					datetime: null,
+					profileId: uid
+			};
+	
+	
+			//delete to and from keys from query if they are not given
+			if (!('from' in params) && !('to' in params)) {
+				delete query.datetime;
+			}
+			else {
+		
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					query.datetime = {
+							//create iso string from passed in date
+							$gte: params.from.toISOString(),
+							$lte: params.to.toISOString()
+					}
+				}
+				//only from given
+				else if ('from' in params) {
+					query.datetime = {
+							$gte: params.from.toISOString()
+					};
+				}
+				//only to given
+				else {
+					query.datetime = {
+							$lte: params.to.toISOString()
+					};
+				}
 			}
 			
-			db.collection('scans').find({profileId: uid}, function(err, docs) {
+			
+			db.collection('scans').find(query, function(err, docs) {
 				if (err) {
-					return reply('Error searching database').code(500);
+					var response = {
+							statusCode: 500,
+							error: 'Error getting users scans',
+							message: 'Error at database lookup'
+					};
+					return reply(response);
 				}
 				
-				if (!isEmptyObject(params)) {
-					var validScans = new Array();
-					
-					var from = 'from' in params ? formatDate(params.from) : "";
-					var to = 'to' in params ? formatDate(params.to) : "";
-					
-					for (var i = 0; i < docs.length;i++) {
-						var oldDate = docs[i].datetime;
-						var newDate = formatDate(oldDate);
-						
-						if (dateCheck(from,to,newDate) == true) {
-							validScans.push(docs[i]);
-						}
+				var scans = new Array();
+				for (var i = 0; i < docs.length;i++) {
+					var newScan = {
+							_id: docs[i]._id.toString(),
+							profileId: docs[i].profileId,
+							mapIds: docs[i].mapIds,
+							scannedValue: docs[i].scannedValue,
+							datetime: docs[i].datetime,
+							location: {
+								type: docs[i].location.type,
+								coordinates: docs[i].location.coordinates,
+								
+							}
+							
+					};
+					if (docs[i].data) {
+						newScan.data = docs[i].data;
 					}
-					
-					return reply({scans: validScans}).code(200);
+					scans.push(newScan);
 				}
 				
 				const resp = {
-						scans: docs
+						scans: scans
 				};
 				return reply(resp).code(200);
 				
