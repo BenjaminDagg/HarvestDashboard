@@ -940,12 +940,13 @@ describe('maps-service', () => {
 			                36.54817,
 			                -118.82813
 			            ]
-					}
+					},
+					'data' : {}
 				})
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
-					res.body.should.have.property('messege');
+					res.body.should.have.property('message');
 					res.body.should.have.property('scan');
 					
 					var scan = res.body.scan;
@@ -954,9 +955,10 @@ describe('maps-service', () => {
 					scan.should.have.property('datetime');
 					scan.should.have.property('mapIds');
 					scan.should.have.property('location');
+					scan.location.should.have.property('type');
+					scan.location.should.have.property('coordinates');
 					
-					var location = res.body.scan.location;
-					location.should.have.property('coordinates');
+					
 					done();
 				});
 		});
@@ -983,6 +985,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					
 					done();
 				});
@@ -1009,6 +1013,9 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
 					
 					done();
 				});
@@ -1035,6 +1042,9 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
 					
 					done();
 				});
@@ -1055,6 +1065,10 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
 					
 					done();
 				});
@@ -1078,6 +1092,68 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when type field is missing' , (done) => {
+			chai.request(url)
+				.post('/scans')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'location' : {
+						
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when any query parameter is given' , (done) => {
+			chai.request(url)
+				.post('/scans?query=invalid')
+				.set('authorization', 'Bearer' + token)
+				.send({
+					'profileId' : testUser.id,
+					'mapIds' : [],
+					'scannedValue' : 'value',
+					'location' : {
+						'type' : 'scan',
+						'coordinates' : [
+			                36.54817,
+			                -118.82813
+			            ]
+					}
+				})
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.be.a('object');
+					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
+					
 					
 					done();
 				});

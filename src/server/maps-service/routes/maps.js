@@ -853,6 +853,34 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					//none
+				},
+				params: {
+					//none
+				},
+				payload: {
+					profileId: Joi.string().length(24).required(),
+					mapIds: Joi.array().items(Joi.string().length(24)).required(),
+					scannedValue: Joi.string().required(),
+					location: Joi.object().keys({
+						type: Joi.string().required(),
+						coordinates: Joi.array().required()
+					}).required(),
+					data: Joi.object()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						message: Joi.string().required(),
+						scan: scanSchema
+					}),
+					400: errorSchema,
+					500: errorSchema
+				}
 			}
 		},
 		method: 'POST',
@@ -862,57 +890,45 @@ exports.register = function(server, options, next) {
 			//get scan from body
 			const scan = request.payload;
 			
-			//check if passed in scan data is valid
-			if (!('profileId' in scan) ||
-				!('location' in scan) ||
-				!('scannedValue' in scan) ||
-				!('mapIds' in scan)) {
-				
-				const response = {
-						error: 'Fields missing.'
-				};
-				return reply(response).code(400);
-			}
 			
-			//check if coordinates given in location
-			var location = scan.location;
-			if (!('coordinates' in location)) {
-				const response = {
-						error: 'Fields missing.'
-				};
-				return reply(response).code(400);
-			}
-			
-			//create datetime field
-			var date = new Date();
-			var day = date.getDate();
-			day = (day < 10 ? "0" : "") + day;
-			var month = date.getMonth() + 1;
-			month = (month < 10 ? "0" : "") + month;
-			var year = date.getFullYear();
-			var hour = date.getHours();
-		    hour = (hour < 10 ? "0" : "") + hour;
-		    var min  = date.getMinutes();
-		    min = (min < 10 ? "0" : "") + min;
-		    var sec  = date.getSeconds();
-		    sec = (sec < 10 ? "0" : "") + sec;
-		    var dateStr = year + "-" + month + "-" + day ;
-		    
-		    scan.datetime = dateStr;
+			//creates date in ISO format and assigns it to scan datetime
+			var date = moment().utc(utcOffsetPST).toISOString(); 
+		    scan.datetime = date;
 			
 			//add scan to database
 			db.collection('scans').save(scan, (err, result) => {
 				if (err) {
 					const response = {
-							error: err
+							statusCode: 400,
+							error: err,
+							message: 'Error occured when trying to add scan'
 					};
-					reply(response).code(500);
+					reply(response).code(400);
 				}
+				//succesffuly added
 				else {
-					const response = {
-							messege: 'scan added',
-							scan: scan
+					
+					//copy result into new scan object then return it
+					var newScan = {
+							_id: result._id.toString(),
+							profileId: result.profileId,
+							datetime: result.datetime,
+							mapIds: result.mapIds,
+							scannedValue: result.scannedValue,
+							location: {
+								type: result.location.type,
+								coordinates: result.location.coordinates
+							}
+							
+					};
+					if (result.data) {
+						newScan.data = result.data;
 					}
+					const response = {
+							message: 'scan added',
+							scan: newScan
+					};
+					//return added scan and success message
 					reply(response).code(200);
 				}
 					
