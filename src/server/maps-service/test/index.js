@@ -2068,7 +2068,7 @@ describe('GET /scans/user/{id}', () => {
 		
 		it('it should filter a users scans to only scnas after a certian date' , (done) => {
 			chai.request(url)
-				.get('/scans/user/' + testUser.id + '?from=02302018')
+				.get('/scans/user/' + testUser.id + '?from=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -2086,6 +2086,7 @@ describe('GET /scans/user/{id}', () => {
 						
 						var location = scans[i].location;
 						location.should.have.property('coordinates');
+						location.should.have.property('type');
 					}
 					
 					done();
@@ -2096,7 +2097,7 @@ describe('GET /scans/user/{id}', () => {
 		
 		it('it should filter a users scans to only scnas before a certian date' , (done) => {
 			chai.request(url)
-				.get('/scans/user/' + testUser.id + '?to=04012018')
+				.get('/scans/user/' + testUser.id + '?to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -2114,6 +2115,7 @@ describe('GET /scans/user/{id}', () => {
 						
 						var location = scans[i].location;
 						location.should.have.property('coordinates');
+						location.should.have.property('type');
 					}
 					
 					done();
@@ -2124,7 +2126,7 @@ describe('GET /scans/user/{id}', () => {
 		
 		it('it should filter a users scans to only scnas in a certain time frame' , (done) => {
 			chai.request(url)
-				.get('/scans/user/' + testUser.id + '?from=02282018&to=04012018')
+				.get('/scans/user/' + testUser.id + '?from=2018-03-01&to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -2142,6 +2144,7 @@ describe('GET /scans/user/{id}', () => {
 						
 						var location = scans[i].location;
 						location.should.have.property('coordinates');
+						location.should.have.property('type');
 					}
 					
 					done();
@@ -2152,7 +2155,7 @@ describe('GET /scans/user/{id}', () => {
 		
 		it('it should return an empty list when an invalid time frame is given' , (done) => {
 			chai.request(url)
-				.get('/scans/user/' + testUser.id + '?from=04282018&to=02012018')
+				.get('/scans/user/' + testUser.id + '?from=2018-05-01&to=2018-03-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -2161,20 +2164,47 @@ describe('GET /scans/user/{id}', () => {
 					
 					var scans = res.body.scans;
 					scans.length.should.eql(0);
-					for (var i = 0; i < scans.length; i++) {
-						scans[i].should.have.property('_id');
-						scans[i].should.have.property('profileId');
-						scans[i].should.have.property('mapIds');
-						scans[i].should.have.property('scannedValue');
-						scans[i].should.have.property('location');
-						
-						var location = scans[i].location;
-						location.should.have.property('coordinates');
-					}
+					
 					
 					done();
 				});
 		});
+		
+		
+		
+		it('it should return an empty list when the given user id does not exist' , (done) => {
+			chai.request(url)
+				.get('/scans/user/5a9c849a062e6821c4075311')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.be.a('object');
+					res.body.should.have.property('scans');
+					
+					var scans = res.body.scans;
+					scans.length.should.eql(0);
+					
+					
+					done();
+				});
+		});
+		
+		
+		
+		it('it should return 400 Bad Request when any wuery parameter is given', (done) => {
+				chai.request(url)
+					.get('/scans/user/5a9c849a062e6821c40753e1?query=invalid')
+					.set('authorization', 'Bearer' + token)
+					.end((err, res) => {
+						res.should.have.status(400);
+						res.body.should.be.a('object');
+						res.body.should.have.property('statusCode');
+						res.body.should.have.property('error');
+						res.body.should.have.property('message');
+						
+						done();
+					});
+			});
 		
 		
 		
