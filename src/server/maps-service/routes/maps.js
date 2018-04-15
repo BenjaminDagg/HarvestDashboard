@@ -1362,6 +1362,22 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				payload: {
+					id: Joi.string().length(24).required()
+				},
+				params: {
+					id: Joi.string().length(24)
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						message: Joi.string()
+					}),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'POST',
@@ -1371,33 +1387,28 @@ exports.register = function(server, options, next) {
 			//get id from url
 			const id = request.params.id;
 			
-			
-			//check if map id given
-			if (!request.payload) {
-				return reply({error: 'Invalid reqest. Missing id in body'}).code(400);
-			}
-			
 			const mapId = request.payload.id;
 			
-			//check valid id
-			if (id.length != 24) {
-				return reply({error: 'Bad Request. Invalid scan id'}).code(400);
-			}
-			
-			//check if valid map id
-			if (mapId.length != 24) {
-				return reply({error: 'Bad Request. Invalid scan id'}).code(400);
-			}
-			
+
 			//searach database for map
 			const mapObjId = mongojs.ObjectId(mapId);
 			db.Maps.findOne({_id : mapObjId}, (mapErr, map) => {
 				if (mapErr) {
-					return reply({error: 'Error searching database for map'}).code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error adding map to scan',
+							message: 'Given map id does not exist. Add map to map collection before inserting it into a scan'
+					};
+					return reply(response).code(400);
 				}
 				
 				if (!map) {
-					return reply({error: 'Bad Request. Map id not found in database'}).code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error adding map to scan',
+							message: 'Given map id does not exist. Add map to map collection before inserting it into a scan'
+					};
+					return reply(response).code(400);
 				}
 				
 				//map id found now search for scan
@@ -1407,10 +1418,20 @@ exports.register = function(server, options, next) {
 				
 				db.collection('scans').findOne({_id: objID}, function (err, doc) {
 					if (err) {
-						return reply(err).code(400);
+						var response = {
+								statusCode: 400,
+								error: 'Error adding map to scan',
+								message: 'Given scan id does not exist'
+						};
+						return reply(response).code(400);
 					}
 					if (!doc) {
-						return reply({error: 'Scan id not found'}).code(400);
+						var response = {
+								statusCode: 400,
+								error: 'Error adding map to scan',
+								message: 'Given scan id does not exist'
+						};
+						return reply(response).code(400);
 					}
 					else {
 						var newScan = doc;
@@ -1418,7 +1439,12 @@ exports.register = function(server, options, next) {
 						//check if map id is already in the scans mapIds array
 						for (var i = 0; i < doc.mapIds.length;i++) {
 							if (doc.mapIds[i] == mapId) {
-								return reply({error: 'Error adding map. Map id already exists in this scan'}).code(400);
+								var response = {
+										statusCode: 400,
+										error: 'Error adding map to scan',
+										message: 'Given map id already exists in this scan'
+								};
+								return reply(response).code(400);
 							}
 						}
 						
@@ -1434,7 +1460,7 @@ exports.register = function(server, options, next) {
 							location: doc.location,
 							
 						}, function () {
-							reply({messege: 'Map successfully updated'}).code(200);
+							reply({message: 'Map successfully updated'}).code(200);
 						});
 						
 					}

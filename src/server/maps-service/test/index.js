@@ -1877,12 +1877,12 @@ describe('maps-service', () => {
 				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
 				.set('authorization', 'Bearer' + token)
 				.send({
-						'id' : '5ac07481551fd72e64345127'
+						'id' : '5ad2e83bbee038280cc75185'
 				})
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
-					res.body.should.have.property('messege');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1894,12 +1894,14 @@ describe('maps-service', () => {
 				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
 				.set('authorization', 'Bearer' + token)
 				.send({
-						'id' : '5ac07481551fd72e64345127'
+						'id' : '5ad2e83bbee038280cc75185'
 				})
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1914,6 +1916,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1931,6 +1935,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1948,6 +1954,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1959,12 +1967,14 @@ describe('maps-service', () => {
 				.post('/scans/5ac181a44ef37e19f43f4e8f/maps')
 				.set('authorization', 'Bearer' + token)
 				.send({
-						'id' : '5ac07481551fd72e64345121'
+						'id' : '5ad2e83bbee038280cc75188'
 				})
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -1982,6 +1992,8 @@ describe('maps-service', () => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
 					res.body.should.have.property('error');
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
