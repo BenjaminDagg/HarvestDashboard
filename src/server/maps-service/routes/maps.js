@@ -518,95 +518,30 @@ exports.register = function(server, options, next) {
 			const objID = mongojs.ObjectId(id);
 			var response;
 			
-			//check database for scans of this id
-			db.collection('scans').find({profileId: id}, (err, doc) => {
+			//search database to check if user id exists
+			db.collection('user').findOne({_id: objID}, (err,doc) => {
+				
 				if (err) {
-					//error in database lookup
 					response = {
 							statusCode: 400,
-							error: 'Error searching for user maps',
-							message: 'No maps found for this user'
+							error: 'Error getting users maps',
+							message: 'Given user id does not exist'
 					};
 					return reply(response).code(400);
 				}
-				//no scans found for given user
 				else if (!doc) {
 					response = {
 							statusCode: 400,
-							error: 'Error searching for user maps',
-							message: 'No maps found for this user'
+							error: 'Error getting users maps',
+							message: 'Given user id does not exist'
 					};
 					return reply(response).code(400);
 				}
-				//scans found
 				else {
-					
-					
-					if (doc.length == 0) {
-						response = {
-								statusCode: 400,
-								error: 'Error searching for user maps',
-								message: 'No maps found for this user'
-						};
-						return reply(response).code(400);
-					}
-					
-					//array to hold map ids for every scan
-					var mapIds = new Array();
-					
-					//iterate over every fetched scan
-					//and insert its mapIds into the array
-					for (var i = 0; i < doc.length;i++) {
-						//current scan object
-						var obj = doc[i];
-						//scan object's maps array
-						var maps = obj.mapIds;
-						//iterate over map array and insert each id in the array
-						for (var j = 0; j < maps.length;j++) {
-							//create mapId obj then insert
-							mapIds.push(mongojs.ObjectId(maps[j].toString()));
-						}
-					}
-					
-					console.log(mapIds);
-					var query = {
-							_id: {
-								$in: mapIds
-							},
-							createdAt: null
-					};
-					
-					
-					//delete to and from keys from query if they are not given
-					if (!('from' in params) && !('to' in params)) {
-						delete query.createdAt;
-					}
-					else {
-						
-						//from and to both given
-						if (('from' in params) && ('to' in params)) {
-							query.createdAt = {
-									//create iso string from passed in date
-									$gte: params.from.toISOString(),
-									$lte: params.to.toISOString()
-							}
-						}
-						//only from given
-						else if ('from' in params) {
-							query.createdAt = {
-									$gte: params.from.toISOString()
-							};
-						}
-						//only to given
-						else {
-							query.createdAt = {
-									$lte: params.to.toISOString()
-							};
-						}
-					}
-					console.log(query);
-					db.Maps.find({_id: {$in: mapIds}}, (err,docs) => {
+					//check database for scans of this id
+					db.collection('scans').find({profileId: id}, (err, doc) => {
 						if (err) {
+							//error in database lookup
 							response = {
 									statusCode: 400,
 									error: 'Error searching for user maps',
@@ -614,32 +549,111 @@ exports.register = function(server, options, next) {
 							};
 							return reply(response).code(400);
 						}
-						
-						if (!docs || docs.length == 0) {
-							return reply(new Array()).code(200);
-						}
-						
-						var results = new Array();
-						for (var i = 0; i < docs.length;i++) {
-							var newMap = {
-									_id: docs[i]._id.toString(),
-									type: docs[i].type,
-									name: docs[i].name,
-									createdAt: docs[i].createdAt,
-									shape: docs[i].shape		
-							};
-							if (docs[i].data) {
-								newMap.data = docs[i].data;
-							}
-							results.push(newMap);
-							
-						}
-						return reply(results).code(200);
-					})
-					
-				}
 				
-			});
+						//scans found
+						else {
+							
+							if (!doc || doc.length == 0) {
+								return reply(new Array()).code(200);
+							}
+				
+							//array to hold map ids for every scan
+							var mapIds = new Array();
+					
+							//iterate over every fetched scan
+							//and insert its mapIds into the array
+							for (var i = 0; i < doc.length;i++) {
+								//current scan object
+								var obj = doc[i];
+								//scan object's maps array
+								var maps = obj.mapIds;
+								//iterate over map array and insert each id in the array
+								for (var j = 0; j < maps.length;j++) {
+									//create mapId obj then insert
+									mapIds.push(mongojs.ObjectId(maps[j].toString()));
+								}
+							}
+					
+					
+							var query = {
+									_id: {
+										$in: mapIds
+									},
+									createdAt: null
+							};
+					
+					
+							//delete to and from keys from query if they are not given
+							if (!('from' in params) && !('to' in params)) {
+								delete query.createdAt;
+							}
+							else {
+						
+								//from and to both given
+								if (('from' in params) && ('to' in params)) {
+									query.createdAt = {
+											//create iso string from passed in date
+											$gte: params.from.toISOString(),
+											$lte: params.to.toISOString()
+									}
+								}
+								//only from given
+								else if ('from' in params) {
+									query.createdAt = {
+											$gte: params.from.toISOString()
+									};
+								}
+								//only to given
+								else {
+									query.createdAt = {
+											$lte: params.to.toISOString()
+									};
+								}
+							}
+					
+							//search database for all maps in mapIds array
+							db.Maps.find(query, (err,docs) => {
+								//no documents found
+								if (err) {
+									response = {
+											statusCode: 400,
+											error: 'Error searching for user maps',
+											message: 'No maps found for this user'
+									};
+									return reply(response).code(400);
+								}
+						
+								//no matches in query. Return empty list
+								if (!docs || docs.length == 0) {
+									return reply(new Array()).code(200);
+								}
+						
+								//found the maps in database
+								//copy documents into array then return it
+								var results = new Array();
+								for (var i = 0; i < docs.length;i++) {
+									//copy document
+									var newMap = {
+											_id: docs[i]._id.toString(),
+											type: docs[i].type,
+											name: docs[i].name,
+											createdAt: docs[i].createdAt,
+											shape: docs[i].shape		
+									};
+									if (docs[i].data) {
+										newMap.data = docs[i].data;
+									}
+									results.push(newMap);
+							
+								}
+								return reply(results).code(200);
+							})
+					
+						}
+				
+					});
+				}
+			})
 		}
 	});
 	

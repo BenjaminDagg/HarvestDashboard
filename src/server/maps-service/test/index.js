@@ -539,7 +539,7 @@ describe('maps-service', () => {
 						res.body[i].should.have.property('name');
 						res.body[i].should.have.property('shape');
 						res.body[i].should.have.property('createdAt');
-						res.body[i].should.have.property('data');
+						
 					}
 					
 					
@@ -556,21 +556,23 @@ describe('maps-service', () => {
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
-				
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
 		
 		
 		
-		it('it should return an empty array if the user does not have any maps' , (done) => {
+		it('it should an empty array if the user does not have any maps' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id)
+				.get('/maps/user/5ad02ada415d0f27341bcfe2')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('array');
-					res.body.length.should.eql(0)
+					res.body.length.should.eql(0);
 					done();
 				});
 		});
@@ -584,7 +586,9 @@ describe('maps-service', () => {
 				.end((err, res) => {
 					res.should.have.status(400);
 					res.body.should.be.a('object');
+					res.body.should.have.property('statusCode');
 					res.body.should.have.property('error');
+					res.body.should.have.property('message');
 					done();
 				});
 		});
@@ -594,7 +598,7 @@ describe('maps-service', () => {
 		
 		it('it should be able to filter a users maps to only get maps older than a certain date' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id +'?from=03012018')
+				.get('/maps/user/' + testUser.id +'?from=2018-01-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -608,7 +612,7 @@ describe('maps-service', () => {
 		
 		it('it should be able to filter a users maps to only get maps newer than a certain date' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id +'?to=04012018')
+				.get('/maps/user/' + testUser.id +'?to=2018-04-14')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -622,7 +626,7 @@ describe('maps-service', () => {
 		
 		it('it should be able to the search to only maps falling in a certain time frame' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id +'?from=03282018&to=04012018')
+				.get('/maps/user/' + testUser.id +'?from=2018-01-01&to=2018-04-14')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -636,7 +640,7 @@ describe('maps-service', () => {
 		
 		it('it should return an empty array if no maps fall in the given time frame' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id +'?from=04012018&to=04302018')
+				.get('/maps/user/' + testUser.id +'?from=2018-05-01&to=2018-05-02')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
@@ -650,7 +654,7 @@ describe('maps-service', () => {
 		
 		it('it should return an empty array if the given time frame is invalid' , (done) => {
 			chai.request(url)
-				.get('/maps/user/' + testUser.id +'?from=04302018&to=04012018')
+				.get('/maps/user/' + testUser.id +'?from=2018-05-01&to=2018-04-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
