@@ -1059,6 +1059,22 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					//none
+				},
+				params: {
+					id: Joi.string().length(24).required()
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						scans: scanSchema
+					}),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -1068,32 +1084,48 @@ exports.register = function(server, options, next) {
 			//parse id from url
 			const id = request.params.id;
 			
-			//check if id format is valid
-			//must be 24 digit hex number
-			if (id.length != 24) {
-				const result = {
-						error: 'Invalid ID format. User ID must be 24 characters'
-				};
-				return reply(result).code(400);
-			}
 			
 			//create mongo id object
 			const objID = mongojs.ObjectId(id);
 			
 			db.collection('scans').findOne({_id: objID}, (err, doc) => {
+				//error in lookup
 				if (err) {
-					
-					return reply(err).code(400);
-				}
-				else if (!doc) {
-					response = {
-						error: 'Error scan not found'
+					var response = {
+							statusCode: 400,
+							error: 'Error retreiving scan from database',
+							message: 'Given scan id does not exist'
 					};
 					return reply(response).code(400);
 				}
+				//scan not found
+				else if (!doc) {
+					var response = {
+							statusCode: 400,
+							error: 'Error retreiving scan from database',
+							message: 'Given scan id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//scan found
 				else {
+					//copy scan from database into new object
+					var scan = {
+							_id: doc._id.toString(),
+							profileId: doc.profileId,
+							datetime: doc.datetime,
+							mapIds: doc.mapIds,
+							scannedValue: doc.scannedValue,
+							location: {
+								type: doc.location.type,
+								coordinates: doc.location.coordinates
+							}
+					};
+					if (doc.data) {
+						scan.data = doc.data;
+					}
 					const response = {
-						scans: doc
+						scans: scan
 					};
 					reply((response)).code(200);
 				}
