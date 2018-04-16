@@ -21,7 +21,7 @@ const testUser = {
 		firstname: "firstname",
 		lastname: "lastname",
 		id: "5abc5cfb73db43393856e365",
-		createdAt: "2018-02-28"
+		createdAt: "2018-04-12T21:56:30.814Z"
 };
 
 
@@ -109,21 +109,166 @@ describe('harvest api', () => {
 	
 	});
 	describe('/GET /harvest/meandist', () => {
-		it('it should return the mean distance between crates for all users from 03/31/2018 to 04/01/2018' , (done) => {
+		it('it should return the mean distance between crates for a given user in a given time frame' , (done) => {
 			chai.request(url)
-				.get('/harvest/meandist?from=03302018&to=04012018')
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
+					res.body.should.have.property('unit');
+					res.body.should.have.property('meandist');
+					res.body.should.have.property('distance');
+					
+					var dist = res.body.distance;
+					for (var key in dist) {
+						var obj = dist[key];
+						obj.should.have.property('scan');
+						var scan = obj.scan;
+						scan.should.have.property('_id');
+						scan.should.have.property('profileId');
+						scan.should.have.property('datetime');
+						scan.should.have.property('mapIds');
+						scan.should.have.property('scannedValue');
+						scan.should.have.property('location');
+						var location = scan.location;
+						location.should.have.property('type');
+						location.should.have.property('coordinates');
+						obj.should.have.property('time_frame');
+						obj.should.have.property('distance');
+					}
+					
 					done();
 				});
 		});
-		it('it should return the mean distance between crates for a specific user from 03/31/2018 to 04/01/2018' , (done) => {
+		it('it should return the mean distance between crates for a specific user' , (done) => {
 			chai.request(url)
-				.get('/harvest/meandist?from=03302018&to=04012018&id=5abc5cfb73db43393856e365')
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01&id=5abc5cfb73db43393856e365')
 				.set('authorization', 'Bearer' + token)
 				.end((err, res) => {
 					res.should.have.status(200);
+					res.body.should.have.property('unit');
+					res.body.should.have.property('meandist');
+					res.body.should.have.property('distance');
+					
+					var dist = res.body.distance;
+					for (var key in dist) {
+						var obj = dist[key];
+						obj.should.have.property('scan');
+						var scan = obj.scan;
+						scan.should.have.property('_id');
+						scan.should.have.property('profileId');
+						scan.should.have.property('datetime');
+						scan.should.have.property('mapIds');
+						scan.should.have.property('scannedValue');
+						scan.should.have.property('location');
+						var location = scan.location;
+						location.should.have.property('type');
+						location.should.have.property('coordinates');
+						obj.should.have.property('time_frame');
+						obj.should.have.property('distance');
+					}
+					done();
+				});
+		});
+		it('it should return 400 Bad Request if the given user id does not exist' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01&id=5abc5cfb73db43393856e366')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		it('it should empty results if the given time frame is invalid' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-05-01&to=2018-01-01&id=5abc5cfb73db43393856e365')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.have.property('unit');
+					res.body.should.have.property('meandist');
+					res.body.should.have.property('distance');
+					done();
+				});
+		});
+		it('it should be able to calculate distance with a given unit parameter' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01&id=5abc5cfb73db43393856e365&unit=kilometers')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(200);
+					res.body.should.have.property('unit');
+					res.body.should.have.property('meandist');
+					res.body.should.have.property('distance');
+					
+					var dist = res.body.distance;
+					for (var key in dist) {
+						var obj = dist[key];
+						obj.should.have.property('scan');
+						var scan = obj.scan;
+						scan.should.have.property('_id');
+						scan.should.have.property('profileId');
+						scan.should.have.property('datetime');
+						scan.should.have.property('mapIds');
+						scan.should.have.property('scannedValue');
+						scan.should.have.property('location');
+						var location = scan.location;
+						location.should.have.property('type');
+						location.should.have.property('coordinates');
+						obj.should.have.property('time_frame');
+						obj.should.have.property('distance');
+					}
+					done();
+				});
+		});
+		it('it should return 400 Bad Request if the given unit parameter is invalid' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01&id=5abc5cfb73db43393856e365&unit=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		it('it should return 400 Bad Request if an invalid query parameter is given' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-01-01&to=2018-05-01&id=5abc5cfb73db43393856e365&unit=miles&query=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		it('it should return 400 Bad Request if no from query is parameter is given' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?to=2018-05-01&id=5abc5cfb73db43393856e365&unit=invalid')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
+					done();
+				});
+		});
+		it('it should return 400 Bad Request if no to query is parameter is given' , (done) => {
+			chai.request(url)
+				.get('/harvest/meandist?from=2018-01-01&id=5abc5cfb73db43393856e365')
+				.set('authorization', 'Bearer' + token)
+				.end((err, res) => {
+					res.should.have.status(400);
+					res.body.should.have.property('statusCode');
+					res.body.should.have.property('error');
+					res.body.should.have.property('message');
 					done();
 				});
 		});

@@ -12,8 +12,11 @@ var http = require('http');
 var https = require('https');
 var request = require('request');
 var bodyParser = require('body-parser');
-
+var Joi = require('joi');
 var fs = require('fs');
+
+//schemas
+var errorSchema = require('../schemas/error/error-schema');
 
 
 
@@ -114,6 +117,7 @@ exports.register = function(server, options, next) {
 	 * 			required 'id': id of user who owns the scans
 	 * 			required 'to' (date) : start date in format MMDDYYYY
 	 * 			required 'from' (date) : end date in format MMDDYY
+	 * 			unit (string) : unit of distance
 	 * 
 	 * Response:
 	 * 		400 - invalid parameters given (probably wrong date format)
@@ -124,6 +128,27 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					from: Joi.date().required(),
+					to: Joi.date().required(),
+					id: Joi.string().length(24),
+					unit: Joi.string()
+				},
+				params: {
+					//none
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						unit: Joi.string().required(),
+						meandist: Joi.number().required(),
+						distance: Joi.object().required()
+					}),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -133,126 +158,160 @@ exports.register = function(server, options, next) {
 			//get query parameters from url
 			const params = request.query;
 			
-			//check if either data parameter is missing
-			if (!('from' in params) || !('to' in params)) {
-				return reply({error: 'Missing required parameters'}).code(400);
-			}
+			//id of user who is authenticated
+			const currUserId = request.auth.credentials.id;
 			
-			//parse parameters
-			var from = params.from;
-			var to = params.to;
-			var uid = params.id;
-			var query = (uid == undefined) ? {} : {profileId: uid};
-			//check if invalid dates
-			if (from.length != 8 || to.length != 8 || (formatDate(to) < formatDate(from))) {
-				return reply({error: 'Invalid date format. Date must be in format MMDDYYYY'}).code(400);
-			}
+			//query parameter to search for in database
+			var query = {
+					profileId: 'id' in params ? params.id : currUserId,
+					datetime: {
+						$gte: params.from.toISOString(),
+						$lte: params.to.toISOString()
+					}
+			};
 			
-			//get all scans from database that fir into this time period
-			db.collection('scans').find(query, (err, docs) => {
-					
-				//error searching database
-				if (err) {
-					return reply(err).code(500);
-				}
-				else if (!docs) {
-					return reply('No scans found').code(400);
-				}
-				from = formatDate(from);
-				to = formatDate(to);
-				
-				//get only scans withing the time frame
-				var scans = docs;
-				var validScans = new Array();
-
-				for (var i = 0; i < scans.length;i++) {
-					const date = formatDate(scans[i].datetime);
-
-					if (dateCheck(from,to,date) == true) {
-						validScans.push(scans[i]);
-					}
-				}
-				
-				//if no valid scans send a bad request
-				if (validScans.length == 0) {
-					return reply('No scans found in this time period').code(400);
-				}
-				
-				var distances = {}
-				
-				//calculate avg dist
-				//sort by date
-				validScans.sort(function (a,b) {
-					var dateA = formatDate(a.datetime);
-					var dateB = formatDate(b.datetime);
-					
-					var a = dateA.split('/');
-					var b = dateB.split('/');
-					
-					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
-				});
-				
-				
-			
-				var dist = 0;
-				var num_calculations = 0;
-				for (var i = validScans.length - 1; i > 0;i--) {
-					var coords1, coords2;
-					
-					
-					if (validScans[i].location.coordinates[0] instanceof Array) {
-						coords1 = validScans[i].location.coordinates[0];
-						
-					}
-					else {
-						coords1 = validScans[i].location.coordinates;
-						
-					}
-					
-					if (validScans[i - 1].location.coordinates[0] instanceof Array) {
-						coords2 = validScans[i - 1].location.coordinates[0];
-						
-					}
-					else {
-						coords2 = validScans[i - 1].location.coordinates;
-						
-					}
-					
-					
-					
-					const scan1 = {
-							lat: coords1[0],
-							lng: coords1[1]
-					};
-					
-					const scan2 = {
-							lat: coords2[0],
-							lng: coords2[1]
-					};
-					var d = turf_methods.distance(scan1,scan2,'miles');
-					dist += d;
-					var date2 = formatDateForGraph(validScans[i].datetime);
-					var date1 = formatDateForGraph(validScans[i-1].datetime);
-					
-					
-					var date = date2 + ' to ' + date1;
-					distances[validScans[i]._id] = {
-							time_frame : date,
-							distance: d
-					}
-					num_calculations ++;
-				}
-				
-				
-				
-				const meandist = {
-						meandist : dist / num_calculations,
-						distance: distances
+			const unit = 'unit' in params ? params.unit : 'miles';
+			if (unit != 'miles' && unit != 'kilometers' && unit != 'ft') {
+				var response = {
+						statusCode: 400,
+						error: 'Bad Request',
+						message: 'Unit query ' + unit + ' is invalid. Supported units are miles, kilometers and feet'
 				};
-				reply(meandist).code(200);
-				
-			})
+				return reply(response).code(400);
+			}
 			
+			
+			//check if given user id exists
+			const objId = mongojs.ObjectId(query.profileId);
+			db.collection('user').findOne({_id: objId}, (err, doc) => {
+				//user not found
+				if (err) {
+					var response = {
+							statusCode: 400,
+							error: 'Error getting crate data',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//id not found
+				else if (!doc) {
+					var response = {
+							statusCode: 400,
+							error: 'Error getting crate data',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//id found
+				else {
+					//get all scans from database that fir into this time period
+					db.collection('scans').find(query, (err, docs) => {
+							
+						//error searching database
+						if (err) {
+							return reply(err).code(500);
+						}
+					
+						//dictionary to hold distance data for each scan id
+						var distances = {}
+						
+						//calculate avg dist
+						//sort by date ascending order
+						docs.sort(function (a,b) {
+							return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
+						});
+						
+						
+						
+						//total distance
+						var dist = 0;
+						//number of records (used lated to calculate avg)
+						var num_calculations = 0;
+						//loop through scans backwards (oldest to newest)
+						for (var i = docs.length - 1; i > 0;i--) {
+							var coords1, coords2;
+							
+							//parse coordinates from scans
+							if (docs[i].location.coordinates[0] instanceof Array) {
+								coords1 = docs[i].location.coordinates[0];
+								
+							}
+							else {
+								coords1 = docs[i].location.coordinates;
+								
+							}
+							
+							if (docs[i - 1].location.coordinates[0] instanceof Array) {
+								coords2 = docs[i - 1].location.coordinates[0];
+								
+							}
+							else {
+								coords2 = docs[i - 1].location.coordinates;
+								
+							}
+							
+							
+							//older scan
+							const scan1 = {
+									lat: coords1[0],
+									lng: coords1[1]
+							};
+							//newer scan
+							const scan2 = {
+									lat: coords2[0],
+									lng: coords2[1]
+							};
+							
+							//get time difference between crates
+							var d1 = new Date(docs[i - 1].datetime);
+							var d2 = new Date(docs[i].datetime);
+							var time_diff = d2 - d1;
+							var time_diff_sec = time_diff / 60000;
+							
+							
+							//get distance between the scans
+							var d;
+							switch (unit) {
+								//if unit is feet get miles then convert to feet
+								case 'ft':
+									var miles = turf_methods.distance(scan1,scan2,'miles');
+									d = miles * 5280;
+									break;
+								//else just plug in unit
+								default:
+									d = turf_methods.distance(scan1,scan2,unit);
+							}
+							
+							
+							//add distance to total
+							dist += d;
+							
+							//get only YYYY-MM-dd component of datetime (used for graph)
+							var date2 = docs[i].datetime.slice(0,10);
+							var date1 = docs[i-1].datetime.slice(0,10);
+							
+							
+							var date = date1 + ' to ' + date2;
+							distances[docs[i]._id] = {
+									scan: docs[i],
+									time_frame : date,
+									distance: d
+							}
+							num_calculations ++;
+						}
+						
+						
+						
+						const meandist = {
+								unit: unit,
+								meandist : num_calculations > 0 ? dist / num_calculations : dist / 1,
+								distance: distances
+						};
+						reply(meandist).code(200);
+						
+					})
+				}
+			})
 			
 		}
 	});

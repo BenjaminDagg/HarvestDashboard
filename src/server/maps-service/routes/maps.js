@@ -2,6 +2,11 @@
  * Routes for the maps api
  */
 
+/*
+ * TODO 
+ * make route to get all fields of a user
+ */
+
 const mongojs = require('mongojs');
 var Joi = require('joi');
 var moment = require('moment');
