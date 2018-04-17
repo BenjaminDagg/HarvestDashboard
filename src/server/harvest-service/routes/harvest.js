@@ -14,6 +14,9 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var Joi = require('joi');
 var fs = require('fs');
+var moment = require('moment');
+//utc offset for Pacific Standard Time (8 hours behind)
+const utcOffsetPST = "-8:00"
 
 //schemas
 var errorSchema = require('../schemas/error/error-schema');
@@ -335,6 +338,15 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					date: Joi.date().required(),
+					id: Joi.string().length(24)
+				},
+				params: {
+					//none
+				}
 			}
 		},
 		method: 'GET',
@@ -344,28 +356,60 @@ exports.register = function(server, options, next) {
 			//get query parameters from url
 			const params = request.query;
 			
-			if (!('date' in params)) {
-				return reply('Missing parameters').code(400);
-			}
 			
-			const date = params.date;
-			var uid = params.id;
-			var query = (uid == undefined) ? {datetime: date} : {profileId: uid, datetime: date}; 
-			//check if date is in invalid format
-			if (date.length != 8) {
-				return reply('Missing parameters').code(400);
-			}
+			var startDate = params.date.toISOString();
+			var endDate = moment(startDate).add(1, 'days').toISOString();
 			
-			db.collection('scans').find({datetime: date}, function (err, docs) {
+			
+			var currUserId = request.auth.credentials.id;
+			var profileId = 'id' in params ? params.id : currUserId;
+			
+			var query = {
+					datetime: {
+						$gte: startDate,
+						$lte: endDate
+					},
+					profileId: profileId
+			};
+			
+			//search database to see if given user id is valid
+			const objId = mongojs.ObjectId(profileId);
+			db.collection('user').findOne({_id: objId}, (err, doc) => {
+				//user not found
 				if (err) {
-					return reply('Error getting crate data.' + err).code(400);
+					var response = {
+							statusCode: 400,
+							error: 'Error getting crate data',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
 				}
-				const response = {
-						numCrates: docs.length,
-						crates: docs
-				};
-				return reply(response).code(200);
+				//id not found
+				else if (!doc) {
+					var response = {
+							statusCode: 400,
+							error: 'Error getting crate data',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				else {
+				
+					db.collection('scans').find(query, function (err, docs) {
+						if (err) {
+							return reply('Error getting crate data.' + err).code(400);
+						}
+						const response = {
+								numCrates: docs.length,
+								crates: docs
+						};
+						return reply(response).code(200);
+					})
+				}
 			})
+			
+			
+			
 		
 		}
 	});
@@ -389,6 +433,16 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					id: Joi.string().length(24),
+					from: Joi.date().required(),
+					to: Joi.date().required()
+				},
+				params: {
+					//none
+				}
 			}
 		},
 		method: 'GET',
@@ -398,73 +452,106 @@ exports.register = function(server, options, next) {
 			//get query parameters from url
 			const params = request.query;
 			
-			//check if either data parameter is missing
-			if (!('from' in params) || !('to' in params)) {
-				return reply({error: 'Missing parameters.'}).code(400);
-			}
+			var d = moment().utc(utcOffsetPST).format();
 			
-			//parse parameters
-			var from = formatDate(params.from);
-			var to = formatDate(params.to);
-			var uid = params.id;
-			var query = (uid == undefined) ? {} : {profileId: uid};
 			
-			//check if invalid dates
-			if (from.length != 10 || to.length != 10 || (formatDate(to) < formatDate(from))) {
-				return reply('Invalid date format').code(400);
-			}
+			const currUserId = request.auth.credentials.id;
+			const profileId = 'id' in params ? params.id : currUserId;
 			
-			//get all scans from database that fir into this time period
-			db.collection('scans').find(query, (err, docs) =>{
+			
+			
+			var query = {
+					profileId: profileId,
+					datetime: null
+			};
+			
+			if (params.from.toISOString() == params.to.toISOString()) {
+				var endDate = moment(params.to).add(1, 'days').toISOString();
 				
-				//error searching database
+				query.datetime = {
+						//create iso string from passed in date
+						$gte: params.from.toISOString(),
+						$lte: endDate
+				}
+
+				
+				
+			}
+			else {
+				query.datetime = {
+						//create iso string from passed in date
+						$gte: params.from.toISOString(),
+						$lte: params.to.toISOString()
+				}
+			}
+			
+			
+			//check if given user id is valid
+			db.collection('user').findOne({_id: mongojs.ObjectId(profileId)}, (err,doc) => {
 				if (err) {
-					return reply(err).code(500);
-				}
-				
-				
-				
-				//get only scans withing the time frame
-				var scans = docs;
-				var validScans = new Array();
-
-				for (var i = 0; i < scans.length;i++) {
-					const date = formatDate(scans[i].datetime);
-
-					if (dateCheck(from,to,date) == true) {
-						validScans.push(scans[i]);
+					var response = {
+							statusCode: 400,
+							error: 'Error getting scan data',
+							message: 'ser id not found'
 					}
+					return reply(response).code(400);
 				}
-				
-				//get number of crates for each day in the time frame
-				var cratesPerDay = {};
-				for (var i = 0 ; i < validScans.length;i++) {
-					//MMDDYYYY
-					//YYYY-MM-DD
-					var date = formatDate(validScans[i].datetime);
-					var occurences = 0;
-					for (var j = 0; j < validScans.length;j++) {
-						if (formatDate(validScans[j].datetime) == date) {
-							occurences++;
-							
+				else if (!doc) {
+					var response = {
+							statusCode: 400,
+							error: 'Error getting scan data',
+							message: 'ser id not found'
+					}
+					return reply(response).code(400);
+				}
+				else {
+					//get all scans from database that fir into this time period
+					db.collection('scans').find(query, (err, docs) =>{
+						
+						//error searching database
+						if (err) {
+							var response = {
+									statusCode: 400,
+									error: 'Error getting scan data',
+									message: 'Scan not found'
+							}
+							return reply(response).code(400);
 						}
 						
-					}
-					
-					cratesPerDay[formatDateForGraph(validScans[i].datetime)] = occurences;
-				}
-				
-				const response = {
-						numCrates: validScans.length,
-						cratesPerDay: cratesPerDay,
-						crates: validScans
 						
-				};
-				return reply(response).code(200);
-				
+						
+						//get only scans withing the time frame
+						var scans = docs;
+						
+						//get number of crates for each day in the time frame
+						var cratesPerDay = {};
+						for (var i = 0 ; i < scans.length;i++) {
+							//MMDDYYYY
+							//YYYY-MM-DD
+							var date = scans[i].datetime.slice(0,10);
+							var occurences = 0;
+							for (var j = 0; j < scans.length;j++) {
+								if (docs[j].datetime.slice(0,10) == date) {
+									occurences++;
+									
+								}
+								
+							}
+							
+							cratesPerDay[date] = occurences;
+						}
+						
+						var response = {
+								numCrates: scans.length,
+								cratesPerDay: cratesPerDay,
+								crates: scans
+								
+						};
+						return reply(response).code(200);
+						
+					})
+				}
 			})
-			
-			
 		}
 	});
 	
@@ -522,7 +609,7 @@ exports.register = function(server, options, next) {
 					var date = formatDate(docs[i].datetime);
 					if (dateCheck(fromDate,toDate,date) == true) {
 						validScans.push(docs[i]);
-						console.log(docs[i]);
+						
 					}
 				}
 				

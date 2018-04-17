@@ -35,138 +35,13 @@ function isEmptyObject(obj) {
 }
 
 
-//formats date from MMDDYYYY or YYYY-MM-DD to MM/DD/YYYY
-function formatDate(date) {
-	if (date.length != 8 && date.length != 10) {
-		return date;
-	}
-	
-	//converting from YYYY-MM-DD to MM/DD/YYYY
-	if (date.indexOf('-') > -1) {
-		
-		newDate = date.slice(5,7) + '/' + date.slice(8, date.length) + '/' + date.slice(0,4);
-		return newDate;
-	}
-	//converting from MMDDYYYY to MM/DD/YYYY
-	else {
-		
-		return date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
-	}
-	
-}
-
-//checks if date check is within the dates from and to
-function dateCheck(from,to,check) {
-
-    var fromDate,toDate,currDate;
-    fromDate = Date.parse(from);
-    toDate = Date.parse(to);
-    currDate = Date.parse(check);
-    
-    if (to == '') {
-    	return currDate >= fromDate;
-    }
-    else if (from == '') {
-    	return currDate <= toDate
-    }
-    else {
-    	if((currDate <= toDate && currDate >= fromDate)) {
-            return true;
-        }else {
-        return false;
-        
-        }
-    }
-    
-}
-
-//formats andy date string into an ISO date
-function formatDateISO(date) {
-	
-	//iso regex
-	var iso = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d/;
-	
-	
-	
-	if (!date) {
-		var currDay = new Date().getDay();
-		var currMonth = new Date().getMonth() + 1;
-		
-		var month = Math.floor(Math.random() * (4 - 2 + 1)) + 2;
-		var day = Math.floor(Math.random() * (13 - 1 + 1)) + 1;
-		var year = '2018';
-		if (day < 10) {
-			day = '0' + day;
-		}
-		
-		var d = year + '-' + '0' + month + '-' + day;
-		
-		return formatDateISO(d);
-	}
-	
-	
-	//date is already in ISO format
-	else if (iso.test(date)) {
-		console.log('is iso');
-		return date;
-	}
-	//convert YYYY-MM-dd -> ISO
-	else if(date.indexOf('-') > -1 && date.length == 10) {
-		
-		var isoDate = moment().utc(utcOffsetPST).toISOString();
-		var newDate = date + isoDate.slice(10,isoDate.length);
-		
-		return newDate;
-	}
-	//convert MM/dd/YYYY -> ISO
-	else if (date.indexOf('/') > -1 && date.length == 10) {
-		var d = date.slice(4,10) + '-' + date.slice(0,2) + '-' + date.slice(2,4);
-		return formatDateISO(d);
-	}
-	//convert MMddYYYY -> ISO
-	else if (date.indexOf('-') < 0 && date.indexOf('/') < 0 && date.length == 8) {
-		var d = date.slice(0, 2) + "/" + date.slice(2, 4) + "/" + date.slice(4, 8);
-		return formatDate(d);
-	}
-	else if (date.indexOf(':') > -1 && date.length == 19) {
-		var newDate = date.slice(0,10).replace(/:/g, '-');
-		var time = 'T' + date.slice(11,19) + '.' + (Math.floor(Math.random() * (999 - 100 + 1)) + 100) + 'z';
-		return formatDate(newDate + time);
-	}
-	
-}
 
 exports.register = function(server, options, next) {
 	
 	const db = server.app.db;
 	
-	/*
-	server.route({
-		method: 'GET',
-		path: '/updatedates',
-		handler: function(request, reply) {
-			var scans = {};
-			db.Maps.find((err, docs) => {
-				for (var i = 0; i < docs.length;i++) {
-					var objID = mongojs.ObjectId(docs[i]._id);
-					var date = formatDateISO(docs[i].createdAt);
-					
-					
-					db.Maps.findAndModify({
-						query: {_id: objID},
-						update: {$set: {createdAt: date}},
-				
-					}, function(err, doc, lastErrorObject) {
-						
-					})
-					
-					
-				}
-				return reply('hello');
-			})
-		}
-	});
-	*/
+	
+	
 	
 	// ******************* Maps **********************
 	
@@ -227,14 +102,33 @@ exports.register = function(server, options, next) {
 					delete query.createdAt;
 				}
 				else {
-					
 					//from and to both given
 					if (('from' in params) && ('to' in params)) {
-						query.createdAt = {
-								//create iso string from passed in date
-								$gte: params.from.toISOString(),
-								$lte: params.to.toISOString()
+						
+						if (params.to.toISOString() == params.from.toISOString()) {
+							
+							//given date at midnight
+							var startDate = moment(params.to).toISOString();
+							//given date next day
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							
+							query.createdAt = {
+									$gte: startDate,
+									$lte: endDate
+							};
+							
 						}
+						
+						else {
+							query.createdAt = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lt: params.to.toISOString()
+							}
+						
+						}
+						
+						
 					}
 					//only from given
 					else if ('from' in params) {
@@ -244,8 +138,9 @@ exports.register = function(server, options, next) {
 					}
 					//only to given
 					else {
+						
 						query.createdAt = {
-								$lte: params.to.toISOString()
+								$lte: params.to.toISOString() 
 						};
 					}
 				}
@@ -369,7 +264,7 @@ exports.register = function(server, options, next) {
 			const map = request.payload;
 		
 			//creates date in ISO format and assigns it to user createdAt
-			var date = moment().utc(utcOffsetPST).toISOString(); 
+			var date = moment().utc(utcOffsetPST).format();
 		    map.createdAt = date;
 			
 		    //insert into database
@@ -594,14 +489,33 @@ exports.register = function(server, options, next) {
 								delete query.createdAt;
 							}
 							else {
-						
 								//from and to both given
 								if (('from' in params) && ('to' in params)) {
-									query.createdAt = {
-											//create iso string from passed in date
-											$gte: params.from.toISOString(),
-											$lte: params.to.toISOString()
+									
+									if (params.to.toISOString() == params.from.toISOString()) {
+										
+										//given date at midnight
+										var startDate = moment(params.to).toISOString();
+										//given date next day
+										var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+										
+										query.createdAt = {
+												$gte: startDate,
+												$lte: endDate
+										};
+										
 									}
+									
+									else {
+										query.createdAt = {
+												//create iso string from passed in date
+												$gte: params.from.toISOString(),
+												$lt: params.to.toISOString()
+										}
+									
+									}
+									
+									
 								}
 								//only from given
 								else if ('from' in params) {
@@ -611,8 +525,9 @@ exports.register = function(server, options, next) {
 								}
 								//only to given
 								else {
+									
 									query.createdAt = {
-											$lte: params.to.toISOString()
+											$lte: params.to.toISOString() 
 									};
 								}
 							}
@@ -722,21 +637,66 @@ exports.register = function(server, options, next) {
 					profileId: null,
 					datetime: null
 			};
-	
-	
-			//delete to and from keys from query if they are not given
+			
+			//parse given dates and build date query
+			
+			//no date query parameters given. Delete datetime key from query
 			if (!('from' in params) && !('to' in params)) {
 				delete query.datetime;
 			}
+			//date queries given
 			else {
-		
 				//from and to both given
 				if (('from' in params) && ('to' in params)) {
-					query.datetime = {
-							//create iso string from passed in date
-							$gte: params.from.toISOString(),
-							$lte: params.to.toISOString()
+					
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
+						
+						query.datetime = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
 					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
+							query.datetime = {
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							};
+						}
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
+						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							console.log('enddate = ' + endDate);
+							query.datetime = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: endDate
+							}
+						}
+						
+					
+					}
+					
+					
 				}
 				//only from given
 				else if ('from' in params) {
@@ -746,20 +706,23 @@ exports.register = function(server, options, next) {
 				}
 				//only to given
 				else {
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					console.log('enddate = ')
 					query.datetime = {
-							$lte: params.to.toISOString()
+							$lte: endDate
 					};
 				}
 			}
+			
 			//if id passed as a query parameter set profileid to it
 			if ('id' in params) {
 				query.profileId = params.id;
 			}
-			//if no id query paramter delete profileid key from query
+			//if no id query paramter then defualt to currently logged in user
 			else {
-				delete query.profileId;
+				query.profileId = request.auth.credentials.id;
 			}
-			
+			console.log(query);
 			// first check if the given user id exists
 			db.collection('user').findOne({_id: query._id}, (err, doc) => {
 				//id not found return 4o0 bad request
@@ -897,7 +860,7 @@ exports.register = function(server, options, next) {
 			
 			
 			//creates date in ISO format and assigns it to scan datetime
-			var date = moment().utc(utcOffsetPST).toISOString(); 
+			var date = moment().utc(utcOffsetPST).format();
 		    scan.datetime = date;
 			
 			//add scan to database
@@ -1524,19 +1487,63 @@ exports.register = function(server, options, next) {
 			};
 	
 	
-			//delete to and from keys from query if they are not given
+			//no date query parameters given. Delete datetime key from query
 			if (!('from' in params) && !('to' in params)) {
 				delete query.datetime;
 			}
+			//date queries given
 			else {
-		
 				//from and to both given
 				if (('from' in params) && ('to' in params)) {
-					query.datetime = {
-							//create iso string from passed in date
-							$gte: params.from.toISOString(),
-							$lte: params.to.toISOString()
+					
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
+						
+						query.datetime = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
 					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
+							query.datetime = {
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							};
+						}
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
+						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							console.log('enddate = ' + endDate);
+							query.datetime = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: endDate
+							}
+						}
+						
+					
+					}
+					
+					
 				}
 				//only from given
 				else if ('from' in params) {
@@ -1546,8 +1553,10 @@ exports.register = function(server, options, next) {
 				}
 				//only to given
 				else {
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					console.log('enddate = ')
 					query.datetime = {
-							$lte: params.to.toISOString()
+							$lte: endDate
 					};
 				}
 			}
