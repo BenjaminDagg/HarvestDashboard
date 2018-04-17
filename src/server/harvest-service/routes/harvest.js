@@ -167,11 +167,69 @@ exports.register = function(server, options, next) {
 			//query parameter to search for in database
 			var query = {
 					profileId: 'id' in params ? params.id : currUserId,
-					datetime: {
-						$gte: params.from.toISOString(),
-						$lte: params.to.toISOString()
-					}
+					datetime: null
 			};
+			
+			//no date query parameters given. Delete datetime key from query
+			if (!('from' in params) && !('to' in params)) {
+				delete query.datetime;
+			}
+			//date queries given
+			else {
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					console.log(' in to and from');
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
+						
+						query.datetime = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
+					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
+							query.datetime = {
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							};
+						}
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
+						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							console.log('enddate = ' + endDate);
+							query.datetime = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: endDate
+							}
+						}
+						
+					
+					}
+					
+					
+				}
+				
+			}
 			
 			const unit = 'unit' in params ? params.unit : 'miles';
 			if (unit != 'miles' && unit != 'kilometers' && unit != 'ft') {
@@ -207,6 +265,7 @@ exports.register = function(server, options, next) {
 				}
 				//id found
 				else {
+					console.log(query);
 					//get all scans from database that fir into this time period
 					db.collection('scans').find(query, (err, docs) => {
 							
@@ -224,7 +283,29 @@ exports.register = function(server, options, next) {
 							return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
 						});
 						
-						
+						//only one or zero d\ocuments gotten
+						if (docs.length <= 1) {
+							distances[docs[0]._id] = {
+									scan: {
+										_id: docs[0]._id.toString(),
+										profileId: docs[0].profileId,
+										mapIds: docs[0].mapIds,
+										scannedValue: docs[0].scannedValue,
+										
+										location: docs[0].location,
+										date: docs[0].data,
+										datetime: docs[0].datetime
+									},
+									time_frame: docs[0].datetime.slice(0,10) + ' to ' + docs[0].datetime.slice(0,10),
+									distance: 0
+							};
+							const meandist = {
+									unit: unit,
+									meandist : 0,
+									distance: distances
+							};
+							return reply(meandist).code(200);
+						}
 						
 						//total distance
 						var dist = 0;
@@ -235,6 +316,8 @@ exports.register = function(server, options, next) {
 							var coords1, coords2;
 							
 							//parse coordinates from scans
+							//scan coordinates is either array of coordinate arrays
+							//or just 1 array with the coordinates
 							if (docs[i].location.coordinates[0] instanceof Array) {
 								coords1 = docs[i].location.coordinates[0];
 								
@@ -296,11 +379,38 @@ exports.register = function(server, options, next) {
 							
 							var date = date1 + ' to ' + date2;
 							distances[docs[i]._id] = {
-									scan: docs[i],
+									scan: {
+										_id: docs[i]._id.toString(),
+										profileId: docs[i].profileId,
+										mapIds: docs[i].mapIds,
+										scannedValue: docs[i].scannedValue,
+										
+										location: docs[i].location,
+										date: docs[i].data,
+										datetime: docs[i].datetime
+									},
 									time_frame : date,
 									distance: d
 							}
 							num_calculations ++;
+							
+							//last loop add the docs[0] which is left out of loop
+							if (i == 1) {
+								distances[docs[i-1]._id] = {
+										scan: {
+											_id: docs[0]._id.toString(),
+											profileId: docs[0].profileId,
+											mapIds: docs[0].mapIds,
+											scannedValue: docs[0].scannedValue,
+											
+											location: docs[0].location,
+											date: docs[0].data,
+											datetime: docs[0].datetime
+										},
+										time_frame: distances[docs[i]._id].time_frame,
+										distance: distances[docs[i]._id].distance
+								}
+							}
 						}
 						
 						
