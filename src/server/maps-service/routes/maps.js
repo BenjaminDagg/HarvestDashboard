@@ -71,6 +71,12 @@ exports.register = function(server, options, next) {
 					from: Joi.date(),
 					to: Joi.date()
 				}
+			},
+			response: {
+				status: {
+					200: Joi.array().items(mapSchema),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -79,146 +85,127 @@ exports.register = function(server, options, next) {
 			
 			const params = request.query;
 			
-			//query parameters were given
-			if (!isEmptyObject(params)) {
-				
-				//build query object
-				var query = {
-						_id: null,
-						createdAt: null
-				};
-				
-				//check if id was given
-				if ('id' in params) {
-					query._id = mongojs.ObjectId(params.id);
-				}
-				else {
-					//remove _id key from query if no id gien
-					delete query._id;
-				}
-				
-				//delete to and from keys from query if they are not given
-				if (!('from' in params) && !('to' in params)) {
-					delete query.createdAt;
-				}
-				else {
-					//from and to both given
-					if (('from' in params) && ('to' in params)) {
+			//build query object
+			var query = {
+					_id: null,
+					createdAt: null
+			};
+			
+			//check if id was given
+			if ('id' in params) {
+				query._id = mongojs.ObjectId(params.id);
+			}
+			else {
+				//remove _id key from query if no id gien
+				delete query._id;
+			}
+			
+			//no date query parameters given. Delete datetime key from query
+			if (!('from' in params) && !('to' in params)) {
+				delete query.createdAt;
+			}
+			//date queries given
+			else {
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
 						
-						if (params.to.toISOString() == params.from.toISOString()) {
-							
-							//given date at midnight
-							var startDate = moment(params.to).toISOString();
-							//given date next day
-							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-							
+						query.createdAt = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
+					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
 							query.createdAt = {
-									$gte: startDate,
-									$lte: endDate
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
 							};
-							
 						}
-						
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
 						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							console.log('enddate = ' + endDate);
 							query.createdAt = {
 									//create iso string from passed in date
 									$gte: params.from.toISOString(),
-									$lt: params.to.toISOString()
+									$lte: endDate
 							}
-						
 						}
 						
-						
+					
 					}
-					//only from given
-					else if ('from' in params) {
-						query.createdAt = {
-								$gte: params.from.toISOString()
-						};
-					}
-					//only to given
-					else {
-						
-						query.createdAt = {
-								$lte: params.to.toISOString() 
-						};
-					}
+					
+					
 				}
-				
-				//search database pass in query object
-				db.Maps.find(query ,(err, docs) => {
-					
-					if (err) {
-						console.log('in error');
-						var response = {
-							statusCode: 400,
-							error: 'Error Searching for maps',
-							message: 'No maps found'
-						};
-						return reply(response).code(400);
-					}
-					
-					//no results return empty array
-					if (docs.length == 0 || !docs) {
-						return reply(new Array()).code(200);
-					}
-					
-					//copy docs into array before returning
-					var maps = new Array();
-					for (var i = 0; i < docs.length; i++) {
-						
-						
-						var newMap = {
-								_id: docs[i]._id.toString(),
-								type: docs[i].type,
-								name: docs[i].name,
-								createdAt: docs[i].createdAt,
-								shape: docs[i].shape,
-								data: docs[i].data
-						};
-						maps.push(newMap);
-					}
-					return reply(maps).code(200);
-				})
+				//only from given
+				else if ('from' in params) {
+					query.createdAt = {
+							$gte: params.from.toISOString()
+					};
+				}
+				//only to given
+				else {
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					console.log('enddate = ')
+					query.createdAt = {
+							$lte: endDate
+					};
+				}
 			}
-			//no query parameters given
-			else {
+			console.log(query);
+			//search database pass in query object
+			db.Maps.find({} ,(err, docs) => {
 				
-				//return all maps 
-				db.Maps.find({}, (err, docs) => {
+				if (err) {
+					console.log('in error');
+					var response = {
+						statusCode: 400,
+						error: 'Error Searching for maps',
+						message: 'No maps found'
+					};
+					return reply(response).code(400);
+				}
+				console.log(docs);
+				
+				
+				//copy docs into array before returning
+				var maps = new Array();
+				for (var i = 0; i < docs.length; i++) {
 					
-					if (err) {
-						var response = {
-								statusCode: 400,
-								error: 'Error Searching for maps',
-								message: 'No maps found'
-							};
-							return reply(response).code(400);
-					}
 					
-					if (docs.length == 0 || !docs) {
-						return reply(new Array()).code(200);
-					}
-					
-					var maps = new Array();
-					for (var i = 0; i < docs.length; i++) {
-						var newMap = {
-								_id: docs[i]._id.toString(),
-								type: docs[i].type,
-								name: docs[i].name,
-								createdAt: docs[i].createdAt,
-								shape: docs[i].shape,
-								data: docs[i].data
-						};
-						maps.push(newMap);
-					}
-					return reply(maps).code(200);
-				})
-			}
-			
-			
-			
-			
+					var newMap = {
+							_id: docs[i]._id.toString(),
+							type: docs[i].type,
+							name: docs[i].name,
+							createdAt: docs[i].createdAt,
+							shape: docs[i].shape,
+							data: docs[i].data
+					};
+					maps.push(newMap);
+				}
+				return reply(maps).code(200);
+			})
 		}
 	}); 
 	
@@ -484,20 +471,27 @@ exports.register = function(server, options, next) {
 							};
 					
 					
-							//delete to and from keys from query if they are not given
+							//no date query parameters given. Delete datetime key from query
 							if (!('from' in params) && !('to' in params)) {
 								delete query.createdAt;
 							}
+							//date queries given
 							else {
 								//from and to both given
 								if (('from' in params) && ('to' in params)) {
 									
+									//midnight of given start date
+									var startDate = moment(params.to).toISOString();
+									//11:59 PM of given end date
+									var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+									
+									//midnight of given end date
+									var startTo = moment(params.to).utc().startOf('day').toISOString();
+									
+									//if searching for a given day in format YYYY-MM-DD and both days on same date
+									//then make start 11:59 PM of the prev day and make end search
+									//midnight of target day
 									if (params.to.toISOString() == params.from.toISOString()) {
-										
-										//given date at midnight
-										var startDate = moment(params.to).toISOString();
-										//given date next day
-										var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
 										
 										query.createdAt = {
 												$gte: startDate,
@@ -505,13 +499,31 @@ exports.register = function(server, options, next) {
 										};
 										
 									}
-									
+									//given from and start dates are on different days
+									//now narrow down search to see if they have time properties
+									//in format YYYY-MM-DDTHH:mm:ss
 									else {
-										query.createdAt = {
-												//create iso string from passed in date
-												$gte: params.from.toISOString(),
-												$lt: params.to.toISOString()
+										//if the given end date specifies a specific time on that day
+										//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+										if (params.to.toISOString() > startTo) {
+											console.log('greater');
+											query.createdAt = {
+													$gte: params.from.toISOString(),
+													$lte: params.to.toISOString()
+											};
 										}
+										//no specific time given on end date so search in time frame
+										//from given start date to the given end date at 11:59 PM
+										else {
+											var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+											console.log('enddate = ' + endDate);
+											query.createdAt = {
+													//create iso string from passed in date
+													$gte: params.from.toISOString(),
+													$lte: endDate
+											}
+										}
+										
 									
 									}
 									
@@ -525,9 +537,10 @@ exports.register = function(server, options, next) {
 								}
 								//only to given
 								else {
-									
+									var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+									console.log('enddate = ')
 									query.createdAt = {
-											$lte: params.to.toISOString() 
+											$lte: endDate
 									};
 								}
 							}

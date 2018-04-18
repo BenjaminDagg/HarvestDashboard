@@ -544,7 +544,8 @@ exports.register = function(server, options, next) {
 				query: {
 					id: Joi.string().length(24),
 					from: Joi.date().required(),
-					to: Joi.date().required()
+					to: Joi.date().required(),
+					groupBy: Joi.string()
 				},
 				params: {
 					//none
@@ -575,7 +576,16 @@ exports.register = function(server, options, next) {
 			const currUserId = request.auth.credentials.id;
 			const profileId = 'id' in params ? params.id : currUserId;
 			
+			var groupBy = 'groupBy' in params ? params.groupBy : 'day';
 			
+			if (groupBy != 'hr' && groupBy != 'day') {
+				var response = {
+						statusCode: 400,
+						error: 'Invalid groupBy parameter given',
+						message: 'Group by must either be value day or hr'
+				};
+				return reply(response).code(400);
+			}
 			
 			var query = {
 					profileId: profileId,
@@ -705,17 +715,33 @@ exports.register = function(server, options, next) {
 						for (var i = 0 ; i < scans.length;i++) {
 							//MMDDYYYY
 							//YYYY-MM-DD
-							var date = scans[i].datetime.slice(0,10);
-							var occurences = 0;
-							for (var j = 0; j < scans.length;j++) {
-								if (docs[j].datetime.slice(0,10) == date) {
-									occurences++;
-									
-								}
-								
-							}
 							
-							cratesPerDay[scans[i].datetime] = occurences;
+							if (params.to.toISOString().slice(0,10) == params.from.toISOString().slice(0,10) ||
+									groupBy == 'hr') {
+								console.log('in');
+								var date = scans[i].datetime.slice(0,13);
+								var occurences = 0;
+								for (var j = 0; j < scans.length;j++) {
+									if (docs[j].datetime.slice(0,13) == date) {
+										occurences++;
+										
+									}
+									cratesPerDay[date + ':00:00Z'] = occurences;
+								}
+							}
+							else {
+								var date = scans[i].datetime.slice(0,10);
+								var occurences = 0;
+								for (var j = 0; j < scans.length;j++) {
+									if (docs[j].datetime.slice(0,10) == date) {
+										occurences++;
+									
+									}
+								
+								}
+							
+								cratesPerDay[date] = occurences;
+							}
 						}
 						
 						var response = {
