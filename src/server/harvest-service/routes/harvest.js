@@ -20,7 +20,7 @@ const utcOffsetPST = "-8:00"
 
 //schemas
 var errorSchema = require('../schemas/error/error-schema');
-
+var scanSchema = require('../schemas/scan/scan-schema');
 
 
 
@@ -178,7 +178,7 @@ exports.register = function(server, options, next) {
 			else {
 				//from and to both given
 				if (('from' in params) && ('to' in params)) {
-					console.log(' in to and from');
+					
 					//midnight of given start date
 					var startDate = moment(params.to).toISOString();
 					//11:59 PM of given end date
@@ -205,7 +205,7 @@ exports.register = function(server, options, next) {
 						//if the given end date specifies a specific time on that day
 						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
 						if (params.to.toISOString() > startTo) {
-							console.log('greater');
+							
 							query.datetime = {
 									$gte: params.from.toISOString(),
 									$lte: params.to.toISOString()
@@ -215,7 +215,7 @@ exports.register = function(server, options, next) {
 						//from given start date to the given end date at 11:59 PM
 						else {
 							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-							console.log('enddate = ' + endDate);
+							
 							query.datetime = {
 									//create iso string from passed in date
 									$gte: params.from.toISOString(),
@@ -265,7 +265,7 @@ exports.register = function(server, options, next) {
 				}
 				//id found
 				else {
-					console.log(query);
+				
 					//get all scans from database that fir into this time period
 					db.collection('scans').find(query, (err, docs) => {
 							
@@ -284,7 +284,7 @@ exports.register = function(server, options, next) {
 						});
 						
 						//only one or zero d\ocuments gotten
-						if (docs.length <= 1) {
+						if (docs.length == 1) {
 							distances[docs[0]._id] = {
 									scan: {
 										_id: docs[0]._id.toString(),
@@ -293,7 +293,7 @@ exports.register = function(server, options, next) {
 										scannedValue: docs[0].scannedValue,
 										
 										location: docs[0].location,
-										date: docs[0].data,
+										data: docs[0].data,
 										datetime: docs[0].datetime
 									},
 									time_frame: docs[0].datetime.slice(0,10) + ' to ' + docs[0].datetime.slice(0,10),
@@ -348,11 +348,7 @@ exports.register = function(server, options, next) {
 									lng: coords2[1]
 							};
 							
-							//get time difference between crates
-							var d1 = new Date(docs[i - 1].datetime);
-							var d2 = new Date(docs[i].datetime);
-							var time_diff = d2 - d1;
-							var time_diff_sec = time_diff / 60000;
+							
 							
 							
 							//get distance between the scans
@@ -386,7 +382,7 @@ exports.register = function(server, options, next) {
 										scannedValue: docs[i].scannedValue,
 										
 										location: docs[i].location,
-										date: docs[i].data,
+										data: docs[i].data,
 										datetime: docs[i].datetime
 									},
 									time_frame : date,
@@ -404,7 +400,7 @@ exports.register = function(server, options, next) {
 											scannedValue: docs[0].scannedValue,
 											
 											location: docs[0].location,
-											date: docs[0].data,
+											data: docs[0].data,
 											datetime: docs[0].datetime
 										},
 										time_frame: distances[docs[i]._id].time_frame,
@@ -477,7 +473,7 @@ exports.register = function(server, options, next) {
 			var query = {
 					datetime: {
 						$gte: startDate,
-						$lte: endDate
+						$lt: endDate
 					},
 					profileId: profileId
 			};
@@ -553,6 +549,17 @@ exports.register = function(server, options, next) {
 				params: {
 					//none
 				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						numCrates: Joi.number().required(),
+						cratesPerDay: Joi.object().required(),
+						crates: Joi.array().items(scanSchema)
+					}),
+					400: errorSchema
+					
+				}
 			}
 		},
 		method: 'GET',
@@ -575,24 +582,65 @@ exports.register = function(server, options, next) {
 					datetime: null
 			};
 			
-			if (params.from.toISOString() == params.to.toISOString()) {
-				var endDate = moment(params.to).add(1, 'days').toISOString();
-				
-				query.datetime = {
-						//create iso string from passed in date
-						$gte: params.from.toISOString(),
-						$lte: endDate
-				}
-
-				
-				
+			//no date query parameters given. Delete datetime key from query
+			if (!('from' in params) && !('to' in params)) {
+				delete query.datetime;
 			}
+			//date queries given
 			else {
-				query.datetime = {
-						//create iso string from passed in date
-						$gte: params.from.toISOString(),
-						$lte: params.to.toISOString()
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
+						
+						query.datetime = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
+					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
+							query.datetime = {
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							};
+						}
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
+						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							console.log('enddate = ' + endDate);
+							query.datetime = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: endDate
+							}
+						}
+						
+					
+					}
+					
+					
 				}
+				
 			}
 			
 			
@@ -628,10 +676,29 @@ exports.register = function(server, options, next) {
 							return reply(response).code(400);
 						}
 						
+						//sort by date ascending order
+						docs.sort(function (a,b) {
+							return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
+						});
 						
 						
-						//get only scans withing the time frame
-						var scans = docs;
+						
+						//copy docs into new array to avoid overwriting them
+						var scans = new Array();
+						for (var i = 0; i < docs.length;i++) {
+							var newScan = {
+									_id: docs[i]._id.toString(),
+									profileId: docs[i].profileId,
+									mapIds: docs[i].mapIds,
+									scannedValue: docs[i].scannedValue,
+									location: {
+										type: docs[i].location.type,
+										coordinates: docs[i].location.coordinates
+									},
+									datetime: docs[i].datetime
+							};
+							scans.push(newScan);
+						}
 						
 						//get number of crates for each day in the time frame
 						var cratesPerDay = {};
@@ -648,7 +715,7 @@ exports.register = function(server, options, next) {
 								
 							}
 							
-							cratesPerDay[date] = occurences;
+							cratesPerDay[scans[i].datetime] = occurences;
 						}
 						
 						var response = {
@@ -676,7 +743,7 @@ exports.register = function(server, options, next) {
 	 * 			&id (string) required) : id of the user who owns the crates
 	 * 			&from (string) required: start date of time frame
 	 * 			&to (string) required: end date of time frame
-	 * 			&unit (unit of time) required: hour, days, min. If none given default is hours
+	 * 			&unit (unit of time) required: 'day', 'hr' , 'min' , 'sec'
 	 * 
 	 * Response:
 	 * 		400 - Bad request. Date format invalid or invalid dates given
@@ -687,6 +754,26 @@ exports.register = function(server, options, next) {
 			cors: {
 				origin: ['*'],
 				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					from: Joi.date().required(),
+					to: Joi.date().required(),
+					id: Joi.string().length(24),
+					unit: Joi.string()
+				},
+				params: {
+					//none
+				}
+			},
+			response: {
+				status: {
+					200: Joi.object().keys({
+						meantime: Joi.number(),
+						crates: Joi.object()
+					}),
+					400: errorSchema
+				}
 			}
 		},
 		method: 'GET',
@@ -696,15 +783,74 @@ exports.register = function(server, options, next) {
 			//get query parameters
 			const params = request.query;
 			
-			//check if paramters missing
-			if (!('from' in params) || !('to' in params)) {
-				return reply({error: 'Missing parameters.'}).code(400);
+			var unit = 'unit' in params ? params.unit : 'min';
+			
+			//build query to search for in scans collection
+			var query = {
+					profileId: 'id' in params ? params.id : request.auth.credentials.id,
+					datetime: null
+			};
+			//no date query parameters given. Delete datetime key from query
+			if (!('from' in params) && !('to' in params)) {
+				delete query.datetime;
+			}
+			//date queries given
+			else {
+				//from and to both given
+				if (('from' in params) && ('to' in params)) {
+					
+					//midnight of given start date
+					var startDate = moment(params.to).toISOString();
+					//11:59 PM of given end date
+					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+					
+					//midnight of given end date
+					var startTo = moment(params.to).utc().startOf('day').toISOString();
+					
+					//if searching for a given day in format YYYY-MM-DD and both days on same date
+					//then make start 11:59 PM of the prev day and make end search
+					//midnight of target day
+					if (params.to.toISOString() == params.from.toISOString()) {
+						
+						query.datetime = {
+								$gte: startDate,
+								$lte: endDate
+						};
+						
+					}
+					//given from and start dates are on different days
+					//now narrow down search to see if they have time properties
+					//in format YYYY-MM-DDTHH:mm:ss
+					else {
+						//if the given end date specifies a specific time on that day
+						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
+						if (params.to.toISOString() > startTo) {
+							console.log('greater');
+							query.datetime = {
+									$gte: params.from.toISOString(),
+									$lte: params.to.toISOString()
+							};
+						}
+						//no specific time given on end date so search in time frame
+						//from given start date to the given end date at 11:59 PM
+						else {
+							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
+							
+							query.datetime = {
+									//create iso string from passed in date
+									$gte: params.from.toISOString(),
+									$lte: endDate
+							}
+						}
+						
+					
+					}
+					
+					
+				}
+				
 			}
 			
-			var fromDate = formatDate(params.from);
-			var toDate = formatDate(params.to);
-			var uid = params.id;
-			var query = (uid == undefined) ? {} : {profileId: uid}; // check whether one or all user's crates
 		
 			db.collection('scans').find(query ,(err,docs) => {
 				
@@ -712,109 +858,138 @@ exports.register = function(server, options, next) {
 					return reply(err).code(500);
 				}
 				
-				//filter results to only show scans falling in the time range
-				var validScans = new Array();
 				
+				var validScans = new Array();
 				for (var i = 0; i < docs.length;i++) {
-					var date = formatDate(docs[i].datetime);
-					if (dateCheck(fromDate,toDate,date) == true) {
-						validScans.push(docs[i]);
-						
-					}
+					var newScan = {
+							_id: docs[i]._id.toString(),
+							profileId: docs[i].profileId,
+							mapIds: docs[i].mapIds,
+							scannedValue: docs[i].scannedValue,
+							location: {
+								type: docs[i].location.type,
+								coordinates: docs[i].location.coordinates
+							},
+							datetime: docs[i].datetime
+					};
+					validScans.push(newScan);
 				}
 				
-				//sort by date ascending
+				//sort by date ascending order
 				validScans.sort(function (a,b) {
-					var dateA = formatDate(a.datetime);
-					var dateB = formatDate(b.datetime);
-					
-					var a = dateA.split('/');
-					var b = dateB.split('/');
-					
-					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
+					return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
 				});
-				
+			
 				//calculate avg time between crates
 				var time = 0.0;
-				var times = {};
+				var crates = {};
 				for (var i = validScans.length - 1; i > 0; i--) {
 					
-					var d1 = new Date(formatDate(validScans[i].datetime));
-					var d2 = new Date(formatDate(validScans[i-1].datetime));
-					var diff = Math.abs(d1.getTime() - d2.getTime());
 					
-					var scanId = validScans[i]._id;
-					var time_frame = formatDateForGraph(validScans[i].datetime) + ' to ' + formatDateForGraph(validScans[i-1].datetime);
+					//get time difference between crates
+					var d1 = new Date(validScans[i - 1].datetime);
+					var d2 = new Date(validScans[i].datetime);
+					var diff = d2 - d1;
 					
-					
-					if ('unit' in params) {
-						const unit = params.unit;
-						
-						switch(unit) {
-							case 'hour':
-								var hours = Math.ceil(diff / (3600000));
-								time += hours;
-								times[scanId] = {
-										time_frame: time_frame,
-										time: hours
-								};
-								break;
-							case 'min':
-								var min = Math.ceil(diff / 60000);
-								time += min;
-								times[scanId] = {
-										time_frame: time_frame,
-										time: min
-								}
-								break;
-							default:
-								var days = Math.ceil(diff / (1000 * 3600 * 24));
-								time += days;
-								times[scanId] = {
-										time_frame: time_frame,
-										time: days
-								};
-								
-						}
-					} else {
-						var hours = Math.ceil(diff / (3600000));
-						time += hours;
-						times[scanId] = {
-								time_frame: time_frame,
-								time: hours
-						};
+					//convert to given unit
+					switch (unit) {
+						case 'day':
+							diff = diff / 86400000;
+							break;
+						case 'hr':
+							diff = diff / 3600000;
+							break;
+						case 'min':
+							diff = diff / 60000;
+							break;
+						//seconds
+						default:
+							diff = diff / 1000;
 					}
+					
+					time += diff;
+					crates[validScans[i]._id.toString()] = {
+							time_frame: validScans[i].datetime + ' to ' + validScans[i-1].datetime,
+							time: diff,
+							unit: unit,
+							crate: {
+								_id: validScans[i]._id.toString(),
+								profileId: validScans[i].profileId,
+								mapIds: validScans[i].mapIds,
+								scannedValue: validScans[i].scannedValue,
+								location: validScans[i].location,
+								datetime: validScans[i].datetime
+							}
+					
+					}
+					
+					if (i == 1) {
+						crates[validScans[0]._id.toString()] = {
+								time_frame: validScans[0].datetime + ' to ' + validScans[0].datetime,
+								time: diff,
+								unit: unit,
+								crate: {
+									_id: validScans[0]._id.toString(),
+									profileId: validScans[0].profileId,
+									mapIds: validScans[0].mapIds,
+									scannedValue: validScans[0].scannedValue,
+									location: validScans[0].location,
+									datetime: validScans[0].datetime
+								}
+						
+						}
+					}
+					
 					
 					
 				}
 				
 				//sort times in ascneding order before returning
 				var keys = [];
-				for (var key in times) {
-					keys.push(times[key]);
+				for (var key in crates) {
+					keys.push(crates[key]);
 				}
 				keys.sort(function (a,b) {
-					
-					var dateA = formatDate(a.time_frame.slice(0,10));
-					var dateB = formatDate(b.time_frame.slice(0,10));
-					
-					
-					
-					var a = dateA.split('/');
-					var b = dateB.split('/');
-					
-					return b[2] - a[2] || b[0] - a[0] || b[1] - a[1];
+					return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
 				});
 				
 				var length = validScans.length > 1 ? validScans.length - 1 : 1;
 				var avgTime = time / length;
 				const response = {
 						meantime: avgTime,
-						times: times
+						crates: crates
 				};
 				return reply(response).code(200);
 				
 			})
+		}
+	});
+	
+	
+	
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				query: {
+					from: Joi.date().required(),
+					to: Joi.date().required(),
+					id: Joi.string().length(24),
+					unit: Joi.string()
+				},
+				params: {
+					//none
+				}
+			}
+		},
+		method: 'GET',
+		path: '/harvest/statistics',
+		handler: function (request, reply) {
+			
+			
 		}
 	});
 	
