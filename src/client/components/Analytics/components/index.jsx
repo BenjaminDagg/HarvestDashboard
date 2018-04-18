@@ -34,8 +34,11 @@ class Analytics extends React.Component {
 			cpdFetchError: false,
 			
 			distFetchError: false,
-			distStartDate: this.props.user != null ? this.props.user.data.user.createdAt : '2018-01-01',
-			distEndDate: this.props.user != null ? this.props.user.data.user.createdAt : format(new Date()), 
+			distDetailVisible: false,
+			distDetailTarget: null,
+			distUnit: 'miles',
+			distStartDate: this.props.user != null ? this.props.user.data.user.createdAt : '2018-01-01T00:00:00',
+			distEndDate: this.props.user != null ? this.props.user.data.user.createdAt : null, 
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
 		this.getMeanDistData = this.getMeanDistData.bind(this);
@@ -45,6 +48,7 @@ class Analytics extends React.Component {
 		this.getCrateTimeData = this.getCrateTimeData.bind(this);
 		this.drawMeanTimeGraph = this.drawMeanTimeGraph.bind(this);
 		this.unitChanged = this.unitChanged.bind(this);
+		this.distUnitChanged = this.distUnitChanged.bind(this);
 		this.cpdStartChanged = this.cpdStartChanged.bind(this);
 		this.cpdEndChanged = this.cpdEndChanged.bind(this);
 		this.getCpdWithDates = this.getCpdWithDates.bind(this);
@@ -60,8 +64,13 @@ class Analytics extends React.Component {
 		this.getMeanDistData();
 		this.getCrateTimeData();
 		
+		//creating initial date for cpdEndDate
 		var cpdDate = moment().utc('-8:00').toISOString();
 		this.setState({cpdEndDate: cpdDate.slice(0,16)});
+		
+		//setting initial date for distEndDat
+		var distDate = moment().utc('-8:00').toISOString();
+		this.setState({distEndDate: distDate.slice(0,16)});
 	}
 	
 	
@@ -129,12 +138,12 @@ class Analytics extends React.Component {
         
         axios.defaults.headers.Authorization = this.props.bearer;
 		
-		var from = this.state.distStartDate.slice(5,7) + this.state.distStartDate.slice(8,10) + this.state.distStartDate.slice(0,4);
-		var to = this.state.distEndDate.slice(5,7) + this.state.distEndDate.slice(8,10) + this.state.distEndDate.slice(0,4);
-
+		var from = this.state.distStartDate + 'Z';
+		var to = this.state.distEndDate + 'Z';
+		var unit = this.state.distUnit;
 		
 		//make HTTP request to account service API
-		axios.get('http://localhost:2000/harvest/meandist?from=' + from + '&to=' + to + '&id=' + this.props.user.data.user._id, {
+		axios.get('http://localhost:2000/harvest/meandist?from=' + from + '&to=' + to + '&id=' + this.props.user.data.user._id +'&unit=' + unit, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
@@ -176,11 +185,20 @@ class Analytics extends React.Component {
 			columns: [
 				['x'],
 				['distance: ']
-			]
+			],
+			onClick: function(value,index) {
+				var index = value.index;
+				var id = data.columns[0][index];
+				var scan = distData[id];
+				this.setState({distDetailVisible: true});
+				this.setState({distDetailTarget: scan});
+				
+				
+			}
 		};
 		for (var key in distData) {
 			
-			data.columns[0].push(distData[key].time_frame);
+			data.columns[0].push(distData[key].scan._id);
 			data.columns[1].push(Math.round(parseFloat(distData[key].distance)));
 		}
 		
@@ -284,7 +302,7 @@ class Analytics extends React.Component {
 			}
 		};
 		const size = {
-			width: 800,
+			width: window.innerWidth,
 			height: 500
 		};
 		
@@ -293,7 +311,7 @@ class Analytics extends React.Component {
 			extent: [1,100]
 		};
 		
-		return(<div><h1>Crates Harvested Per Day</h1><C3Chart  zoom={zoom} bar={bar} axis={axis} size={size} id="chart" data={data} /></div>)
+		return(<div id="cpdContainer"><h1>Crates Harvested Per Day</h1><C3Chart  zoom={zoom} bar={bar} axis={axis} size={size} id="chart" data={data} /></div>)
 	
 	}
 	
@@ -415,6 +433,13 @@ class Analytics extends React.Component {
 	}
 	
 	
+	distUnitChanged(event) {
+		this.setState({meanDistData: null});
+		this.setState({distUnit: event.target.value});
+		this.getMeanDistData();
+	}
+	
+	
 	cpdStartChanged(event) {
 		var newDate = event.target.value;
 		this.setState({cpdStartDate: newDate});
@@ -503,6 +528,11 @@ class Analytics extends React.Component {
 			 'height': '80%'
 		};
 	
+		var graphStyle = {
+			'width' : '100%',
+			
+		};
+	
 		return (
 			<div style={style}>
 				<style>{"\
@@ -519,7 +549,7 @@ class Analytics extends React.Component {
               "}</style>
               
              
-				<div id="cpdGraph">
+				<div style={graphStyle} id="cpdGraph">
 					Start Date: <input value={this.state.cpdStartDate} onChange={this.cpdStartChanged} type="datetime-local" />
 					< br />
 					End Date: <input value={this.state.cpdEndDate} type="datetime-local" onChange={this.cpdEndChanged}/>
@@ -531,6 +561,12 @@ class Analytics extends React.Component {
 				    Start Date: <input value={this.state.distStartDate} onChange={this.distStartChanged} type="datetime-local" />
 					< br />
 					End Date: <input value={this.state.distEndDate} type="datetime-local" onChange={this.distEndChanged}/>
+					<br />
+					Unit: <select onChange={this.distUnitChanged} value={this.state.distUnit}>
+								<option value="miles">Mile</option>
+								<option value="kilometers">Km</option>
+								<option value="ft">feet</option>
+						  </select>
 					<br />
 					<button onClick={this.getDistWithDates}>Submit</button>
 					{meanDistGraph}
