@@ -33,6 +33,9 @@ class Analytics extends React.Component {
 			cpdEndDate: this.props.user != null ? this.props.user.data.user.createdAt : null, 
 			cpdFetchError: false,
 			
+			timeStartDate: '2018-01-01T00:00',
+			timeEndDate: null,
+			
 			distFetchError: false,
 			distDetailVisible: false,
 			distDetailTarget: null,
@@ -51,6 +54,9 @@ class Analytics extends React.Component {
 		this.distUnitChanged = this.distUnitChanged.bind(this);
 		this.cpdStartChanged = this.cpdStartChanged.bind(this);
 		this.cpdEndChanged = this.cpdEndChanged.bind(this);
+		this.timeStartChanged = this.timeStartChanged.bind(this);
+		this.timeEndChanged = this.timeEndChanged.bind(this);
+		this.getTimeWithDates = this.getTimeWithDates.bind(this);
 		this.getCpdWithDates = this.getCpdWithDates.bind(this);
 		
 		this.distStartChanged = this.distStartChanged.bind(this);
@@ -71,6 +77,10 @@ class Analytics extends React.Component {
 		//setting initial date for distEndDat
 		var distDate = moment().utc('-8:00').toISOString();
 		this.setState({distEndDate: distDate.slice(0,16)});
+		
+		//set initial date for time end date
+		var timeDate = moment().utc('-8:00').toISOString();
+		this.setState({timeEndDate: timeDate.slice(0,16)});
 	}
 	
 	
@@ -89,7 +99,7 @@ class Analytics extends React.Component {
 		
 		var from = this.state.cpdStartDate + 'Z';
 		var to = this.state.cpdEndDate + 'Z';
-		console.log('from = ' + from + ' and to = ' + to);
+		
 		
 		//make HTTP request to account service API
 		axios.get('http://localhost:2000/harvest/numcrates/between?from=' + from + '&to=' + to + '&id=' + this.props.user.data.user._id, {
@@ -98,6 +108,7 @@ class Analytics extends React.Component {
 			},
 			headers
 		).then(res => {
+			
 			var data = res.data;
 			this.setState({crateData: data});
 			this.setState({cpdFetchError: false});
@@ -230,8 +241,8 @@ class Analytics extends React.Component {
 		
 		
 		return(<div>
-				<h1>Crate Mean Distance</h1>
-				<span>Mean Distance between crates: {this.state.meanDistData.meandist}</span>
+				
+				<h3>Mean distance: {this.state.meanDistData.meandist.toFixed(2)} {this.state.distUnit}</h3>
 				<C3Chart  axis={axis} size={size} id="meanDist" data={data} />
 				
 			  </div>)
@@ -311,7 +322,7 @@ class Analytics extends React.Component {
 			extent: [1,100]
 		};
 		
-		return(<div id="cpdContainer"><h1>Crates Harvested Per Day</h1><C3Chart  zoom={zoom} bar={bar} axis={axis} size={size} id="chart" data={data} /></div>)
+		return(<div id="cpdContainer"><C3Chart  zoom={zoom} bar={bar} axis={axis} size={size} id="chart" data={data} /></div>)
 	
 	}
 	
@@ -335,17 +346,19 @@ class Analytics extends React.Component {
         
         //call harvest api meantime api
         //set query parameters
-        var from = '01012018';
-        var to = '05012018';
-        var uid = this.props.user.data.user._id
+        var from = this.state.timeStartDate + 'Z';
+        var to = this.state.timeEndDate + 'Z';
+        var uid = this.props.user.data.user._id;
         var unit = this.state.selectedUnit;
-        
+        console.log('from = ' + from + ' and to = ' + to);
+        console.log('unit = ' + unit);
         axios.get('http://localhost:2000/harvest/meantime?from=' + from + '&to=' + to + '&id=' + uid + '&unit=' + unit, {
 				"username": this.state.username,
 				"password": this.state.password
 			},
 			headers
 		).then(res => {
+			console.log(res);
 			var data = res.data;
 			this.setState({crateTimeData: data});
 			
@@ -375,7 +388,8 @@ class Analytics extends React.Component {
 		
 	
 		
-		var timeData = this.state.crateTimeData.times;
+		var timeData = this.state.crateTimeData.crates;
+		console.log(timeData);
 		var data = {
 			x: 'x',
 			columns: [
@@ -385,7 +399,7 @@ class Analytics extends React.Component {
 		};
 		for (var key in timeData) {
 			
-			data.columns[0].push(timeData[key].time_frame);
+			data.columns[0].push(timeData[key].crate._id);
 			data.columns[1].push(Math.round(parseFloat(timeData[key].time)));
 		}
 		
@@ -417,8 +431,7 @@ class Analytics extends React.Component {
 		
 		
 		return(<div>
-				<h1>Mean time between crates</h1>
-				<span> mean time: {this.state.crateTimeData.meantime}</span>
+				<h3>Mean time: {this.state.crateTimeData.meantime.toFixed(2)} {this.state.selectedUnit}s</h3>
 				<C3Chart  axis={axis} size={size} id="meanDist" data={data} />
 			  </div>)
 	}
@@ -449,6 +462,27 @@ class Analytics extends React.Component {
 	cpdEndChanged(event) {
 		var newDate = event.target.value;
 		this.setState({cpdEndDate: newDate});
+	}
+	
+	
+	timeStartChanged(event) {
+		var newDate = event.target.value;
+		this.setState({timeStartDate: newDate});
+	}
+	
+	
+	timeEndChanged(event) {
+		var newDate = event.target.value;
+		this.setState({timeEndDate: newDate});
+	}
+	
+	
+	getTimeWithDates() {
+		if (!this.state.timeStartDate || !this.state.timeEndDate) {
+			return;
+		}
+		this.setState({crateTimeData: null});
+		this.getCrateTimeData();
 	}
 	
 	
@@ -550,14 +584,17 @@ class Analytics extends React.Component {
               
              
 				<div style={graphStyle} id="cpdGraph">
+					<h1>Crates Harvested Per Day</h1>
 					Start Date: <input value={this.state.cpdStartDate} onChange={this.cpdStartChanged} type="datetime-local" />
 					< br />
 					End Date: <input value={this.state.cpdEndDate} type="datetime-local" onChange={this.cpdEndChanged}/>
 					<br />
 					<button onClick={this.getCpdWithDates}>Submit</button>
+					<br />
 					{cpdGraph}
 				</div>
 				<div id="meanDist">
+				<h1>Crate Mean Distance</h1>
 				    Start Date: <input value={this.state.distStartDate} onChange={this.distStartChanged} type="datetime-local" />
 					< br />
 					End Date: <input value={this.state.distEndDate} type="datetime-local" onChange={this.distEndChanged}/>
@@ -573,11 +610,19 @@ class Analytics extends React.Component {
 				</div>
 				
 				<div id="meanTime">
+					<h1>Mean Time Between Crates</h1>
+				    start Date: <input value={this.state.timeStartDate} type="datetime-local" onChange={this.timeStartChanged} />
+					<br />
+					End Date: <input value={this.state.timeEndDate} type="datetime-local" onChange={this.timeEndChanged} />
+					<br />
 					Select unit: <select onChange={this.unitChanged} value={this.state.selectedUnit}>
-									<option value="hour">Hours</option>
-									<option value="min">Minutes</option>
-									
+									<option value="day">Day</option>
+									<option value="hr">Hour</option>
+									<option value="min">Min</option>
+									<option value="sec">Sec</option>
 								</select>
+					<br />
+					<button onClick={this.getTimeWithDates}>Submit</button>
 					{meanTimeGraph}
 				</div>
 			</div>

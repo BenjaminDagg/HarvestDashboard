@@ -180,7 +180,7 @@ exports.register = function(server, options, next) {
 				if (('from' in params) && ('to' in params)) {
 					
 					//midnight of given start date
-					var startDate = moment(params.from).toISOString();
+					var startDate = moment(params.to).toISOString();
 					//11:59 PM of given end date
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
 					
@@ -602,7 +602,7 @@ exports.register = function(server, options, next) {
 				if (('from' in params) && ('to' in params)) {
 					
 					//midnight of given start date
-					var startDate = moment(params.from).toISOString();
+					var startDate = moment(params.to).toISOString();
 					//11:59 PM of given end date
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
 					
@@ -826,7 +826,7 @@ exports.register = function(server, options, next) {
 				if (('from' in params) && ('to' in params)) {
 					
 					//midnight of given start date
-					var startDate = moment(params.from).toISOString();
+					var startDate = moment(params.to).toISOString();
 					//11:59 PM of given end date
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
 					
@@ -928,7 +928,9 @@ exports.register = function(server, options, next) {
 						case 'min':
 							diff = diff / 60000;
 							break;
-						//seconds
+						case 'sec':
+							diff = diff / 1000;
+							break;
 						default:
 							diff = diff / 1000;
 					}
