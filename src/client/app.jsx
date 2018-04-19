@@ -6,7 +6,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import { routes } from './routes';
 import { Router, browserHistory, Route } from 'react-router';
-import { createStore } from 'redux';
+import store from './store';
 import { Provider } from 'react-redux';
 import rootReducer from './reducers';
 //
@@ -31,14 +31,9 @@ require.ensure(
 //
 
 window.webappStart = () => {
-  const initialState = window.__PRELOADED_STATE__;
-  const store = createStore(rootReducer, initialState);
-
   render(
     <Provider store={store}>
-      <Router history={browserHistory}>
-      	{routes}
-      </Router>
+      <Router history={browserHistory}>{routes}</Router>
     </Provider>,
     document.querySelector('.js-content')
   );
