@@ -34,6 +34,10 @@ class MainDrawer extends React.Component {
   	window.location.assign("/analytics");
   };
   
+  gotoRealTime() {
+  	window.location.assign('/realtime');
+  }
+  
   
   gotoHome() {
   	window.location.assign("/home");
@@ -62,7 +66,7 @@ class MainDrawer extends React.Component {
               <Home />
             </MenuItem>
 
-            <MenuItem primary="REAL-TIME" data-tip="Real-Time" >
+            <MenuItem onClick={this.gotoRealTime.bind(this)} primary="REAL-TIME" data-tip="Real-Time" >
               <Schedule />
             </MenuItem>
 

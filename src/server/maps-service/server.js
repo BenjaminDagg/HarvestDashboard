@@ -17,6 +17,13 @@ server.connection({
 	host: 'localhost'
 });
 
+var io = require('socket.io')(server.listener);
+io.on('connection', function(socket) {
+	socket.emit('Welcome', {message: 'welcome'});
+})
+
+server.app.io = io;
+
 
 //connect to mongo database
 server.app.db = mongojs(dbConfig.url, ['Maps']);

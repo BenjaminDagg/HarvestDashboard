@@ -62,6 +62,8 @@ class Analytics extends React.Component {
 		this.distStartChanged = this.distStartChanged.bind(this);
 		this.distEndChanged = this.distEndChanged.bind(this);
 		this.getDistWithDates = this.getDistWithDates.bind(this);
+		
+	
 	};
 	
 	
@@ -81,14 +83,25 @@ class Analytics extends React.Component {
 		//set initial date for time end date
 		var timeDate = moment().utc('-8:00').toISOString();
 		this.setState({timeEndDate: timeDate.slice(0,16)});
+		
+		
+		
+		
 	}
 	
+
+	
+	componentWillUnmount() {
+		clearTimeout(this.timer);
+	}
+	
+
 	
 	getCrateData() {
 		if (this.props.bearer === "" || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
-	
+		console.log('getcratedata');
 		//get users scans from database
 		var headers = {
             'Content-Type': 'application/json',
@@ -110,6 +123,7 @@ class Analytics extends React.Component {
 		).then(res => {
 			
 			var data = res.data;
+			
 			this.setState({crateData: data});
 			this.setState({cpdFetchError: false});
 		})

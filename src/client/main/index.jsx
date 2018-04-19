@@ -8,6 +8,7 @@ import Register from '../components/Register/components';
 import LoginRoute from '../components/Login';
 import Map from '../components/MapContainer/components';
 import Analytics from '../components/Analytics/components';
+import RealTime from '../components/realtime/components';
 
 export default (
   <Route path="/" name="app" component={App}>
@@ -16,5 +17,6 @@ export default (
   	<Route path="/register" component={Register} />
   	<Route path="/map" component={Map} />
   	<Route path="/analytics" component={Analytics} />
+  	<Route path="/realtime" component={RealTime} />
   </Route>
 );
