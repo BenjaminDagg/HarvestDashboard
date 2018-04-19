@@ -32,7 +32,8 @@ class Map extends React.Component {
 		super(props);
 		
 		this.state = {
-			map: null
+			map: null,
+			markers: []
 		};
 		
 		this.drawGeometry = this.drawGeometry.bind(this);
@@ -67,6 +68,8 @@ class Map extends React.Component {
 	
 		switch (geometry.type) {
 		
+			//if geometry collection loop through the geometries
+			//list and draw each object
 			case "GeometryCollection":
 			
 				for (var i = 0; i < geometry.geometries.length;i++) {
@@ -77,7 +80,33 @@ class Map extends React.Component {
 				
 			case 'Point':
 				const coords = geometry.coordinates;
+				
+				//get lat and long form coord and make latlng object
+				var latlng = {
+					lat: coords[0],
+					lng: coords[1]
+				};
+				
+				//create marker for the point
+				var marker = new L.marker(latlng, {title: ''}).addTo(this.map);
 				L.circle(coords, {radius: 1, color: 'red'}).addTo(this.map);
+				
+				//if the shape has a scan object make
+				//a popup window to display scan info
+				if (geometry.scan) {
+					var popUp = '<span> id: ' + geometry.scan._id + '</h1><br /><span> date: ' + geometry.scan.datetime + '</span>';
+					marker.bindPopup(popUp);
+				}
+				
+				//add new marker to state markers list
+				var tempMarkers = this.state.markers;
+				tempMarkers.push(marker);
+				this.setState({markers: tempMarkers});
+				
+				//fit map to show all markers
+				var group = new L.featureGroup(this.state.markers);
+				this.map.fitBounds(group.getBounds());
+				
 				break;
 				
 			case 'Polygon':
@@ -92,7 +121,7 @@ class Map extends React.Component {
 				break;
 				
 			default:
-				console.log('error drawing geometry');
+				
 				return;
 		}
 		
@@ -102,7 +131,7 @@ class Map extends React.Component {
  	
  	const lat = this.props.center[0];
  	const lng = this.props.center[1];
- 	console.log('lat = ' + lat + ' lng = ' + lng);
+ 	
     this.map = L.map(this.props.title).setView([lat,lng] , 2);
    	
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZWd1aWRvIiwiYSI6ImNqYzE2ZDUycjA1em0yeHBmN2Q0Z2VveHQifQ.WKx_h2jg4NwT2FcVXGHSdg', {
@@ -111,11 +140,14 @@ class Map extends React.Component {
       accessToken: 'pk.eyJ1IjoiZWd1aWRvIiwiYSI6ImNqYzE2ZDUycjA1em0yeHBmN2Q0Z2VveHQifQ.WKx_h2jg4NwT2FcVXGHSdg'
     }).addTo(this.map);
     
+    
     if (this.props.geometry != null) {
     	this.drawGeometry(this.props.geometry);
+    	var bounds = new L.LatLngBounds();
+    	bounds.extend
     }
     
-    this.map.on('click', this.addMarker);
+    //this.map.on('click', this.addMarker);
     
   }
 
@@ -132,7 +164,7 @@ class Map extends React.Component {
 			<div>
 				<h1>{this.props.title}</h1>
 				
-				<div id={this.props.title} style={{height: '300px', width: '300px'}}>
+				<div id={this.props.title} style={{height: '400px', width: '80%'}}>
 			
 				</div>
 			</div>
