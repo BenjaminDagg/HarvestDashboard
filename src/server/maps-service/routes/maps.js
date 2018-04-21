@@ -40,7 +40,7 @@ exports.register = function(server, options, next) {
 	
 	const db = server.app.db;
 	
-	
+	const io = server.app.io;
 	
 	
 	// ******************* Maps **********************
@@ -82,6 +82,8 @@ exports.register = function(server, options, next) {
 		method: 'GET',
 		path: '/maps',
 		handler: function (request, reply) {
+			
+			
 			
 			const params = request.query;
 			
@@ -264,6 +266,10 @@ exports.register = function(server, options, next) {
 					};
 					return reply(response).code(400);
 				}
+				
+				
+				
+				
 				return reply({messege: 'Map added successfully'}).code(200);
 			})
 			
@@ -909,6 +915,13 @@ exports.register = function(server, options, next) {
 							message: 'scan added',
 							scan: newScan
 					};
+					
+					
+					var currId = request.auth.credentials.id;
+					if (scan.profileId == currId) {
+						io.emit('scan_added', response.scan);
+					}
+					
 					//return added scan and success message
 					reply(response).code(200);
 				}

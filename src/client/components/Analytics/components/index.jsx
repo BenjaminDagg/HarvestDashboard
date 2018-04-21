@@ -27,18 +27,18 @@ class Analytics extends React.Component {
 			crateTimeData: null,
 			selectedUnit: 'hour',
 
-			cpdStartDate: this.props.user != null ? this.props.user.createdAt : '2018-01-01T00:00',
-			cpdEndDate: this.props.user != null ? this.props.user.createdAt : null,
+			cpdStartDate: this.props.user !== null ? this.props.user.createdAt : '2018-01-01T00:00Z',
+			cpdEndDate: this.props.user !== null ? this.props.user.createdAt : null,
 			cpdFetchError: false,
 
-			timeStartDate: '2018-01-01T00:00',
+			timeStartDate: '2018-01-01T00:00Z',
 			timeEndDate: null,
 
 			distFetchError: false,
 			distDetailVisible: false,
 			distDetailTarget: null,
 			distUnit: 'miles',
-			distStartDate: this.props.user != null ? this.props.user.createdAt : '2018-01-01T00:00:00',
+			distStartDate: this.props.user != null ? this.props.user.createdAt : '2018-01-01T00:00:00Z',
 			distEndDate: this.props.user != null ? this.props.user.createdAt : null
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
@@ -86,11 +86,16 @@ class Analytics extends React.Component {
 		this.setState({ timeEndDate: timeDate.slice(0, 16) });
 	}
 
+	componentWillUnmount() {
+		clearTimeout(this.timer);
+	}
+
 	getCrateData() {
 		if (this.props.bearer === '' || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
 
+		console.log('getcratedata');
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -99,10 +104,11 @@ class Analytics extends React.Component {
 
 		axios.defaults.headers.Authorization = this.props.bearer;
 
-		var from = this.state.cpdStartDate + 'Z';
-		var to = this.state.cpdEndDate + 'Z';
+		var from = this.state.cpdStartDate;
+		var to = this.state.cpdEndDate;
 
 		//make HTTP request to account service API
+
 		axios
 			.get(
 				'http://localhost:2000/harvest/numcrates/between?from=' +
@@ -119,6 +125,7 @@ class Analytics extends React.Component {
 			)
 			.then(res => {
 				var data = res.data;
+
 				this.setState({ crateData: data });
 				this.setState({ cpdFetchError: false });
 			})
@@ -158,8 +165,8 @@ class Analytics extends React.Component {
 
 		axios.defaults.headers.Authorization = this.props.bearer;
 
-		var from = this.state.distStartDate + 'Z';
-		var to = this.state.distEndDate + 'Z';
+		var from = this.state.distStartDate;
+		var to = this.state.distEndDate;
 		var unit = this.state.distUnit;
 
 		//make HTTP request to account service API
@@ -342,8 +349,8 @@ class Analytics extends React.Component {
 
 		//call harvest api meantime api
 		//set query parameters
-		var from = this.state.timeStartDate + 'Z';
-		var to = this.state.timeEndDate + 'Z';
+		var from = this.state.timeStartDate;
+		var to = this.state.timeEndDate;
 		var uid = this.props.user._id;
 		var unit = this.state.selectedUnit;
 		console.log('from = ' + from + ' and to = ' + to);
@@ -365,7 +372,7 @@ class Analytics extends React.Component {
 			.catch(error => {
 				if (error.response) {
 					this.setState({ error: true });
-					this.props.submit(false);
+					//this.props.submit(false);
 				}
 			});
 	}
@@ -522,7 +529,7 @@ class Analytics extends React.Component {
 		var meanTimeGraph = this.drawMeanTimeGraph();
 
 		var style = {
-			'overflow-y': 'auto',
+			overflowY: 'auto',
 			height: '80%'
 		};
 

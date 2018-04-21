@@ -7,8 +7,10 @@ import promise from 'redux-promise-middleware';
 
 const middleware = applyMiddleware(promise(), thunk, createLogger());
 
-//const initialState = window.__PRELOADED_STATE__;
-const persistedState = localStorage.getItem('reduxState') ? JSON.parse(localStorage.getItem('reduxState')) : {};
+const initialState = window.__PRELOADED_STATE__;
+const persistedState = localStorage.getItem('reduxState')
+	? JSON.parse(localStorage.getItem('reduxState'))
+	: initialState;
 
 const store = createStore(rootReducer, persistedState, middleware);
 store.subscribe(() => {
