@@ -62,7 +62,7 @@ class Analytics extends React.Component {
 		this.getDistWithDates = this.getDistWithDates.bind(this);
 	}
 
-	componentDidMount() {
+	componentWillMount() {
 		this.getCrateData();
 		this.getMeanDistData();
 		this.getCrateTimeData();

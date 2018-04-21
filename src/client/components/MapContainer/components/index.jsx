@@ -39,8 +39,7 @@ class MapContainer extends React.Component {
 		this.getScansWithDates = this.getScansWithDates.bind(this);
 	}
 
-	componentDidMount() {
-		//set scanEndDate to the current date
+	componentWillMount() {
 		var timeDate = moment()
 			.utc('-8:00')
 			.toISOString();
