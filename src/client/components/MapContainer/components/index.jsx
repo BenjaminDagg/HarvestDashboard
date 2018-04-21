@@ -196,7 +196,7 @@ class MapContainer extends React.Component {
 		};
 
 		var style = {
-			'overflow-y': 'auto',
+			overflowY: 'auto',
 			height: '100%'
 		};
 		return (
