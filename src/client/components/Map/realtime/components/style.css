@@ -1,3 +1,15 @@
+#crateChart {
+	width: 90%;
+	position: absolute;
+	left: 0;
+}
+
+table, th, td {
+	border: 1px solid black;
+}
+
+
+
 .c3Line {
 	fill: none
 }
