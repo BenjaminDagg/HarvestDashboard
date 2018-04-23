@@ -147,7 +147,7 @@ class Map extends React.Component {
     	bounds.extend
     }
     
-    this.map.on('click', this.addMarker);
+    //this.map.on('click', this.addMarker);
     
   }
 
