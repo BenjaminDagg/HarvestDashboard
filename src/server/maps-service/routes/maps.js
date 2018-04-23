@@ -18,6 +18,7 @@ var mapSchema = require('../schemas/map/map-schema');
 var errorSchema = require('../schemas/error/error-schema');
 var scanSchema = require('../schemas/scan/scan-schema');
 
+var turf = require('@turf/turf');
 
 //This should work in node.js and other ES5 compliant implementations.
 function isEmptyObject(obj) {
@@ -595,6 +596,182 @@ exports.register = function(server, options, next) {
 					});
 				}
 			})
+		}
+	});
+	
+	
+	
+	/*
+	 * Gets map data of every map for the given user id
+	 * 
+	 * Request:
+	 * 		GET
+	 * 		user id in url
+	 * 		query params:
+	 * 			from: get only maps after this date
+	 * 			to: get only maps before this date
+	 * 
+	 * Response:
+	 * 		400 - Bad request (user not found)
+	 * 		200 - Returns array of map object for the user
+	 * 
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				params: {
+					//none
+				},
+				query: {
+					id: Joi.string().length(24) //id of user
+				}
+			}
+		},
+		method: 'GET',
+		path: '/maps/fields',
+		handler: function (request, reply) {
+			
+			//get optional query parameters form url if they exist
+			const params = request.query;
+			
+			const uid = 'id' in params ? params.id : request.auth.credentials.id;
+			console.log('uid = ' + uid);
+			var id = mongojs.ObjectId(uid);
+			
+			var response;
+			
+			//search for id to see if it exists
+			db.collection('user').find({_id: id}, (err, doc) => {
+				
+				if (err) {
+					response = {
+							statusCode: 400,
+							error: 'Error getting users fields',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//user not found
+				else if (!doc) {
+					response = {
+							statusCode: 400,
+							error: 'Error getting users fields',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//user id found now get their feilds
+				else {
+					console.log('user found');
+					//search for users scans to get the map ids
+					db.collection('scans').find({profileId: uid}, (err, docs) => {
+						if (err) {
+							response = {
+									statusCode: 400,
+									error: 'Error getting users fields',
+									message: 'Given user id does not exist'
+							};
+							return reply(response).code(400);
+						}
+						
+						var mapIds = new Array();
+						var scans = docs;
+					
+						//insert the mapids of each scan into mapIds array
+						for (var i = 0; i < scans.length;i++) {
+							for (var j = 0; j < scans[i].mapIds.length;j++) {
+								mapIds.push(mongojs.ObjectId(scans[i].mapIds[j]));
+							}
+						}
+						console.log(mapIds);
+						
+						var query = {
+								type: 'field',
+								_id: {
+									$in: mapIds
+								}
+						};
+						
+						//get all maps
+						db.Maps.find(query, (err,docs) => {
+							if (err) {
+								response = {
+									statusCode: 400,
+									error: 'Error getting users fields',
+									message: 'Error searching user maps'
+								};
+								return reply(response).code(400);
+							}
+							
+							//copy all map objects into array before sending
+							var maps = new Array();
+							
+							//copy all maps in db into array
+							for (var i = 0; i < docs.length;i++) {
+								var newMap = {
+									_id: docs[i]._id.toString(),
+									type: docs[i].type,
+									name: docs[i].name,
+									createdAt: docs[i].createdAt,
+									shape: {
+										type: docs[i].shape.type,
+										coordinates: docs[i].shape.coordinates
+									}
+								};
+								
+								//polygon object representing map field
+								var coords = newMap.shape.coordinates;
+								coords.push(coords[0]);
+								var field = turf.polygon([coords]);
+								
+								var shape = {
+										type: 'GeometryCollection',
+										geometries: [
+											newMap.shape
+										]
+								}
+								
+								/*
+								 * Goes through all scans and gets scans that are inside
+								 * the coordinates of the users fiel. If scans coordiantes
+								 * in field then add it to geometry collection
+								 */
+								//iterate of users scans
+								for (var ii = 0; ii < scans.length;ii++) {
+									//iterate over coordinates of each scan
+									for (var jj = 0; jj < scans[ii].location.coordinates.length;jj++) {
+										
+										var point = turf.point(scans[ii].location.coordinates[jj]);
+										//check if scan coords inside field coords
+										if (turf.booleanWithin(point,field)) {
+											
+											//add scan point to collection
+											var newGeometryPoint = {
+													type: 'Point',
+													coordinates: scans[ii].location.coordinates[jj]
+											};
+											shape.geometries.push(newGeometryPoint);
+										}
+									}
+								}
+								
+								//upate this maps geometry to include points
+								newMap.shape = shape;
+								maps.push(newMap);
+							
+							}
+							
+							return reply(maps).code(200);
+						})
+					})
+				}
+				
+			})
+			
 		}
 	});
 	

@@ -89,7 +89,7 @@ class Map extends React.Component {
 				
 				//create marker for the point
 				var marker = new L.marker(latlng, {title: ''}).addTo(this.map);
-				L.circle(coords, {radius: 1, color: 'red'}).addTo(this.map);
+				L.circle(coords, {radius: 1, color: 'blue'}).addTo(this.map);
 				
 				//if the shape has a scan object make
 				//a popup window to display scan info
@@ -147,7 +147,7 @@ class Map extends React.Component {
     	bounds.extend
     }
     
-    //this.map.on('click', this.addMarker);
+    this.map.on('click', this.addMarker);
     
   }
 
