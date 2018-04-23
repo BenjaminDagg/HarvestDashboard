@@ -2,7 +2,7 @@ import React from 'react';
 import { withRouter } from 'react-router';
 import LiveGraph from '../../LiveGraph/components';
 import openSocket from 'socket.io-client';
-const socket = openSocket('http://localhost:1234');
+
 var moment = require('moment');
 import axios from 'axios';
 import { withStyles } from 'material-ui/styles';
@@ -24,6 +24,7 @@ class RealTime extends React.Component {
 		super(props);
 		
 		this.state = {
+			socket: openSocket('http://localhost:1234'),
 			message: 'none',
 			timerSpeed: 1000, //number of milliseconds in timer
 			scans: [	//array of users scans
@@ -80,13 +81,17 @@ class RealTime extends React.Component {
 		};
 		
 		
-		
+		this.registerSocket = this.registerSocket.bind(this);
 		this.scanListener = this.scanListener.bind(this);
 		this.getUserScans = this.getUserScans.bind(this);
 		this.incrShowCrateAmt = this.incrShowCrateAmt.bind(this);
 		this.resetCrateChart = this.resetCrateChart.bind(this);
 		this.tick = this.tick.bind(this);
 		this.updateCrateEstimates = this.updateCrateEstimates.bind(this);
+		
+		this.registerSocket((err, message) => {
+		
+		});
 		
 		//listen for scans being added from socket
 		this.scanListener((err, message) => {
@@ -159,6 +164,9 @@ class RealTime extends React.Component {
 			this.setState({scans: scans});
  			this.setState({message: message.datetime});
  		});
+ 		
+ 		
+ 		
 		
 		
 	}
@@ -168,6 +176,12 @@ class RealTime extends React.Component {
  	
  		//creates timer to increment every second
  		this.interval = setInterval(this.tick,1000);
+ 		
+ 		//when socket connects to server sends server the user id
+ 		var self = this;
+ 		this.state.socket.on('connect', function(data) {
+ 			self.state.socket.emit('register', {uid: self.props.user.data.user._id});
+ 		});
     
   	}
   	
@@ -177,9 +191,18 @@ class RealTime extends React.Component {
   	
   		//deletes timer
   		clearInterval(this.interval);
+  		
+  		socket.close();
   	}
   	
   	
+  	registerSocket(cb) {
+  		if (this.props.user) {
+  			socket.on('connect', function(data) {
+  				socket.emit('register', {uid: this.props.user.data.user._id});
+  			});
+  		}
+  	}
   	
   	
   	
@@ -347,7 +370,7 @@ class RealTime extends React.Component {
   	
   	//listens to socket server to detect when a new scan is added to database
   	scanListener(cb) {
-  		socket.on('scan_added', message => cb(null,message));
+  		this.state.socket.on('scan_added', message => cb(null,message));
   	}
   	
   	

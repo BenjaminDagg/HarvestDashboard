@@ -42,6 +42,7 @@ exports.register = function(server, options, next) {
 	
 	const io = server.app.io;
 	
+	var clients = server.app.clients;
 	
 	// ******************* Maps **********************
 	
@@ -917,9 +918,16 @@ exports.register = function(server, options, next) {
 					};
 					
 					
-					var currId = request.auth.credentials.id;
-					if (scan.profileId == currId) {
-						io.emit('scan_added', response.scan);
+					
+					for (var i = 0; i < clients.length;i++) {
+						
+						if (clients[i].uid == response.scan.profileId) {
+							console.log(clients[i]);
+							var socketId = clients[i].clientId;
+							io.to(socketId).emit('scan_added', response.scan);
+							
+						}
+						
 					}
 					
 					//return added scan and success message
