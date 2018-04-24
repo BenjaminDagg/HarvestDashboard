@@ -722,11 +722,17 @@ exports.register = function(server, options, next) {
 										coordinates: docs[i].shape.coordinates
 									}
 								};
+								if (docs[i].data) {
+									newMap.data = docs[i].data;
+								}
 								
 								//polygon object representing map field
 								var coords = newMap.shape.coordinates;
 								coords.push(coords[0]);
 								var field = turf.polygon([coords]);
+								
+								var area = turf.area(field);
+								newMap.data.area = area;
 								
 								var shape = {
 										type: 'GeometryCollection',
@@ -735,30 +741,132 @@ exports.register = function(server, options, next) {
 										]
 								}
 								
-								/*
-								 * Goes through all scans and gets scans that are inside
-								 * the coordinates of the users fiel. If scans coordiantes
-								 * in field then add it to geometry collection
-								 */
-								//iterate of users scans
-								for (var ii = 0; ii < scans.length;ii++) {
-									//iterate over coordinates of each scan
-									for (var jj = 0; jj < scans[ii].location.coordinates.length;jj++) {
+								//draws line for each row of field
+								if (newMap.data) {
+									newMap.data.rows = [];
+									
+									//bot left
+									var startCoords = newMap.shape.coordinates[0];
+									var startPt = turf.point(startCoords);
+									startPt = turf.flip(startPt);
+									
+									//bot right
+									var endCoords = newMap.shape.coordinates[3];
+									var endPt = turf.point(endCoords);
+									endPt = turf.flip(endPt);
+									
+									
+									
+									//top left
+									var pt2 = newMap.shape.coordinates[1];
+									var widthStart = turf.point(pt2);
+									widthStart = turf.flip(widthStart);
+									
+									//top right
+									var pt3 = newMap.shape.coordinates[2];
+									var ptTopRt = turf.point(pt3);
+									ptTopRt = turf.flip(ptTopRt);
+									
+									
+									var fieldHeight = turf.distance(turf.flip(widthStart),turf.flip(startPt),{units: 'feet'});
+									var fieldWidth = turf.distance(turf.flip(startPt), turf.flip(endPt), {units: 'feet'});
+									newMap.data.fieldWidth = fieldWidth;
+									newMap.data.fieldHeight = fieldHeight;
+									
+									newMap.data.row_count = (newMap.data.fieldWidth / newMap.data.row_width) - 1;
+									
+									var bearingLength = turf.rhumbBearing(startPt,endPt);
+									var bearingWidth = turf.rhumbBearing(widthStart, ptTopRt);
+									
+									var dist = newMap.data.row_width;
+									for (var k = 0; k < newMap.data.row_count - newMap.data.row_width;k++) {
+										var pt = turf.rhumbDestination(startPt,dist,bearingLength,{units:'feet'});
+										pt = turf.flip(pt);
 										
-										var point = turf.point(scans[ii].location.coordinates[jj]);
-										//check if scan coords inside field coords
-										if (turf.booleanWithin(point,field)) {
+										
+										
+										var ptTop = turf.rhumbDestination(widthStart,dist,bearingWidth,{units: 'feet'});
+										ptTop = turf.flip(ptTop);
+										
+										
+										
+										var lineCoords = [];
+										lineCoords.push(ptTop.geometry.coordinates);
+										lineCoords.push(pt.geometry.coordinates);
+										
+										
+										
+										var rowCoords = [
+											turf.flip(startPt).geometry.coordinates,
+											turf.flip(widthStart).geometry.coordinates,
+											ptTop.geometry.coordinates,
+											pt.geometry.coordinates
+										];
+										if (k == -1) {
 											
-											//add scan point to collection
-											var newGeometryPoint = {
-													type: 'Point',
-													coordinates: scans[ii].location.coordinates[jj]
-											};
-											shape.geometries.push(newGeometryPoint);
 										}
+										
+										shape.geometries.push({
+											type: 'Polygon',
+											coordinates: rowCoords
+										});
+										
+										rowCoords.push(rowCoords[0]);
+										var rowPoly = turf.polygon([rowCoords]);
+										var rowArea = turf.area(rowPoly);
+										var newRow = {
+												coordinates: rowCoords,
+												area: rowArea
+										};
+										newMap.data.rows.push(newRow);
+										
+										widthStart = turf.flip(ptTop);
+										startPt = turf.flip(pt);
+										
+										
 									}
 								}
 								
+								
+								
+								var distancePerRow = [];
+								for (ii = 0; ii < newMap.data.rows.length;ii++) {
+									var row = turf.polygon([newMap.data.rows[ii].coordinates]);
+									var lines = [];
+									
+									for (var jj = 0; jj < scans.length;jj++) {
+										for (var kk = 0; kk < scans[jj].location.coordinates.length;kk++) {
+											var point = turf.point(scans[jj].location.coordinates[kk]);
+											
+											if (turf.booleanWithin(point,row)) {
+												var newGeometryPoint = {
+														type: 'Point',
+														coordinates: scans[jj].location.coordinates[kk]
+												};
+												
+												shape.geometries.push(newGeometryPoint);
+												lines.push(point.geometry.coordinates);
+											}
+										}
+									}
+									if (lines.length <= 1) {
+										distancePerRow[ii] = lines.length;
+									}
+									else {
+										var lineString = turf.lineString(lines);
+										var rowDistance = turf.length(lineString, {units: 'feet'});
+										distancePerRow[ii] = rowDistance;
+									}
+									
+								}
+								newMap.data.distancePerRow = distancePerRow;
+								var percentHarvested = 0;
+								for (var m = 0; m < newMap.data.distancePerRow.length;m++) {
+									var area = newMap.data.distancePerRow[m] * newMap.data.row_width;
+									percentHarvested += area;
+								}
+								percentHarvested = percentHarvested / newMap.data.area;
+								newMap.data.percentHarvested = percentHarvested;
 								//upate this maps geometry to include points
 								newMap.shape = shape;
 								maps.push(newMap);

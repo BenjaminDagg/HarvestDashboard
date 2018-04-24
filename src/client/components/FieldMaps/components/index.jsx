@@ -4,6 +4,7 @@ import axios from 'axios';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Map from '../../Map/components';
+import GuageChart from '../../GuageChart/components';
 
 var moment = require('moment');
 
@@ -17,7 +18,8 @@ class FieldMaps extends React.Component {
 			maps: null, //array of map objects of the users maps
 			user: this.props.user || null,
 			bearer: this.props.bearer || null,
-			fields: null 	//array of map object of users fields
+			fields: null, 	//array of map object of users fields
+			graphs: null
 		};
 		
 		
@@ -71,6 +73,47 @@ class FieldMaps extends React.Component {
 			headers
 		).then(res => {
 			console.log(res.data);
+			
+			var fields = res.data;
+			var graphs = [];
+			for (var i = 0; i < fields.length;i++) {
+			var percent = fields[i].data.percentHarvested * 100;
+			percent = percent.toFixed(2);
+				var newGraph = {
+					data: {
+						columns: [
+							['data', percent]
+						],
+						type: 'gauge'
+					},
+					gauge: {
+						label: {
+							format: function(value, ration) {
+								return value;
+							},
+							show:false
+						},
+						min: 0,
+						max: 100,
+						units: ' %',
+						width: 39
+					},
+					color: {
+        				pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044'], // the three color levels for the percentage values.
+       					 threshold: {
+        					unit: 'value', 
+            				max: 200, 
+            				values: [30, 60, 90, 100]
+       						 }
+    				},
+    				size: {
+       					height: 180
+    				},
+					name: fields[i].name
+				};
+				graphs.push(newGraph);
+			}
+			this.setState({graphs: graphs});	
 			this.setState({fields: res.data});
 		})
 		.catch(error => {
@@ -103,19 +146,40 @@ class FieldMaps extends React.Component {
 		  
 			
 			<div style={style}>
+			
+			<style>{"\
+                .c3-line{\
+                  fill:none;\
+                }\
+              "}</style>
+              <style>{"\
+                .c3-axis path, .c3-axis line {\
+                  stroke-width: 1px;\
+                  fill : none;\
+                  stroke: #000;\
+                }\
+              "}</style>
 				
 				
 				{this.state.fields != null &&
-					this.state.fields.map((data) => {
+					this.state.fields.map((data, index) => {
+						
+						
+					
 						return (
+							<div>
+							
 							<Map title={data.name}
 								 center={this.state.fields[0].shape.geometries[0].coordinates[0]}
 								 geometry={data.shape}
 								 zoom={14}
 							/>
+							<GuageChart color={this.state.graphs[index].color} size={this.state.graphs[index].size} data={this.state.graphs[index].data} guage={this.state.graphs[index].gauge} name={this.state.graphs[index].name.replace(/\s/g, '')} />
+							</div>
 						)
 					})
 				}
+				
 				
 				
 			</div>

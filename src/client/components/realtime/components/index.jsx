@@ -88,7 +88,7 @@ class RealTime extends React.Component {
 		this.resetCrateChart = this.resetCrateChart.bind(this);
 		this.tick = this.tick.bind(this);
 		this.updateCrateEstimates = this.updateCrateEstimates.bind(this);
-		
+		this.speedChanged = this.speedChanged.bind(this);
 		this.registerSocket((err, message) => {
 		
 		});
@@ -175,7 +175,7 @@ class RealTime extends React.Component {
 	componentDidMount() {
  	
  		//creates timer to increment every second
- 		this.interval = setInterval(this.tick,1000);
+ 		this.interval = setInterval(this.tick,this.state.timerSpeed);
  		
  		//when socket connects to server sends server the user id
  		var self = this;
@@ -183,6 +183,16 @@ class RealTime extends React.Component {
  			self.state.socket.emit('register', {uid: self.props.user.data.user._id});
  		});
     
+  	}
+  	
+  	
+  	
+  	componentDidUpdate(prevProps, prevState) {
+  		if (this.state.timerSpeed != 1000) {
+  			clearInterval(this.interval);
+  			//creates timer to increment every second
+ 			this.interval = setInterval(this.tick,this.state.timerSpeed);
+  		}
   	}
   	
   	
@@ -391,6 +401,12 @@ class RealTime extends React.Component {
   	}
   	
   	
+  	speedChanged(event) {
+  		console.log('changed');
+  		this.setState({timerSpeed: event.target.value});
+  	}
+  	
+  	
 
 	render() {
 	
@@ -477,7 +493,8 @@ class RealTime extends React.Component {
     	
     		<br />
     		
-    	
+    		<h2>Estimated # Crates Harvested Today</h2>
+    		<input type="range" min="100" max="2000" value={this.state.timerSpeed} onChange={this.speedChanged} />
     		<LiveGraph data={this.state.crateEstimateGraph.data} axis={this.state.crateEstimateGraph.axis} name="crateEstimateGraph" />
     	</div>
     );
