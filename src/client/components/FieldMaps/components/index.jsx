@@ -111,6 +111,7 @@ class FieldMaps extends React.Component {
 							<Map title={data.name}
 								 center={this.state.fields[0].shape.geometries[0].coordinates[0]}
 								 geometry={data.shape}
+								 zoom={14}
 							/>
 						)
 					})

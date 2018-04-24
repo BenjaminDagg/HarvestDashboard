@@ -196,7 +196,14 @@ class MapContainer extends React.Component {
 			).then(res => {
 				
 				const mapData = res.data;
-				this.setState({maps: mapData});
+				
+				var maps = [];
+				for (var i = 0; i < mapData.length;i++) {
+					if (mapData[i].type != 'field') {
+						maps.push(mapData[i]);
+					}
+				}
+				this.setState({maps: maps});
 			})
 			.catch(error => {
 					
@@ -279,6 +286,10 @@ class MapContainer extends React.Component {
 		var user = this.props.user;
 		var bearer = this.props.bearer;
 		
+		//current path
+		var currentPath = this.props.location.pathname;
+		console.log(currentPath);
+		
 		return (
 		
 		  
@@ -292,12 +303,12 @@ class MapContainer extends React.Component {
 					</li>
 					<li class="nav">
 						<a>
-							<Link to="map/scan">Scans</Link>
+							<Link to="/map/scan">Scans</Link>
 						</a>
 					</li>
 					<li class="nav">	
 						<a>
-							<Link to="map/fields">Your Fields</Link>
+							<Link to="/map/fields">Your Fields</Link>
 						</a>
 					</li>
 				</ul>
@@ -305,7 +316,7 @@ class MapContainer extends React.Component {
 				{ childrenWithProps}
 				
 				<h1>Your Maps</h1>
-				{this.state.maps != null && 
+				{this.state.maps != null && currentPath == '/map' &&
 					this.state.maps.map((data) => {
 						return (
 							

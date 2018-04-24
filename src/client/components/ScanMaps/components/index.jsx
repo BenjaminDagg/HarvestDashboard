@@ -239,7 +239,9 @@ class ScanMaps extends React.Component {
 				this.state.scans != null &&
 					<Map title={'Scan Locations'} 
 					geometry={this.state.scanCoords.shape} 
-					center={this.state.scans[0].location.coordinates} />
+					center={this.state.scans[0].location.coordinates}
+					fit={true}
+					 />
 				}
 				<br />
 				{this.state.scanFetchError.status == true &&

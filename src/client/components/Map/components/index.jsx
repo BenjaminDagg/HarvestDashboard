@@ -103,10 +103,11 @@ class Map extends React.Component {
 				tempMarkers.push(marker);
 				this.setState({markers: tempMarkers});
 				
-				//fit map to show all markers
-				var group = new L.featureGroup(this.state.markers);
-				this.map.fitBounds(group.getBounds());
-				
+				if (this.props.fit != null && this.props.fit == true) {
+					//fit map to show all markers
+					var group = new L.featureGroup(this.state.markers);
+					this.map.fitBounds(group.getBounds());
+				}
 				break;
 				
 			case 'Polygon':
@@ -132,10 +133,12 @@ class Map extends React.Component {
  	const lat = this.props.center[0];
  	const lng = this.props.center[1];
  	
-    this.map = L.map(this.props.title).setView([lat,lng] , 2);
+ 	var zoom = this.props.zoom != null ? this.props.zoom : 2;
+ 	
+    this.map = L.map(this.props.title).setView([lat,lng] , zoom);
    	
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZWd1aWRvIiwiYSI6ImNqYzE2ZDUycjA1em0yeHBmN2Q0Z2VveHQifQ.WKx_h2jg4NwT2FcVXGHSdg', {
-      maxZoom: 18,
+      maxZoom: 20,
       id: 'mapbox.streets-satellite',
       accessToken: 'pk.eyJ1IjoiZWd1aWRvIiwiYSI6ImNqYzE2ZDUycjA1em0yeHBmN2Q0Z2VveHQifQ.WKx_h2jg4NwT2FcVXGHSdg'
     }).addTo(this.map);
@@ -143,12 +146,17 @@ class Map extends React.Component {
     
     if (this.props.geometry != null) {
     	this.drawGeometry(this.props.geometry);
+    	/*
     	var bounds = new L.LatLngBounds();
     	bounds.extend
+    	*/
     }
     
-    //this.map.on('click', this.addMarker);
     
+    //this.map.on('click', this.addMarker);
+    this.map.on('zoomend', function(e) {
+    	console.log(e);
+    });
   }
 
 	render() {
