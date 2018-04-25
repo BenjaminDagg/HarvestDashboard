@@ -1,8 +1,8 @@
 import React from 'react';
 import { withRouter } from 'react-router';
-import LiveGraph from '../../LiveGraph/components';
-import openSocket from 'socket.io-client';
 
+import openSocket from 'socket.io-client';
+const socket = openSocket('http://localhost:1234');
 var moment = require('moment');
 import axios from 'axios';
 import { withStyles } from 'material-ui/styles';
@@ -17,17 +17,14 @@ import LineChart from 'react-c3js';
 import 'c3/c3.css';
 
 
-
 class RealTime extends React.Component {
 
 	constructor(props) {
 		super(props);
 		
 		this.state = {
-			socket: openSocket('http://localhost:1234'),
 			message: 'none',
-			timerSpeed: 1000, //number of milliseconds in timer
-			scans: [	//array of users scans
+			scans: [
 				{
 					_id : '',
 					profielId: '',
@@ -37,63 +34,28 @@ class RealTime extends React.Component {
 					location: {}
 				}
 			],
-			crateEstimateGraph : {	//graph data for crate estimate graph
-				data : {
-					x: 'x',
-					xFormat: '%Y-%m-%dT%H:%M:%S.%LZ',
-					columns: [	
-						['x'],	//columns[0] is x axis (current date)
-						['crates:']	//columns[1] is # of estimated crates
-					]
-				},
-				axis: {	//format of grapg x and y axis
-					y: {
-				
-						max: 0,	//max value of y ticks
-						min: 0,	//min value of y ticks
-						
-						label: {
-							text: '# Crates',
-							position: 'outer-middle'
-						},
-						tick: {
-							fit: false,
-						}
-					},
-					x: {
-						type: 'timeseries',
-						localtime: true,
-						tick: {
-							culling: true,
-							fit: true,
-							format: '%Y-%m-%dT%H:%M:%S.%LZ'
-						}
-					}
-				}
-					
-			},
-			minNumCrates: 0, //maximum estimated num of crates
-			maxNumCrates: 0, //min estimated num of crates
+			crateEstimateData: {
+			x: 'x',
+			xFormat: '%Y-%m-%dT%H:%M:%S.%LZ',
+			columns: [
+				['x'],
+				['crates:']
+			]
+		},
 			avgTime: 1, //avg time to harvest 10 newest crates
 			showCrateAmt: 10, //number of crates to show in the list
-			dateNow: moment().utc('-8:00').toISOString(),
-			
+			dateNow: moment().utc('-8:00').toISOString()
 		};
 		
-		
-		this.registerSocket = this.registerSocket.bind(this);
+		this.drawScanList = this.drawScanList.bind(this);
 		this.scanListener = this.scanListener.bind(this);
 		this.getUserScans = this.getUserScans.bind(this);
 		this.incrShowCrateAmt = this.incrShowCrateAmt.bind(this);
 		this.resetCrateChart = this.resetCrateChart.bind(this);
+		this.renderCrateEstimateGraph = this.renderCrateEstimateGraph.bind(this);
 		this.tick = this.tick.bind(this);
-		this.updateCrateEstimates = this.updateCrateEstimates.bind(this);
-		this.speedChanged = this.speedChanged.bind(this);
-		this.registerSocket((err, message) => {
 		
-		});
-		
-		//listen for scans being added from socket
+		//listen for scans being added
 		this.scanListener((err, message) => {
 			
 			//check if scan already in table
@@ -108,7 +70,7 @@ class RealTime extends React.Component {
 			var scans = this.state.scans;
 			
 			//move all elements down one
-			for (var i = scans.length - 1; i > 0;i--) {
+			for (var i = scans.length; i > 0;i--) {
 				scans[i] = scans[i-1];
 			}
 			
@@ -157,16 +119,12 @@ class RealTime extends React.Component {
 			//update crate avg time
 			var time = 0
 			for (var i = 0; i < 10;i++) {
-				time += this.state.scans[i].time;
+				time += this.state.crates[i].time;
 			}
-			
 			this.setState({avgTime: time / 10});
 			this.setState({scans: scans});
  			this.setState({message: message.datetime});
  		});
- 		
- 		
- 		
 		
 		
 	}
@@ -174,106 +132,38 @@ class RealTime extends React.Component {
 
 	componentDidMount() {
  	
- 		//creates timer to increment every second
- 		this.interval = setInterval(this.tick,this.state.timerSpeed);
+ 		this.getUserScans();
  		
- 		//when socket connects to server sends server the user id
- 		var self = this;
- 		this.state.socket.on('connect', function(data) {
- 			self.state.socket.emit('register', {uid: self.props.user.data.user._id});
- 		});
+ 		this.interval = setInterval(this.tick,1000);
     
   	}
   	
-  	
-  	
-  	componentDidUpdate(prevProps, prevState) {
-  		if (this.state.timerSpeed != 1000) {
-  			clearInterval(this.interval);
-  			//creates timer to increment every second
- 			this.interval = setInterval(this.tick,this.state.timerSpeed);
-  		}
-  	}
-  	
-  	
-  	
   	componentWillUnMount() {
-  	
-  		//deletes timer
   		clearInterval(this.interval);
-  		
-  		socket.close();
   	}
   	
   	
-  	registerSocket(cb) {
-  		if (this.props.user) {
-  			socket.on('connect', function(data) {
-  				socket.emit('register', {uid: this.props.user.data.user._id});
-  			});
-  		}
-  	}
-  	
-  	
-  	
-  	//called every second
-  	//uses the current date and the avg time to 
-  	//harvest a crate to update crateEstimate data with
-  	//new estimate
-  	updateCrateEstimates() {
-  	
-  		//check if scan data is loaded
-  		if (this.state.avgTime >= 1 && this.state.scans.length > 0) {
-  			
-  			//midnight of otday
- 			var midnight =  moment(this.state.dateNow).utc('-8:00').add(1,'days').endOf('day').toISOString();
- 			
- 			//estimated number of crates going to be harvested today
- 			var secLeft = Math.floor((new Date(midnight) - new Date(this.state.dateNow)) / 1000);
- 			
- 			
- 			//estimated # of crates
- 			var numCrates = Math.ceil(secLeft / this.state.avgTime);
- 			
- 			//update crateEstimateData
- 			var graph = this.state.crateEstimateGraph;
- 			
- 			
- 			//shifts all indexes of current data down one
- 			for (var i = 0; i < graph.data.columns.length;i++) {
- 				graph.data.columns[i] = [graph.data.columns[i][0]].concat(graph.data.columns[i].slice(1).slice(-15));
- 			}
- 			
- 			
- 			var max = 0;
- 			var min = graph.data.columns[1][0];
- 			for (var i = 0; i < graph.data.columns[1].length;i++) {
- 				if (graph.data.columns[1][i] > max) {
- 					max = graph.data.columns[1][i];
- 				}
- 				if (graph.data.columns[1][i] < min) {
- 					min = graph.data.columns[1][i];
- 				}
- 			}
- 			graph.axis.y.max = max + 5;
- 			graph.axis.y.min = 0;
- 			
- 			//add new data
- 			graph.data.columns[0].push(this.state.dateNow);
- 			graph.data.columns[1].push(numCrates);
- 			this.setState({crateEstimateGraph: graph});
-  		
-  			
-  		}
-  	}
-  	
-  	
-  	//called every second when setInterval timer increments
-  	//updates datenow to current time
   	tick() {
   		this.setState({dateNow: moment().utc('-8:00').toISOString()});
   		
-  		this.updateCrateEstimates();
+  		if (this.state.avgTime >= 1 && this.state.scans.length > 0) {
+  			
+ 			var midnight =  moment(this.state.dateNow).utc('-8:00').add(1,'days').endOf('day').toISOString();
+ 			//estimated number of crates going to be harvested today
+ 			var secLeft = Math.floor((new Date(midnight) - new Date(this.state.dateNow)) / 1000);
+ 			var numCrates = Math.ceil(secLeft / this.state.avgTime);
+ 			console.log(midnight);
+ 			
+ 			var currData = this.state.crateEstimateData;
+ 			
+ 			for (var i = 0; i < currData.columns.length;i++) {
+ 				currData.columns[i] = [currData.columns[i][0]].concat(currData.columns[i].slice(1).slice(-5));
+ 			}
+ 			
+ 			currData.columns[0].push(this.state.dateNow);
+ 			currData.columns[1].push(numCrates);
+ 			this.setState({crateEstimateData: currData});
+  		}
   	}
   	
   	
@@ -315,18 +205,12 @@ class RealTime extends React.Component {
 					return (a.datetime > b.datetime) ? -1 : ((a.datetime < b.datetime) ? 1 : 0);
 			});
 			
-			
-			
-			
-			
 			//get time to harvest each scan
 			var avg = this.state.avgTime;
 			for (var i = 0; i < scans.length - 1;i++) {
 				var d1 = new Date(scans[i].datetime);
 				var d2 = new Date(scans[i + 1].datetime);
 				var diff = (d1 - d2) / 1000;
-				
-				
 				
 				//get distance between crates
 				var end;
@@ -363,7 +247,6 @@ class RealTime extends React.Component {
 				}
 				scans[i].time = diff;
 			}
-			
 			this.setState({avgTime: avg / 10});
 			this.setState({scans: scans});
 		})
@@ -375,12 +258,25 @@ class RealTime extends React.Component {
   	}
   	
   	
-  	
+  	//loops over array of scans and makes table rows 
+  	//showing their date
+  	drawScanList() {
+  		
+  		//loop over every scans
+  		this.state.scans.map((value, index ) => {
+  			
+  			return (<tr key={index}>
+  						<td>{value._id}</td>
+  						<td>{value.datetime}</td>
+  					</tr>
+  			);
+  		})
+  	};
   	
   	
   	//listens to socket server to detect when a new scan is added to database
   	scanListener(cb) {
-  		this.state.socket.on('scan_added', message => cb(null,message));
+  		socket.on('scan_added', message => cb(null,message));
   	}
   	
   	
@@ -401,11 +297,50 @@ class RealTime extends React.Component {
   	}
   	
   	
-  	speedChanged(event) {
-  		console.log('changed');
-  		this.setState({timerSpeed: event.target.value});
-  	}
   	
+  	renderCrateEstimateGraph() {
+  	
+  		if (this.state.scans.length < 3 || this.state.avgTime < 1|| this.state.crateEstimateData == null) {
+  			return (<div>Loading...</div>);
+  		}
+  	
+  		//today at midnight
+ 		var midnight = moment(this.state.dateNow).utc('-8:00').endOf('day').toISOString();
+		//time left from now to midnight
+ 		var secLeft = Math.floor((new Date(midnight) - new Date(this.state.dateNow)) / 1000);
+ 		
+ 		//estimated number of crates going to be harvested today
+ 		var numCrates = Math.floor(secLeft / this.state.avgTime);
+ 		
+ 		
+		var axis = {
+			y: {
+				label: {
+					text: '# Crates',
+					position: 'outer-middle'
+				},
+				tick: {
+					fit: true,
+					max: 100
+				}
+			},
+			x: {
+				type: 'timeseries',
+				localtime: true,
+				tick: {
+					fit: true,
+					format: '%Y-%m-%dT%H:%M:%S.%LZ'
+				}
+			}
+		};
+		var data = this.state.crateEstimateData;
+		
+		
+		
+		
+		return (<div><C3Chart  axis={axis}  data={this.state.crateEstimateData} /></div>);
+  	
+  	}
   	
 
 	render() {
@@ -418,8 +353,13 @@ class RealTime extends React.Component {
 	
 	this.getUserScans();
 	
+ 	var crateEstimates = this.renderCrateEstimateGraph();
+ 	
 		
 	return (
+	
+	
+		
 	
     	<div style={style}>
     	
@@ -492,10 +432,8 @@ class RealTime extends React.Component {
     	
     	
     		<br />
-    		
-    		<h2>Estimated # Crates Harvested Today</h2>
-    		<input type="range" min="100" max="2000" value={this.state.timerSpeed} onChange={this.speedChanged} />
-    		<LiveGraph data={this.state.crateEstimateGraph.data} axis={this.state.crateEstimateGraph.axis} name="crateEstimateGraph" />
+    		{crateEstimates}
+    	
     	</div>
     );
 		

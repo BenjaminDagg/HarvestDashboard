@@ -18,6 +18,7 @@ var mapSchema = require('../schemas/map/map-schema');
 var errorSchema = require('../schemas/error/error-schema');
 var scanSchema = require('../schemas/scan/scan-schema');
 
+var turf = require('@turf/turf');
 
 //This should work in node.js and other ES5 compliant implementations.
 function isEmptyObject(obj) {
@@ -42,6 +43,7 @@ exports.register = function(server, options, next) {
 	
 	const io = server.app.io;
 	
+	var clients = server.app.clients;
 	
 	// ******************* Maps **********************
 	
@@ -598,6 +600,290 @@ exports.register = function(server, options, next) {
 	});
 	
 	
+	
+	/*
+	 * Gets map data of every map for the given user id
+	 * 
+	 * Request:
+	 * 		GET
+	 * 		user id in url
+	 * 		query params:
+	 * 			from: get only maps after this date
+	 * 			to: get only maps before this date
+	 * 
+	 * Response:
+	 * 		400 - Bad request (user not found)
+	 * 		200 - Returns array of map object for the user
+	 * 
+	 */
+	server.route({
+		config: {
+			cors: {
+				origin: ['*'],
+				additionalHeaders: ['cache-control', 'x-requested-with']
+			},
+			validate: {
+				params: {
+					//none
+				},
+				query: {
+					id: Joi.string().length(24) //id of user
+				}
+			}
+		},
+		method: 'GET',
+		path: '/maps/fields',
+		handler: function (request, reply) {
+			
+			//get optional query parameters form url if they exist
+			const params = request.query;
+			
+			const uid = 'id' in params ? params.id : request.auth.credentials.id;
+			console.log('uid = ' + uid);
+			var id = mongojs.ObjectId(uid);
+			
+			var response;
+			
+			//search for id to see if it exists
+			db.collection('user').find({_id: id}, (err, doc) => {
+				
+				if (err) {
+					response = {
+							statusCode: 400,
+							error: 'Error getting users fields',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//user not found
+				else if (!doc) {
+					response = {
+							statusCode: 400,
+							error: 'Error getting users fields',
+							message: 'Given user id does not exist'
+					};
+					return reply(response).code(400);
+				}
+				//user id found now get their feilds
+				else {
+					console.log('user found');
+					//search for users scans to get the map ids
+					db.collection('scans').find({profileId: uid}, (err, docs) => {
+						if (err) {
+							response = {
+									statusCode: 400,
+									error: 'Error getting users fields',
+									message: 'Given user id does not exist'
+							};
+							return reply(response).code(400);
+						}
+						
+						var mapIds = new Array();
+						var scans = docs;
+					
+						//insert the mapids of each scan into mapIds array
+						for (var i = 0; i < scans.length;i++) {
+							for (var j = 0; j < scans[i].mapIds.length;j++) {
+								mapIds.push(mongojs.ObjectId(scans[i].mapIds[j]));
+							}
+						}
+						console.log(mapIds);
+						
+						var query = {
+								type: 'field',
+								_id: {
+									$in: mapIds
+								}
+						};
+						
+						//get all maps
+						db.Maps.find(query, (err,docs) => {
+							if (err) {
+								response = {
+									statusCode: 400,
+									error: 'Error getting users fields',
+									message: 'Error searching user maps'
+								};
+								return reply(response).code(400);
+							}
+							
+							//copy all map objects into array before sending
+							var maps = new Array();
+							
+							//copy all maps in db into array
+							for (var i = 0; i < docs.length;i++) {
+								var newMap = {
+									_id: docs[i]._id.toString(),
+									type: docs[i].type,
+									name: docs[i].name,
+									createdAt: docs[i].createdAt,
+									shape: {
+										type: docs[i].shape.type,
+										coordinates: docs[i].shape.coordinates
+									}
+								};
+								if (docs[i].data) {
+									newMap.data = docs[i].data;
+								}
+								
+								//polygon object representing map field
+								var coords = newMap.shape.coordinates;
+								coords.push(coords[0]);
+								var field = turf.polygon([coords]);
+								
+								var area = turf.area(field);
+								newMap.data.area = area;
+								
+								var shape = {
+										type: 'GeometryCollection',
+										geometries: [
+											newMap.shape
+										]
+								}
+								
+								//draws line for each row of field
+								if (newMap.data) {
+									newMap.data.rows = [];
+									
+									//bot left
+									var startCoords = newMap.shape.coordinates[0];
+									var startPt = turf.point(startCoords);
+									startPt = turf.flip(startPt);
+									
+									//bot right
+									var endCoords = newMap.shape.coordinates[3];
+									var endPt = turf.point(endCoords);
+									endPt = turf.flip(endPt);
+									
+									
+									
+									//top left
+									var pt2 = newMap.shape.coordinates[1];
+									var widthStart = turf.point(pt2);
+									widthStart = turf.flip(widthStart);
+									
+									//top right
+									var pt3 = newMap.shape.coordinates[2];
+									var ptTopRt = turf.point(pt3);
+									ptTopRt = turf.flip(ptTopRt);
+									
+									
+									var fieldHeight = turf.distance(turf.flip(widthStart),turf.flip(startPt),{units: 'feet'});
+									var fieldWidth = turf.distance(turf.flip(startPt), turf.flip(endPt), {units: 'feet'});
+									newMap.data.fieldWidth = fieldWidth;
+									newMap.data.fieldHeight = fieldHeight;
+									
+									newMap.data.row_count = (newMap.data.fieldWidth / newMap.data.row_width) - 1;
+									
+									var bearingLength = turf.rhumbBearing(startPt,endPt);
+									var bearingWidth = turf.rhumbBearing(widthStart, ptTopRt);
+									
+									var dist = newMap.data.row_width;
+									for (var k = 0; k < newMap.data.row_count - newMap.data.row_width;k++) {
+										var pt = turf.rhumbDestination(startPt,dist,bearingLength,{units:'feet'});
+										pt = turf.flip(pt);
+										
+										
+										
+										var ptTop = turf.rhumbDestination(widthStart,dist,bearingWidth,{units: 'feet'});
+										ptTop = turf.flip(ptTop);
+										
+										
+										
+										var lineCoords = [];
+										lineCoords.push(ptTop.geometry.coordinates);
+										lineCoords.push(pt.geometry.coordinates);
+										
+										
+										
+										var rowCoords = [
+											turf.flip(startPt).geometry.coordinates,
+											turf.flip(widthStart).geometry.coordinates,
+											ptTop.geometry.coordinates,
+											pt.geometry.coordinates
+										];
+										if (k == -1) {
+											
+										}
+										
+										shape.geometries.push({
+											type: 'Polygon',
+											coordinates: rowCoords
+										});
+										
+										rowCoords.push(rowCoords[0]);
+										var rowPoly = turf.polygon([rowCoords]);
+										var rowArea = turf.area(rowPoly);
+										var newRow = {
+												coordinates: rowCoords,
+												area: rowArea
+										};
+										newMap.data.rows.push(newRow);
+										
+										widthStart = turf.flip(ptTop);
+										startPt = turf.flip(pt);
+										
+										
+									}
+								}
+								
+								
+								
+								var distancePerRow = [];
+								for (ii = 0; ii < newMap.data.rows.length;ii++) {
+									var row = turf.polygon([newMap.data.rows[ii].coordinates]);
+									var lines = [];
+									
+									for (var jj = 0; jj < scans.length;jj++) {
+										for (var kk = 0; kk < scans[jj].location.coordinates.length;kk++) {
+											var point = turf.point(scans[jj].location.coordinates[kk]);
+											
+											if (turf.booleanWithin(point,row)) {
+												var newGeometryPoint = {
+														type: 'Point',
+														coordinates: scans[jj].location.coordinates[kk]
+												};
+												
+												shape.geometries.push(newGeometryPoint);
+												lines.push(point.geometry.coordinates);
+											}
+										}
+									}
+									if (lines.length <= 1) {
+										distancePerRow[ii] = lines.length;
+									}
+									else {
+										var lineString = turf.lineString(lines);
+										var rowDistance = turf.length(lineString, {units: 'feet'});
+										distancePerRow[ii] = rowDistance;
+									}
+									
+								}
+								newMap.data.distancePerRow = distancePerRow;
+								var percentHarvested = 0;
+								for (var m = 0; m < newMap.data.distancePerRow.length;m++) {
+									var area = newMap.data.distancePerRow[m] * newMap.data.row_width;
+									percentHarvested += area;
+								}
+								percentHarvested = percentHarvested / newMap.data.area;
+								newMap.data.percentHarvested = percentHarvested;
+								//upate this maps geometry to include points
+								newMap.shape = shape;
+								maps.push(newMap);
+							
+							}
+							
+							return reply(maps).code(200);
+						})
+					})
+				}
+				
+			})
+			
+		}
+	});
+	
+	
 	//************** Scans *******************
 	
 	/*
@@ -917,9 +1203,16 @@ exports.register = function(server, options, next) {
 					};
 					
 					
-					var currId = request.auth.credentials.id;
-					if (scan.profileId == currId) {
-						io.emit('scan_added', response.scan);
+					
+					for (var i = 0; i < clients.length;i++) {
+						
+						if (clients[i].uid == response.scan.profileId) {
+							console.log(clients[i]);
+							var socketId = clients[i].clientId;
+							io.to(socketId).emit('scan_added', response.scan);
+							
+						}
+						
 					}
 					
 					//return added scan and success message
