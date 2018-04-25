@@ -223,7 +223,8 @@ class MapContainer extends React.Component {
 	render() {
 		var childrenWithProps = React.Children.map(this.props.children, child => {
 			return React.cloneElement(child, {
-				id: this.props.user.data.user._id,
+				user: this.props.user,
+				id: this.props.user._id,
 				bearer: this.props.bearer
 			});
 		});
@@ -243,7 +244,6 @@ class MapContainer extends React.Component {
 
 		var user = this.props.user;
 		var bearer = this.props.bearer;
-
 		//current path
 		var currentPath = this.props.location.pathname;
 		console.log(currentPath);
