@@ -729,6 +729,7 @@ exports.register = function(server, options, next) {
 								//polygon object representing map field
 								var coords = newMap.shape.coordinates;
 								coords.push(coords[0]);
+								newMap.data.coords = coords;
 								var field = turf.polygon([coords]);
 								
 								var area = turf.area(field);

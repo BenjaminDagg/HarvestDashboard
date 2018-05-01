@@ -57,7 +57,10 @@ class GuageChart extends React.Component {
   	
   	
   
-  	
+  	componentDidUpdate(prevProps, prevState) {
+		
+  		this.update();
+  	}
   	
   	
   	/*
@@ -87,6 +90,16 @@ class GuageChart extends React.Component {
  		});
  	
  		
+  	}
+  	
+  	
+  	
+  	
+  	update() {
+  		//append new data to graph data
+  		this.state.chart.load({
+  			columns: this.props.data.columns
+  		});
   	}
   	
   	

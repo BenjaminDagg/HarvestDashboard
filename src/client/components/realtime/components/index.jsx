@@ -2,6 +2,7 @@ import React from 'react';
 import { withRouter } from 'react-router';
 import LiveGraph from '../../LiveGraph/components';
 import openSocket from 'socket.io-client';
+import GuageChart from '../../GuageChart/components';
 
 var moment = require('moment');
 import axios from 'axios';
@@ -15,6 +16,8 @@ var turf = require('@turf/turf');
 import C3Chart from 'react-c3js';
 import LineChart from 'react-c3js';
 import 'c3/c3.css';
+
+var lodash = require('lodash');
 
 
 
@@ -77,7 +80,8 @@ class RealTime extends React.Component {
 			avgTime: 1, //avg time to harvest 10 newest crates
 			showCrateAmt: 10, //number of crates to show in the list
 			dateNow: moment().utc('-8:00').toISOString(),
-			
+			fields: null, 	//array of map objects of users fields
+			graphs: null	//guage graph objects for users fields
 		};
 		
 		
@@ -89,9 +93,9 @@ class RealTime extends React.Component {
 		this.tick = this.tick.bind(this);
 		this.updateCrateEstimates = this.updateCrateEstimates.bind(this);
 		this.speedChanged = this.speedChanged.bind(this);
-		
-		
-		
+		this.getUserFields = this.getUserFields.bind(this);
+		this.renderField = this.renderField.bind(this);
+		this.updateFieldProgress = this.updateFieldProgress.bind(this);
 		
 		
 		//listen for scans being added from socket
@@ -161,9 +165,14 @@ class RealTime extends React.Component {
 				time += this.state.scans[i].time;
 			}
 			
+			
+			
 			this.setState({avgTime: time / 10});
 			this.setState({scans: scans});
  			this.setState({message: message.datetime});
+ 			
+ 			this.updateFieldProgress();
+ 			
  		});
  		
  		
@@ -277,6 +286,7 @@ class RealTime extends React.Component {
   		this.setState({dateNow: moment().utc('-8:00').toISOString()});
   		
   		this.updateCrateEstimates();
+  		
   	}
   	
   	
@@ -411,6 +421,171 @@ class RealTime extends React.Component {
   	}
   	
   	
+  	
+  	//get map objects for users fields with GET /maps/fields
+	getUserFields() {
+		if (!this.props.user || this.state.fields != null || this.props.bearer == "") {
+			return (<div>Loading data...</div>);
+		}
+		
+		const userId = this.props.user._id;
+		
+		//get users scans from database
+		var headers = {
+            'Content-Type': 'application/json',
+            'Authorization' : 'bearer' + this.props.bearer.toString()
+        };
+        
+  
+        axios.defaults.headers.Authorization = this.props.bearer;
+       
+        //make call to maps service api
+        axios.get('http://localhost:1234/maps/fields?id=' + userId.toString(),
+        	{ },
+			headers
+		).then(res => {
+			
+			console.log(res.data);
+			var fields = res.data;
+			var graphs = [];
+			for (var i = 0; i < fields.length;i++) {
+			var percent = fields[i].data.percentHarvested * 100;
+			percent = percent.toFixed(2);
+			var newGraph = {
+					data: {
+						columns: [
+							['data', percent]
+						],
+						type: 'gauge'
+					},
+					gauge: {
+						label: {
+							format: function(value, ration) {
+								return value;
+							},
+							show:false
+						},
+						min: 0,
+						max: 100,
+						units: ' %',
+						width: 39
+					},
+					color: {
+        				pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044'], // the three color levels for the percentage values.
+       					 threshold: {
+        					unit: 'value', 
+            				max: 200, 
+            				values: [30, 60, 90, 100]
+       						 }
+    				},
+    				size: {
+       					height: 180
+    				},
+					name: fields[i].name
+				};
+				graphs.push(newGraph);
+			}
+			this.setState({graphs: graphs});	
+			this.setState({fields: res.data});
+			
+		})
+		.catch(error => {
+		console.log(error);
+		
+		});
+	}
+	
+	
+	//takes in newly added field and updates field progress %
+	//if the crate coordinates fall into one of the users fields
+	//coordinates
+	updateFieldProgress() {
+		
+		if (this.state.fields == null || this.state.graphs == null) {
+			return;
+		}
+		
+		var graphs = this.state.graphs;
+		var fields = this.state.fields;
+		
+		//loop over every field
+		for (var i = 0; i < this.state.fields.length;i++) {
+			//loop over each row of the field
+			
+			var distPerRow = {};
+			
+			for (var j = 0; j < this.state.fields[i].data.rows.length;j++) {
+			
+				//polygon representing perimeter of the row
+				var row = turf.polygon([this.state.fields[i].data.rows[j].coordinates]);
+				//array of points in this row
+				var lines = [];
+				
+				//loop over every scan
+				for (var k = 0; k < this.state.scans.length;k++) {
+					//loop over every coordinate for the scan
+					for (var n = 0; n < this.state.scans[k].location.coordinates.length;n++) {
+						//point of scan coordinates
+						var point = turf.point(this.state.scans[k].location.coordinates[n]);
+					
+						//check if scan is inside of row perimeter
+						if (turf.booleanWithin(point,row)) {
+							lines.push(point.geometry.coordinates);
+						}
+					}
+				}
+				
+				//record total distance harvested in this row
+				if (lines.length <= 1) {
+					distPerRow[j] = lines.length;
+				}
+				else {
+					var lineString = turf.lineString(lines);
+					var rowDistance = turf.length(lineString, {units: 'feet'});
+					distPerRow[j] = rowDistance;
+				}
+			}
+			
+			/*
+			To get percent harvested multiply length harvested in each
+			row times the width of a row then divide that by the total area of
+			field;
+			*/
+			var percentHarvested = 0;
+			for (var key in distPerRow) {
+				
+				var area = distPerRow[key] * this.state.fields[i].data.row_width;
+				percentHarvested += area;
+			}
+			percentHarvested = percentHarvested / this.state.fields[i].data.area;
+			
+			
+			//update graph
+			
+			var targetGraph = graphs[i];
+			targetGraph.data.columns[0][1] = (percentHarvested * 100.00).toFixed(2);
+			graphs[i] = targetGraph;
+			
+		
+			fields[i].data.percentHarvested = percentHarvested;
+			fields[i].distancePerRow = distPerRow;
+		}
+		this.setState({graphs: graphs});
+		this.setState({fields:fields});
+	}
+  	
+  	
+  	renderField(graph) {
+  		return (
+  			<div>
+  				<h3>{graph.name}</h3>
+  				<span>Completed: {graph.data.columns[0][1]}%</span>
+  				<br/>
+  				<GuageChart color={graph.color} size={graph.size} data={graph.data} guage={graph.gauge} name={graph.name.replace(/\s/g, '')} />
+  			</div>
+  		);
+  	}
+  	
 
 	render() {
 	
@@ -421,7 +596,16 @@ class RealTime extends React.Component {
 	};
 	
 	this.getUserScans();
+	this.getUserFields();
 	
+	var fieldGraphs;
+	
+	if (this.state.fields == null || this.state.graphs == null) {
+		fieldGraphs = (<div>Loading..</div>);
+	}
+	else {
+		fieldGraphs = lodash.map(this.state.graphs, this.renderField);
+	}
 		
 	return (
 	
@@ -500,6 +684,11 @@ class RealTime extends React.Component {
     		<h2>Estimated # Crates Harvested Today</h2>
     		<input type="range" min="100" max="2000" value={this.state.timerSpeed} onChange={this.speedChanged} />
     		<LiveGraph data={this.state.crateEstimateGraph.data} axis={this.state.crateEstimateGraph.axis} name="crateEstimateGraph" />
+    		<br />
+    		<div id="field-progress">
+    			<h2>Field Progress</h2>
+    			{fieldGraphs}
+    		</div>
     	</div>
     );
 		

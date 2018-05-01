@@ -95,7 +95,7 @@ class Analytics extends React.Component {
 			return;
 		}
 
-		console.log('getcratedata');
+		
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -125,13 +125,13 @@ class Analytics extends React.Component {
 			)
 			.then(res => {
 				var data = res.data;
-
+				console.log(data);
 				this.setState({ crateData: data });
 				this.setState({ cpdFetchError: false });
 			})
 			.catch(error => {
 				if (error.code) {
-					console.log(error.code);
+					
 					this.setState({ cpdFetchError: true });
 				}
 			});
@@ -353,8 +353,7 @@ class Analytics extends React.Component {
 		var to = this.state.timeEndDate;
 		var uid = this.props.user._id;
 		var unit = this.state.selectedUnit;
-		console.log('from = ' + from + ' and to = ' + to);
-		console.log('unit = ' + unit);
+		
 		axios
 			.get(
 				'http://localhost:2000/harvest/meantime?from=' + from + '&to=' + to + '&id=' + uid + '&unit=' + unit,
@@ -365,7 +364,7 @@ class Analytics extends React.Component {
 				headers
 			)
 			.then(res => {
-				console.log(res);
+				
 				var data = res.data;
 				this.setState({ crateTimeData: data });
 			})
@@ -387,7 +386,7 @@ class Analytics extends React.Component {
 		}
 
 		var timeData = this.state.crateTimeData.crates;
-		console.log(timeData);
+		
 		var data = {
 			x: 'x',
 			columns: [['x'], ['time: ']]
@@ -474,7 +473,7 @@ class Analytics extends React.Component {
 		}
 		this.setState({ crateData: null });
 		this.setState({ cpdFetchError: false });
-		console.log('button pressed');
+		
 		this.getCrateData();
 	}
 
