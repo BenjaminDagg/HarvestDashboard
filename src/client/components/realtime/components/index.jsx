@@ -89,9 +89,10 @@ class RealTime extends React.Component {
 		this.tick = this.tick.bind(this);
 		this.updateCrateEstimates = this.updateCrateEstimates.bind(this);
 		this.speedChanged = this.speedChanged.bind(this);
-		this.registerSocket((err, message) => {
 		
-		});
+		
+		
+		
 		
 		//listen for scans being added from socket
 		this.scanListener((err, message) => {
@@ -180,7 +181,7 @@ class RealTime extends React.Component {
  		//when socket connects to server sends server the user id
  		var self = this;
  		this.state.socket.on('connect', function(data) {
- 			self.state.socket.emit('register', {uid: self.props.user.data.user._id});
+ 			self.state.socket.emit('register', {uid: self.props.user._id});
  		});
     
   	}
@@ -202,14 +203,16 @@ class RealTime extends React.Component {
   		//deletes timer
   		clearInterval(this.interval);
   		
-  		socket.close();
+  		this.state.socket.close();
   	}
   	
   	
   	registerSocket(cb) {
   		if (this.props.user) {
-  			socket.on('connect', function(data) {
-  				socket.emit('register', {uid: this.props.user.data.user._id});
+  			console.log('registering');
+  			var self = this;
+  			this.state.socket.on('connect', function(data) {
+  				self.state.socket.emit('register', {uid: self.props.user._id});
   			});
   		}
   	}
@@ -293,7 +296,8 @@ class RealTime extends React.Component {
             'Authorization' : 'bearer' + this.props.bearer.toString()
         };
        
-        const userId = this.props.user.data.user._id;
+        //const userId = this.props.user.data.user._id;
+        const userId = this.props.user._id;
         console.log('userId = ' + userId);
        	var from = '2018-01-01T00:00:00Z';
        	var to = moment().utc('-8:00').toISOString().slice(0,16) + 'Z';

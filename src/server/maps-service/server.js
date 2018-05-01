@@ -33,7 +33,9 @@ io.on('connection', function(socket) {
 			clientId: socket.id
 		};
 		
+		
 		clients.push(client);
+		
 	});
 	
 	//when client disconnects remove them from client array

@@ -139,7 +139,7 @@ exports.register = function(server, options, next) {
 						//if the given end date specifies a specific time on that day
 						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
 						if (params.to.toISOString() > startTo) {
-							console.log('greater');
+							
 							query.createdAt = {
 									$gte: params.from.toISOString(),
 									$lte: params.to.toISOString()
@@ -149,7 +149,7 @@ exports.register = function(server, options, next) {
 						//from given start date to the given end date at 11:59 PM
 						else {
 							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-							console.log('enddate = ' + endDate);
+							
 							query.createdAt = {
 									//create iso string from passed in date
 									$gte: params.from.toISOString(),
@@ -171,18 +171,18 @@ exports.register = function(server, options, next) {
 				//only to given
 				else {
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-					console.log('enddate = ')
+					
 					query.createdAt = {
 							$lte: endDate
 					};
 				}
 			}
-			console.log(query);
+			
 			//search database pass in query object
 			db.Maps.find({} ,(err, docs) => {
 				
 				if (err) {
-					console.log('in error');
+					
 					var response = {
 						statusCode: 400,
 						error: 'Error Searching for maps',
@@ -190,7 +190,7 @@ exports.register = function(server, options, next) {
 					};
 					return reply(response).code(400);
 				}
-				console.log(docs);
+				
 				
 				
 				//copy docs into array before returning
@@ -514,7 +514,7 @@ exports.register = function(server, options, next) {
 										//if the given end date specifies a specific time on that day
 										//then use that date in format YYYY-MM-ddTHH:mm:ssZ
 										if (params.to.toISOString() > startTo) {
-											console.log('greater');
+											
 											query.createdAt = {
 													$gte: params.from.toISOString(),
 													$lte: params.to.toISOString()
@@ -524,7 +524,7 @@ exports.register = function(server, options, next) {
 										//from given start date to the given end date at 11:59 PM
 										else {
 											var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-											console.log('enddate = ' + endDate);
+											
 											query.createdAt = {
 													//create iso string from passed in date
 													$gte: params.from.toISOString(),
@@ -546,7 +546,7 @@ exports.register = function(server, options, next) {
 								//only to given
 								else {
 									var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-									console.log('enddate = ')
+									
 									query.createdAt = {
 											$lte: endDate
 									};
@@ -639,7 +639,7 @@ exports.register = function(server, options, next) {
 			const params = request.query;
 			
 			const uid = 'id' in params ? params.id : request.auth.credentials.id;
-			console.log('uid = ' + uid);
+			
 			var id = mongojs.ObjectId(uid);
 			
 			var response;
@@ -666,7 +666,7 @@ exports.register = function(server, options, next) {
 				}
 				//user id found now get their feilds
 				else {
-					console.log('user found');
+					
 					//search for users scans to get the map ids
 					db.collection('scans').find({profileId: uid}, (err, docs) => {
 						if (err) {
@@ -687,7 +687,7 @@ exports.register = function(server, options, next) {
 								mapIds.push(mongojs.ObjectId(scans[i].mapIds[j]));
 							}
 						}
-						console.log(mapIds);
+						
 						
 						var query = {
 								type: 'field',
@@ -980,7 +980,7 @@ exports.register = function(server, options, next) {
 						//if the given end date specifies a specific time on that day
 						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
 						if (params.to.toISOString() > startTo) {
-							console.log('greater');
+							
 							query.datetime = {
 									$gte: params.from.toISOString(),
 									$lte: params.to.toISOString()
@@ -990,7 +990,7 @@ exports.register = function(server, options, next) {
 						//from given start date to the given end date at 11:59 PM
 						else {
 							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-							console.log('enddate = ' + endDate);
+							
 							query.datetime = {
 									//create iso string from passed in date
 									$gte: params.from.toISOString(),
@@ -1012,7 +1012,7 @@ exports.register = function(server, options, next) {
 				//only to given
 				else {
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-					console.log('enddate = ')
+					
 					query.datetime = {
 							$lte: endDate
 					};
@@ -1027,7 +1027,7 @@ exports.register = function(server, options, next) {
 			else {
 				query.profileId = request.auth.credentials.id;
 			}
-			console.log(query);
+			
 			// first check if the given user id exists
 			db.collection('user').findOne({_id: query._id}, (err, doc) => {
 				//id not found return 4o0 bad request
@@ -1207,7 +1207,7 @@ exports.register = function(server, options, next) {
 					for (var i = 0; i < clients.length;i++) {
 						
 						if (clients[i].uid == response.scan.profileId) {
-							console.log(clients[i]);
+							
 							var socketId = clients[i].clientId;
 							io.to(socketId).emit('scan_added', response.scan);
 							
@@ -1841,7 +1841,7 @@ exports.register = function(server, options, next) {
 						//if the given end date specifies a specific time on that day
 						//then use that date in format YYYY-MM-ddTHH:mm:ssZ
 						if (params.to.toISOString() > startTo) {
-							console.log('greater');
+							
 							query.datetime = {
 									$gte: params.from.toISOString(),
 									$lte: params.to.toISOString()
@@ -1851,7 +1851,7 @@ exports.register = function(server, options, next) {
 						//from given start date to the given end date at 11:59 PM
 						else {
 							var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-							console.log('enddate = ' + endDate);
+							
 							query.datetime = {
 									//create iso string from passed in date
 									$gte: params.from.toISOString(),
@@ -1873,7 +1873,7 @@ exports.register = function(server, options, next) {
 				//only to given
 				else {
 					var endDate = moment(params.to).utc(utcOffsetPST).add(1,'days').endOf('day').toISOString();
-					console.log('enddate = ')
+					
 					query.datetime = {
 							$lte: endDate
 					};
