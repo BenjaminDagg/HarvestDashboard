@@ -102,9 +102,7 @@ class App extends React.Component {
 
             <div className={classes.content}>
               {content}
-              login = {this.state.isLoggedIn.toString()}
-              user = {this.state.user != null && this.state.user.toString()}
-              token = {this.state.bearer != '' ? this.state.bearer : 'undefined'}
+              
               {children}
             </div>
           </div>

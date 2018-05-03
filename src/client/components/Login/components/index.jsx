@@ -158,7 +158,7 @@ class Login extends React.Component {
 					</span>
 				</div>
 				<div style={registerStyle}>
-					<a style={{'margin': '0 auto'}} href="url">Register</a>
+					<a style={{'margin': '0 auto'}} href="/register">Register</a>
 				</div>
 			</div>
 		);
