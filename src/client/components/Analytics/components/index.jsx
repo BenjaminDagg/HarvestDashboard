@@ -63,10 +63,6 @@ class Analytics extends React.Component {
 	}
 
 	componentWillMount() {
-		this.getCrateData();
-		this.getMeanDistData();
-		this.getCrateTimeData();
-
 		//creating initial date for cpdEndDate
 		var cpdDate = moment()
 			.utc('-8:00')
@@ -84,6 +80,10 @@ class Analytics extends React.Component {
 			.utc('-8:00')
 			.toISOString();
 		this.setState({ timeEndDate: timeDate.slice(0, 16) });
+
+		this.getCrateData();
+		this.getMeanDistData();
+		this.getCrateTimeData();
 	}
 
 	componentWillUnmount() {
