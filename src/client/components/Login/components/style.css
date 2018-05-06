@@ -1,0 +1,12 @@
+.title {
+	font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+	color: #848484;
+	text-align: center;
+}
+
+#login-form {
+	
+	width: 800px;
+	height: 200px;
+	margin: 0 auto;
+}

@@ -140,6 +140,7 @@ class Register extends React.Component {
 
 	render() {
 	
+		//turns error messages on or off
 		var errStyle = {
 			color: 'red',
 			visibility: this.state.error ? 'visible' : 'hidden'
@@ -151,21 +152,98 @@ class Register extends React.Component {
 		};
 		
 		
+		//css for header
+		var headerStyle = {
+			'text-align': 'center',
+			'font-family': "Roboto, Helvetica, Arial, sans-serif",
+			'color': '#848484'
+		};
+		
+		//css for div that holds form inputs
+		var formStyle = {
+			width: '350px',
+			height: '800px',
+			margin: '0 auto',
+			
+			
+		};
+		
+		//css for the text of each input
+		var spanStyle = {
+			'float': 'left',
+			'font-size': '20px'
+	
+		};
+		
+		//css for each input in form
+		var inputStyle = {
+	
+			'float': 'right',
+			'border': '1px solid #757677',
+    		'border-radius': '4px',
+			'height' : '25px',
+			'background-color': 'white',
+			'font-size' : '16px'
+		};
+		
+		//css for each row div of form
+		var fieldContainer = {
+			'width': '100%',
+			'height': '30px',
+			'margin-top': '20px'
+		};
+		
+		//css for error message divs
+		var registerStyle = {
+			'width': '100%',
+			'height': '20px',
+			'margin': '0 auto',
+			'text-align': 'center',
+			'font-size': '20px'
+		};
+		
+		//css for submit button
+		var btnStyle = {
+			'margin': '0 auto',
+			'height': '40px',
+			'width': '70px',
+			'font-family': 'Roboto, Helvetica, Arial, sans-serif',
+			'background-color': 'white',
+			'color': '#838383',
+			'border': '1px solid #838383',
+			'border-radius': '4px',
+			'display' : 'flex',
+			'padding': '12px'
+		};
 	
 		return (
 			<div>
-				<h1>Register</h1>
+				<h1 style={headerStyle}>Register</h1>
 				
-				Username: <input id="usernameField" type="text" value={this.state.username} onChange={this.usernameChange.bind(this)} />
-				<br />
-				First Name: <input id="firstnameField" type="text" value={this.state.firstname} onChange={this.firstnameChange.bind(this)} />
-				<br />
-				Last Name: <input id="lastnameField" type="text" value={this.state.lastname} onChange={this.lastnameChange.bind(this)} />
-				<br />
-				Password: <input id="passwordField" type="password" value={this.state.password} onChange={this.pswChange.bind(this)}/>
-				<br />
-				<span id="loginError" style={errStyle}>{this.state.errorMessage}</span>
-				<br />
+				<div style={formStyle}>
+					<div style={fieldContainer}>
+						<span style={spanStyle} >Username:</span>
+					 	<input style={inputStyle} id="usernameField" type="text" value={this.state.username} onChange={this.usernameChange.bind(this)} />
+					</div>
+					<div style={fieldContainer}>
+						<span style={spanStyle}>First Name:</span>
+						 <input style={inputStyle} id="firstnameField" type="text" value={this.state.firstname} onChange={this.firstnameChange.bind(this)} />
+					</div>
+					<div style={fieldContainer}>
+						<span style={spanStyle}>Last Name:</span>
+						 <input style={inputStyle} id="lastnameField" type="text" value={this.state.lastname} onChange={this.lastnameChange.bind(this)} />
+					</div>
+					<div style={fieldContainer}>
+						<span style={spanStyle} >Password:</span>
+						 <input style={inputStyle} id="passwordField" type="password" value={this.state.password} onChange={this.pswChange.bind(this)}/>
+					</div>
+					<div style={registerStyle}>
+						<span id="loginError" style={errStyle}>{this.state.errorMessage}</span>
+					</div>
+					
+					<button style={btnStyle} onClick={this.onSubmitHandler.bind(this)}>Submit</button>
+					
+				</div>
 				
 				{this.state.loginSuccess == true &&
 					<span id="loginLink" style={success}>Registration Successfull. Continue to </span>
@@ -175,7 +253,7 @@ class Register extends React.Component {
 					<a href='/login'>Login</a>	
 				}
 				<br />
-				<button onClick={this.onSubmitHandler.bind(this)}>Submit</button>
+				
 				
 				
 			<br />

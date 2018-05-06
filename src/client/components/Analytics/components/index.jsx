@@ -27,12 +27,14 @@ class Analytics extends React.Component {
 			crateTimeData: null,
 			selectedUnit: 'hour',
 
-			cpdStartDate: this.props.user !== null ? this.props.user.createdAt : '2018-01-01T00:00Z',
+			cpdStartDate: moment('2018-01-01T00:00Z')
+				.utc('-8:00')
+				.format(),
 			cpdEndDate: this.props.user !== null ? this.props.user.createdAt : null,
 			cpdFetchError: false,
 
 			timeStartDate: '2018-01-01T00:00Z',
-			timeEndDate: null,
+			timeEndDate: this.props.user !== null ? this.props.user.createdAt : null,
 
 			distFetchError: false,
 			distDetailVisible: false,
@@ -62,7 +64,11 @@ class Analytics extends React.Component {
 		this.getDistWithDates = this.getDistWithDates.bind(this);
 	}
 
-	componentWillMount() {
+	componentDidMount() {
+		this.getCrateData();
+		this.getMeanDistData();
+		this.getCrateTimeData();
+
 		//creating initial date for cpdEndDate
 		var cpdDate = moment()
 			.utc('-8:00')
@@ -95,7 +101,6 @@ class Analytics extends React.Component {
 			return;
 		}
 
-		console.log('getcratedata');
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -104,8 +109,8 @@ class Analytics extends React.Component {
 
 		axios.defaults.headers.Authorization = this.props.bearer;
 
-		var from = this.state.cpdStartDate;
-		var to = this.state.cpdEndDate;
+		var from = this.state.cpdStartDate.slice(0, 16) + 'Z';
+		var to = this.state.cpdEndDate.slice(0, 16) + 'Z';
 
 		//make HTTP request to account service API
 
@@ -131,7 +136,6 @@ class Analytics extends React.Component {
 			})
 			.catch(error => {
 				if (error.code) {
-					console.log(error.code);
 					this.setState({ cpdFetchError: true });
 				}
 			});
@@ -165,8 +169,8 @@ class Analytics extends React.Component {
 
 		axios.defaults.headers.Authorization = this.props.bearer;
 
-		var from = this.state.distStartDate;
-		var to = this.state.distEndDate;
+		var from = this.state.distStartDate.slice(0, 16) + 'Z';
+		var to = this.state.distEndDate.slice(0, 16) + 'Z';
 		var unit = this.state.distUnit;
 
 		//make HTTP request to account service API
@@ -349,12 +353,11 @@ class Analytics extends React.Component {
 
 		//call harvest api meantime api
 		//set query parameters
-		var from = this.state.timeStartDate;
-		var to = this.state.timeEndDate;
+		var from = this.state.timeStartDate.slice(0, 16) + 'Z';
+		var to = this.state.timeEndDate.slice(0, 16) + 'Z';
 		var uid = this.props.user._id;
 		var unit = this.state.selectedUnit;
-		console.log('from = ' + from + ' and to = ' + to);
-		console.log('unit = ' + unit);
+
 		axios
 			.get(
 				'http://localhost:2000/harvest/meantime?from=' + from + '&to=' + to + '&id=' + uid + '&unit=' + unit,
@@ -365,7 +368,6 @@ class Analytics extends React.Component {
 				headers
 			)
 			.then(res => {
-				console.log(res);
 				var data = res.data;
 				this.setState({ crateTimeData: data });
 			})
@@ -387,7 +389,7 @@ class Analytics extends React.Component {
 		}
 
 		var timeData = this.state.crateTimeData.crates;
-		console.log(timeData);
+
 		var data = {
 			x: 'x',
 			columns: [['x'], ['time: ']]
@@ -474,7 +476,7 @@ class Analytics extends React.Component {
 		}
 		this.setState({ crateData: null });
 		this.setState({ cpdFetchError: false });
-		console.log('button pressed');
+
 		this.getCrateData();
 	}
 

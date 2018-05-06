@@ -1,15 +1,15 @@
 import React from 'react';
 import { Link, withRouter } from 'react-router';
 import axios from 'axios';
-import PropTypes from 'prop-types';
-import classNames from 'classnames';
+
 import Map from '../../Map/components';
-import style from './style.css';
+
 var moment = require('moment');
 
-class MapContainer extends React.Component {
+class ScanMaps extends React.Component {
 	constructor(props) {
 		super(props);
+
 		this.state = {
 			maps: null, //array of map objects of the users maps
 			user: this.props.user || null,
@@ -27,20 +27,15 @@ class MapContainer extends React.Component {
 			scanFetchError: {
 				status: false,
 				message: ''
-			},
-
-			fields: null //array of map object of users fields
+			}
 		};
 
-		this.getMaps = this.getMaps.bind(this);
 		this.getUserScans = this.getUserScans.bind(this);
 		this.getMapCenter = this.getMapCenter.bind(this);
 
 		this.scanStartChanged = this.scanStartChanged.bind(this);
 		this.scanEndChanged = this.scanEndChanged.bind(this);
 		this.getScansWithDates = this.getScansWithDates.bind(this);
-
-		this.getUserFields = this.getUserFields.bind(this);
 	}
 
 	componentDidMount() {
@@ -51,23 +46,6 @@ class MapContainer extends React.Component {
 		this.setState({ scanEndDate: timeDate.slice(0, 16) });
 	}
 
-	getMaps() {
-		var headers = {
-			'Content-Type': 'application/json',
-			Authorization: 'bearer' + this.props.bearer
-		};
-
-		//make HTTP request to account service API
-		axios
-			.get('http://localhost:1234/maps', headers)
-			.then(res => {
-				const mapData = res.data;
-
-				this.setState({ maps: mapData });
-			})
-			.catch(error => {});
-	}
-
 	getMapCenter(geometry) {
 		if (geometry.type == 'GeometryCollection') {
 			return geometry.geometries[0].coordinates[0];
@@ -76,42 +54,16 @@ class MapContainer extends React.Component {
 		}
 	}
 
-	//get map objects for users fields with GET /maps/fields
-	getUserFields() {
-		if (!this.props.user || this.state.fields != null || this.props.bearer == '') {
-			return <div>Loading data...</div>;
-		}
-
-		const userId = this.props.user._id;
-
-		//get users scans from database
-		var headers = {
-			'Content-Type': 'application/json',
-			Authorization: 'bearer' + this.props.bearer.toString()
-		};
-
-		axios.defaults.headers.Authorization = this.props.bearer;
-
-		//make call to maps service api
-		axios
-			.get('http://localhost:1234/maps/fields?id=' + userId.toString(), {}, headers)
-			.then(res => {
-				console.log(res.data);
-				this.setState({ fields: res.data });
-			})
-			.catch(error => {
-				console.log(error);
-			});
-	}
-
 	getUserScans() {
+		console.log(this.props.user);
 		//check if user props loaded yet or if scans already gotten
-		if (this.props.user == null || this.state.scans != null || this.props.bearer === '') {
+		if (this.props.id === null || this.state.scans !== null || this.props.bearer === '') {
+			console.log('error');
 			return <div>You must be logged in to view maps </div>;
 		}
+		console.log('in');
+		const userId = this.props.id;
 
-		const userId = this.props.user._id;
-		console.log('UserID ', userId);
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -127,6 +79,7 @@ class MapContainer extends React.Component {
 		axios
 			.get('http://localhost:1234/scans?from=' + from + '&to=' + to + '&id=' + userId.toString(), {}, headers)
 			.then(res => {
+				console.log(res);
 				//parse scans from response JSON
 				const scans = res.data;
 
@@ -168,7 +121,6 @@ class MapContainer extends React.Component {
 					points.shape.geometries.push(point);
 				}
 
-				console.log(points);
 				axios
 					.get('http://localhost:1234/maps/user/' + userId.toString(), headers)
 					.then(res => {
@@ -221,17 +173,7 @@ class MapContainer extends React.Component {
 	}
 
 	render() {
-		var childrenWithProps = React.Children.map(this.props.children, child => {
-			return React.cloneElement(child, {
-				user: this.props.user,
-				id: this.props.user._id,
-				bearer: this.props.bearer
-			});
-		});
-
 		var view = this.getUserScans();
-
-		this.getUserFields();
 
 		var error = {
 			color: 'red'
@@ -241,44 +183,32 @@ class MapContainer extends React.Component {
 			overflowY: 'auto',
 			height: '100%'
 		};
-
-		var user = this.props.user;
-		var bearer = this.props.bearer;
-		//current path
-		var currentPath = this.props.location.pathname;
-		console.log(currentPath);
-
 		return (
 			<div style={style}>
-				<ul id="mapNav">
-					<li class="nav">
-						<a>
-							<Link to="/map">Your Maps</Link>
-						</a>
-					</li>
-					<li class="nav">
-						<a>
-							<Link to="/map/scan">Scans</Link>
-						</a>
-					</li>
-					<li class="nav">
-						<a>
-							<Link to="/map/fields">Your Fields</Link>
-						</a>
-					</li>
-				</ul>
-
-				{childrenWithProps}
-
-				<h1>Your Maps</h1>
-				{this.state.maps != null &&
-					currentPath == '/map' &&
-					this.state.maps.map(data => {
-						return <Map title={data.name} center={this.getMapCenter(data.shape)} geometry={data.shape} />;
-					})}
+				<span>Filter Scans:</span>
+				<br />
+				start Date:{' '}
+				<input value={this.state.scanStartDate} type="datetime-local" onChange={this.scanStartChanged} />
+				<br />
+				End Date: <input value={this.state.scanEndDate} type="datetime-local" onChange={this.scanEndChanged} />
+				<br />
+				<button onClick={this.getScansWithDates}>Submit</button>
+				{this.state.user != null}
+				{this.state.scans != null && (
+					<Map
+						title={'Scan Locations'}
+						geometry={this.state.scanCoords.shape}
+						center={this.state.scans[0].location.coordinates}
+						fit={true}
+					/>
+				)}
+				<br />
+				{this.state.scanFetchError.status == true && (
+					<span style={error}>{this.state.scanFetchError.message}</span>
+				)}
 			</div>
 		);
 	}
 }
 
-export default withRouter(MapContainer);
+export default withRouter(ScanMaps);

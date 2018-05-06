@@ -3,6 +3,7 @@ import axios from 'axios';
 import { withRouter } from 'react-router';
 import { fetchUser } from '../../../actions/loginAction';
 import { connect } from 'react-redux';
+import style from './style.css';
 
 class Login extends React.Component {
 	constructor(props) {
@@ -64,38 +65,101 @@ class Login extends React.Component {
 	render() {
 		var errStyle = {
 			color: 'red',
-			visibility: this.state.error ? 'visible' : 'hidden'
+			visibility: this.state.error ? 'visible' : 'hidden',
+			'margin': '0 aut0'
+		};
+		
+		var formStyle = {
+			width: '300px',
+			height: '200px',
+			margin: '0 auto',
+			
+		};
+		
+		var spanStyle = {
+			'float': 'left',
+			'font-size': '20px'
+	
+		};
+		
+		var inputStyle = {
+	
+			'float': 'right',
+			'border': '1px solid #757677',
+    		'border-radius': '4px',
+			'height' : '25px',
+			'background-color': 'white',
+			'font-size' : '16px'
+		};
+		
+		var fieldContainer = {
+			'width': '100%',
+			'height': '50%',
+			'margin-top': '20px'
+		};
+		
+		var btnStyle = {
+			'margin': '0 auto',
+			'height': '40px',
+			'width': '70px',
+			'font-family': 'Roboto, Helvetica, Arial, sans-serif',
+			'background-color': 'white',
+			'color': '#838383',
+			'border': '1px solid #838383',
+			'border-radius': '4px',
+			'display' : 'flex',
+			'padding': '12px'
+		};
+		
+		var registerStyle = {
+			'width': '100%',
+			'height': '20px',
+			'margin': '0 auto',
+			'text-align': 'center',
+			'font-size': '20px'
 		};
 
 		return (
 			<div>
 				{this.props.user != null && prompt(this.props.user._id)}
-				<h1>Login</h1>
+				<h1 className={style.title}>Login</h1>
 				<br />
-				Username:{' '}
-				<input
-					id="usernameField"
-					type="text"
-					value={this.state.username}
-					onChange={this.usernameChange.bind(this)}
-				/>
+				<div style={formStyle}>
+					<div>
+						<span style={spanStyle}>Username:{' '}</span>
+						<input style={inputStyle}
+							id="usernameField"
+							type="text"
+							value={this.state.username}
+							onChange={this.usernameChange.bind(this)}
+						/>
+					</div>
+					<br />
+					<div style={fieldContainer}>
+						<span style={spanStyle}>Password:{' '}</span>
+						<input style={inputStyle}
+						id="passwordField"
+						type="password"
+						value={this.state.password}
+						onChange={this.pswChange.bind(this)}
+					/>
+					</div>
+					<span id="loginError" style={errStyle}>
+						Incorrect Username or Password
+					</span>
+					<button style={btnStyle} onClick={this.onSubmitHandler.bind(this)}>Submit</button>
+				</div>
 				<br />
-				Password:{' '}
-				<input
-					id="passwordField"
-					type="password"
-					value={this.state.password}
-					onChange={this.pswChange.bind(this)}
-				/>
+				
 				<br />
-				<button onClick={this.onSubmitHandler.bind(this)}>Submit</button>
-				<br />
-				<span id="loginError" style={errStyle}>
+				<div style={registerStyle}>
+					<span id="loginError" style={errStyle}>
 					Incorrect Username or Password
-				</span>
-				<br />
-				<br />
-				<a href="url">Register</a>
+					</span>
+				</div>
+				<div style={registerStyle}>
+					<a style={{'margin': '0 auto'}} href="/register">Register</a>
+				</div>
 			</div>
 		);
 	}
