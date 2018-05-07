@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, withRouter } from 'react-router';
 import axios from 'axios';
-
+import { LinearProgress } from 'material-ui/Progress';
+import Fade from 'material-ui/transitions/Fade';
 import Map from '../../Map/components';
 
 var moment = require('moment');
@@ -27,7 +28,8 @@ class ScanMaps extends React.Component {
 			scanFetchError: {
 				status: false,
 				message: ''
-			}
+			},
+			isLoading: true
 		};
 
 		this.getUserScans = this.getUserScans.bind(this);
@@ -131,6 +133,7 @@ class ScanMaps extends React.Component {
 
 				this.setState({ scanCoords: points });
 				this.setState({ scans: scans });
+				this.setState({ isLoading: false });
 			})
 			.catch(error => {
 				console.log('in error');
@@ -183,8 +186,23 @@ class ScanMaps extends React.Component {
 			overflowY: 'auto',
 			height: '100%'
 		};
+		const styles = {
+			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
+		};
 		return (
 			<div style={style}>
+				<div style={styles.Paper}>
+					<Fade
+						style={styles}
+						in={this.state.isLoading}
+						style={{
+							transitionDelay: this.state.isLoading ? '800ms' : '0ms'
+						}}
+						unmountOnExit
+					>
+						<LinearProgress />
+					</Fade>
+				</div>
 				<span>Filter Scans:</span>
 				<br />
 				start Date:{' '}
