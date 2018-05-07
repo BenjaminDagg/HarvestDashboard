@@ -5,6 +5,12 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Map from '../../Map/components';
 import style from './style.css';
+import { Paper, Tabs } from 'material-ui';
+import { Tab } from 'material-ui/Tabs';
+import { Grid } from 'material-ui';
+import { LinearProgress } from 'material-ui/Progress';
+import Fade from 'material-ui/transitions/Fade';
+
 var moment = require('moment');
 
 class MapContainer extends React.Component {
@@ -29,7 +35,9 @@ class MapContainer extends React.Component {
 				message: ''
 			},
 
-			fields: null //array of map object of users fields
+			fields: null, //array of map object of users fields
+			currentTab: 0,
+			isLoading: true
 		};
 
 		this.getMaps = this.getMaps.bind(this);
@@ -41,6 +49,23 @@ class MapContainer extends React.Component {
 		this.getScansWithDates = this.getScansWithDates.bind(this);
 
 		this.getUserFields = this.getUserFields.bind(this);
+
+		this.handleChange = this.handleChange.bind(this);
+	}
+
+	handleChange(event, value) {
+		console.log('Event: ', value);
+		this.setState({ currentTab: value });
+		switch (value) {
+			case 0:
+				this.props.router.push('/map');
+				break;
+			case 1:
+				this.props.router.push('/map/scan');
+				break;
+			case 2:
+				this.props.router.push('/map/fields');
+		}
 	}
 
 	componentDidMount() {
@@ -174,6 +199,7 @@ class MapContainer extends React.Component {
 					.then(res => {
 						const mapData = res.data;
 						this.setState({ maps: mapData });
+						this.setState({ isLoading: false });
 					})
 					.catch(error => {});
 
@@ -231,7 +257,7 @@ class MapContainer extends React.Component {
 
 		var view = this.getUserScans();
 
-		this.getUserFields();
+		//this.getUserFields();
 
 		var error = {
 			color: 'red'
@@ -248,34 +274,58 @@ class MapContainer extends React.Component {
 		var currentPath = this.props.location.pathname;
 		console.log(currentPath);
 
+		const styles = {
+			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
+		};
+
 		return (
 			<div style={style}>
-				<ul id="mapNav">
-					<li class="nav">
-						<a>
-							<Link to="/map">Your Maps</Link>
-						</a>
-					</li>
-					<li class="nav">
-						<a>
-							<Link to="/map/scan">Scans</Link>
-						</a>
-					</li>
-					<li class="nav">
-						<a>
-							<Link to="/map/fields">Your Fields</Link>
-						</a>
-					</li>
-				</ul>
+				<Paper elevation={4}>
+					<Tabs
+						value={this.state.currentTab}
+						onChange={this.handleChange}
+						centered
+						indicatorColor="primary"
+						textColor="primary"
+					>
+						<Tab label="Your Maps" />
+						<Tab label="Scans" />
+						<Tab label="Your Fields" />
+					</Tabs>
+				</Paper>
 
 				{childrenWithProps}
 
-				<h1>Your Maps</h1>
-				{this.state.maps != null &&
-					currentPath == '/map' &&
+				{this.state.maps !== null &&
+					currentPath === '/map' &&
 					this.state.maps.map(data => {
-						return <Map title={data.name} center={this.getMapCenter(data.shape)} geometry={data.shape} />;
+						return (
+							<Grid container spacing={24}>
+								<Grid item xs>
+									<Paper style={styles.Paper}>
+										<Map
+											title={data.name}
+											center={this.getMapCenter(data.shape)}
+											geometry={data.shape}
+										/>
+									</Paper>
+								</Grid>
+							</Grid>
+						);
 					})}
+
+				<div style={styles.Paper}>
+					<Fade
+						style={styles}
+						in={this.state.isLoading}
+						style={{
+							transitionDelay: this.state.isLoading ? '800ms' : '0ms'
+						}}
+						unmountOnExit
+					>
+						<LinearProgress />
+					</Fade>
+				</div>
 			</div>
 		);
 	}
