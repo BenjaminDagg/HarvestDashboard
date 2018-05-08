@@ -4,6 +4,13 @@ import axios from 'axios';
 import C3Chart from 'react-c3js';
 import LineChart from 'react-c3js';
 import 'c3/c3.css';
+import Button from 'material-ui/Button';
+import { InputLabel } from 'material-ui/Input';
+import { MenuItem } from 'material-ui/Menu';
+import { FormControl } from 'material-ui/Form';
+import PropTypes from 'prop-types';
+import TextField from 'material-ui/TextField';
+import Select from 'material-ui/Select';
 import style from './style.css';
 var moment = require('moment');
 
@@ -25,8 +32,7 @@ class Analytics extends React.Component {
 			crateData: null,
 			meanDistData: null,
 			crateTimeData: null,
-			selectedUnit: 'hour',
-
+			selectedUnit: '',
 			cpdStartDate: moment('2018-01-01T00:00Z')
 				.utc('-8:00')
 				.format(),
@@ -39,7 +45,7 @@ class Analytics extends React.Component {
 			distFetchError: false,
 			distDetailVisible: false,
 			distDetailTarget: null,
-			distUnit: 'miles',
+			distUnit: '',
 			distStartDate: this.props.user != null ? this.props.user.createdAt : '2018-01-01T00:00:00Z',
 			distEndDate: this.props.user != null ? this.props.user.createdAt : null
 		};
@@ -510,7 +516,22 @@ class Analytics extends React.Component {
 			width: 500,
 			height: 500
 		};
+		const styles = theme => ({
 
+		  formControl: {
+		    margin: theme.spacing.unit,
+		    minWidth: 120,
+		  },
+			container: {
+		    display: 'flex',
+		    flexWrap: 'wrap',
+		  },
+		  textField: {
+		    marginLeft: theme.spacing.unit,
+		    marginRight: theme.spacing.unit,
+		    width: 230,
+		  },
+		});
 		const axis = {
 			y: {
 				label: {
@@ -562,52 +583,154 @@ class Analytics extends React.Component {
 
 				<div style={graphStyle} id="cpdGraph">
 					<h1>Crates Harvested Per Day</h1>
-					Start Date:{' '}
-					<input value={this.state.cpdStartDate} onChange={this.cpdStartChanged} type="datetime-local" />
-					<br />
-					End Date:{' '}
-					<input value={this.state.cpdEndDate} type="datetime-local" onChange={this.cpdEndChanged} />
-					<br />
-					<button onClick={this.getCpdWithDates}>Submit</button>
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="Start Date & Time"
+							value={this.state.cpdStartDate}
+							type="datetime-local"
+							onChange={this.cpdStartChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+					<br/>
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="End Date & Time"
+							value={this.state.cpdEndDate}
+							type="datetime-local"
+							onChange={this.cpdEndChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+					< br />
+
+					<Button variant="raised" onClick={this.getCpdWithDates}>
+        			Submit
+      		</Button>
 					<br />
 					{cpdGraph}
 				</div>
 				<div id="meanDist">
 					<h1>Crate Mean Distance</h1>
-					Start Date:{' '}
-					<input value={this.state.distStartDate} onChange={this.distStartChanged} type="datetime-local" />
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="Start Date & Time"
+							value={this.state.cpdStartDate}
+							type="datetime-local"
+							onChange={this.cpdStartChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+					<br/>
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="End Date & Time"
+							value={this.state.cpdEndDate}
+							type="datetime-local"
+							onChange={this.cpdEndChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+
+					<form>
+        			<FormControl>
+          			<InputLabel htmlFor="controlled-open-select">Unit</InputLabel>
+          			<Select
+            				value={this.state.distUnit}
+										onChange={this.distUnitChanged}
+            				inputProps={{
+              					name: 'distUnit',
+              					id: 'controlled-open-select',
+            				}}
+          				>
+            				<MenuItem value="">
+              				<em>None</em>
+            				</MenuItem>
+            				<MenuItem value={"miles"}>Miles</MenuItem>
+            				<MenuItem value={"kilometers"}>Kilometers</MenuItem>
+            				<MenuItem value={"ft"}>Feet</MenuItem>
+          			</Select>
+        			</FormControl>
+      		</form>
 					<br />
-					End Date:{' '}
-					<input value={this.state.distEndDate} type="datetime-local" onChange={this.distEndChanged} />
-					<br />
-					Unit:{' '}
-					<select onChange={this.distUnitChanged} value={this.state.distUnit}>
-						<option value="miles">Mile</option>
-						<option value="kilometers">Km</option>
-						<option value="ft">feet</option>
-					</select>
-					<br />
-					<button onClick={this.getDistWithDates}>Submit</button>
+					<Button variant="raised" onClick={this.getDistWithDates}>
+        			Submit
+      		</Button>
 					{meanDistGraph}
 				</div>
 
 				<div id="meanTime">
 					<h1>Mean Time Between Crates</h1>
-					start Date:{' '}
-					<input value={this.state.timeStartDate} type="datetime-local" onChange={this.timeStartChanged} />
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="Start Date & Time"
+							value={this.state.cpdStartDate}
+							type="datetime-local"
+							onChange={this.cpdStartChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+					<br/>
+					<form noValidate>
+			      <TextField
+			        id="datetime-local"
+			        label="End Date & Time"
+							value={this.state.cpdEndDate}
+							type="datetime-local"
+							onChange={this.cpdEndChanged}
+			        defaultValue="2018-03-24T10:30"
+			        InputLabelProps={{
+			          shrink: true,
+			        }}
+			      />
+			    </form>
+				
+					<form>
+							<FormControl>
+								<InputLabel htmlFor="controlled-open-select">Unit</InputLabel>
+								<Select
+										value={this.state.selectedUnit}
+										onChange={this.unitChanged}
+										inputProps={{
+												name: 'selectedUnit',
+												id: 'controlled-open-select',
+										}}
+									>
+										<MenuItem value="">
+											<em>None</em>
+										</MenuItem>
+										<MenuItem value={"day"}>Days</MenuItem>
+										<MenuItem value={"hr"}>Hours</MenuItem>
+										<MenuItem value={"min"}>Minutes</MenuItem>
+										<MenuItem value={"sec"}>Seconds</MenuItem>
+								</Select>
+							</FormControl>
+					</form>
+
 					<br />
-					End Date:{' '}
-					<input value={this.state.timeEndDate} type="datetime-local" onChange={this.timeEndChanged} />
-					<br />
-					Select unit:{' '}
-					<select onChange={this.unitChanged} value={this.state.selectedUnit}>
-						<option value="day">Day</option>
-						<option value="hr">Hour</option>
-						<option value="min">Min</option>
-						<option value="sec">Sec</option>
-					</select>
-					<br />
-					<button onClick={this.getTimeWithDates}>Submit</button>
+					<Button variant="raised" onClick={this.getTimeWithDates}>
+        			Submit
+      		</Button>
 					{meanTimeGraph}
 				</div>
 			</div>
