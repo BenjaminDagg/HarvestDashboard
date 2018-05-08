@@ -4,13 +4,15 @@ import axios from 'axios';
 import { LinearProgress } from 'material-ui/Progress';
 import Fade from 'material-ui/transitions/Fade';
 import Map from '../../Map/components';
+import TextField from 'material-ui/TextField';
+import { Grid, Paper } from 'material-ui';
+import Button from 'material-ui/Button';
 
 var moment = require('moment');
 
 class ScanMaps extends React.Component {
 	constructor(props) {
 		super(props);
-
 		this.state = {
 			maps: null, //array of map objects of the users maps
 			user: this.props.user || null,
@@ -40,6 +42,14 @@ class ScanMaps extends React.Component {
 		this.getScansWithDates = this.getScansWithDates.bind(this);
 	}
 
+	componentWillMount() {
+		//set scanEndDate to the current date
+		var timeDate = moment()
+			.utc('-8:00')
+			.toISOString();
+		this.setState({ scanEndDate: timeDate.slice(0, 16) });
+	}
+
 	componentDidMount() {
 		//set scanEndDate to the current date
 		var timeDate = moment()
@@ -49,7 +59,7 @@ class ScanMaps extends React.Component {
 	}
 
 	getMapCenter(geometry) {
-		if (geometry.type == 'GeometryCollection') {
+		if (geometry.type === 'GeometryCollection') {
 			return geometry.geometries[0].coordinates[0];
 		} else {
 			return geometry.coordinates[0];
@@ -60,7 +70,7 @@ class ScanMaps extends React.Component {
 		console.log(this.props.user);
 		//check if user props loaded yet or if scans already gotten
 		if (this.props.id === null || this.state.scans !== null || this.props.bearer === '') {
-			console.log('error');
+			//console.log('error');
 			return <div>You must be logged in to view maps </div>;
 		}
 		console.log('in');
@@ -169,6 +179,7 @@ class ScanMaps extends React.Component {
 			status: false,
 			message: ''
 		};
+		this.setState({ isLoading: true });
 		this.setState({ scanFetchError: error });
 		this.setState({ scans: null });
 		this.setState({ scanCoords: null });
@@ -186,8 +197,10 @@ class ScanMaps extends React.Component {
 			overflowY: 'auto',
 			height: '100%'
 		};
+
 		const styles = {
-			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
+			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' },
+			Button: { marginTop: 10, marginBottom: 10 }
 		};
 		return (
 			<div style={style}>
@@ -203,16 +216,47 @@ class ScanMaps extends React.Component {
 						<LinearProgress />
 					</Fade>
 				</div>
-				<span>Filter Scans:</span>
-				<br />
-				start Date:{' '}
-				<input value={this.state.scanStartDate} type="datetime-local" onChange={this.scanStartChanged} />
-				<br />
-				End Date: <input value={this.state.scanEndDate} type="datetime-local" onChange={this.scanEndChanged} />
-				<br />
-				<button onClick={this.getScansWithDates}>Submit</button>
-				{this.state.user != null}
-				{this.state.scans != null && (
+				<Grid container spacing={24}>
+					<Grid item xs>
+						<Paper style={styles.Paper}>
+							<h3>Filter Scans:</h3>
+							<form noValidate>
+								<TextField
+									id="datetime-local"
+									label="Start Date"
+									type="datetime-local"
+									defaultValue={this.state.scanStartDate}
+									onChange={this.scanStartChanged}
+									InputLabelProps={{
+										shrink: true
+									}}
+								/>
+							</form>
+							<form noValidate>
+								<TextField
+									id="datetime-local"
+									label="End Date"
+									type="datetime-local"
+									defaultValue={this.state.scanEndDate}
+									onChange={this.scanEndChanged}
+									InputLabelProps={{
+										shrink: true
+									}}
+								/>
+							</form>
+							<Button
+								variant="raised"
+								color="primary"
+								style={styles.Button}
+								onClick={this.getScansWithDates}
+							>
+								Submit
+							</Button>
+						</Paper>
+					</Grid>
+				</Grid>
+				{this.state.user !== null}
+				{this.state.scans !== null && (
 					<Map
 						title={'Scan Locations'}
 						geometry={this.state.scanCoords.shape}
@@ -221,7 +265,7 @@ class ScanMaps extends React.Component {
 					/>
 				)}
 				<br />
-				{this.state.scanFetchError.status == true && (
+				{this.state.scanFetchError.status === true && (
 					<span style={error}>{this.state.scanFetchError.message}</span>
 				)}
 			</div>

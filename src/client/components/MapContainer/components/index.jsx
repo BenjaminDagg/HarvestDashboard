@@ -68,6 +68,14 @@ class MapContainer extends React.Component {
 		}
 	}
 
+	componentWillMount() {
+		//set scanEndDate to the current date
+		var timeDate = moment()
+			.utc('-8:00')
+			.toISOString();
+		this.setState({ scanEndDate: timeDate.slice(0, 16) });
+	}
+
 	componentDidMount() {
 		//set scanEndDate to the current date
 		var timeDate = moment()
@@ -273,6 +281,9 @@ class MapContainer extends React.Component {
 		//current path
 		var currentPath = this.props.location.pathname;
 		console.log(currentPath);
+		if (currentPath !== '/map') {
+			style.overflowY = 'hidden';
+		}
 
 		const styles = {
 			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
@@ -300,17 +311,12 @@ class MapContainer extends React.Component {
 					currentPath === '/map' &&
 					this.state.maps.map(data => {
 						return (
-							<Grid container spacing={24}>
-								<Grid item xs>
-									<Paper style={styles.Paper}>
-										<Map
-											title={data.name}
-											center={this.getMapCenter(data.shape)}
-											geometry={data.shape}
-										/>
-									</Paper>
-								</Grid>
-							</Grid>
+							<Map
+								key={data.name}
+								title={data.name}
+								center={this.getMapCenter(data.shape)}
+								geometry={data.shape}
+							/>
 						);
 					})}
 
