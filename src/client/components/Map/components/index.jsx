@@ -5,6 +5,7 @@ import Divider from 'material-ui/Divider';
 import styles from './styles';
 
 import { withStyles } from 'material-ui/styles';
+import { Grid, Paper } from 'material-ui';
 
 /*
 * Displays a Leaflet map with additional map data
@@ -160,11 +161,19 @@ class Map extends React.Component {
 			}
 		};
 
+		const styles = {
+			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
+		};
+
 		return (
-			<div>
-				<h1>{this.props.title}</h1>
-				<div id={this.props.title} style={{ height: '400px' }} />
-			</div>
+			<Grid container spacing={24}>
+				<Grid item xs>
+					<Paper style={styles.Paper}>
+						<h1>{this.props.title}</h1>
+						<div id={this.props.title} style={{ height: '400px' }} />
+					</Paper>
+				</Grid>
+			</Grid>
 		);
 	}
 }

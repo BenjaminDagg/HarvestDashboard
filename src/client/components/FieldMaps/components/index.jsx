@@ -151,7 +151,7 @@ class FieldMaps extends React.Component {
 				{this.state.fields != null &&
 					this.state.fields.map((data, index) => {
 						return (
-							<div>
+							<div key={data.name}>
 								<div style={styles.Paper}>
 									<Fade
 										style={styles}
