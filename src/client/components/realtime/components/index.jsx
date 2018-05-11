@@ -592,7 +592,7 @@ class RealTime extends React.Component {
 	//makes page scrollable
 	var style = {
 			'overflow-y': 'auto',
-			 'height': '80%'
+			 'height': '90%'
 	};
 	
 	this.getUserScans();
