@@ -95,17 +95,45 @@ class MapContainer extends React.Component {
 			.get('http://localhost:1234/maps', headers)
 			.then(res => {
 				const mapData = res.data;
-
+				
 				this.setState({ maps: mapData });
 			})
 			.catch(error => {});
 	}
 
-	getMapCenter(geometry) {
-		if (geometry.type == 'GeometryCollection') {
+	getMapCenter(map) {
+		//no data given in map. use scan coordinates as center
+		if (!map.shape.geometry) {
+			
+			//search through scans to see which of them has this map
+			for (var i = 0; i < this.state.scans.length;i++) {
+				
+				for (var j = 0; j < this.state.scans[i].mapIds.length;j++) {
+					
+					if (this.state.scans[i].mapIds[j] == map._id) {
+						//extract coordinates
+						if (this.state.scans[i].location.coordinates[0] instanceof Array) {
+							
+							var coords = this.state.scans[i].location.coordinates[0];
+							
+							return coords;
+							
+							
+						} else {
+						
+							var coords = [this.state.scans[i].location.coordinates[0], this.state.scans[i].location.coordinates[1]];
+							
+							return coords;
+						}
+					}
+				}
+			}
+		}
+		else if (map.shape.geometry.type == 'GeometryCollection') {
 			return geometry.geometries[0].coordinates[0];
-		} else {
-			return geometry.coordinates[0];
+		} 
+		else {
+			return map.shape.geometry.coordinates[0];
 		}
 	}
 
@@ -129,7 +157,7 @@ class MapContainer extends React.Component {
 		axios
 			.get('http://localhost:1234/maps/fields?id=' + userId.toString(), {}, headers)
 			.then(res => {
-				console.log(res.data);
+				
 				this.setState({ fields: res.data });
 			})
 			.catch(error => {
@@ -144,7 +172,7 @@ class MapContainer extends React.Component {
 		}
 
 		const userId = this.props.user._id;
-		console.log('UserID ', userId);
+		
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -162,7 +190,7 @@ class MapContainer extends React.Component {
 			.then(res => {
 				//parse scans from response JSON
 				const scans = res.data;
-
+				
 				if (scans.length == 0) {
 					var error = {
 						status: true,
@@ -201,12 +229,13 @@ class MapContainer extends React.Component {
 					points.shape.geometries.push(point);
 				}
 
-				console.log(points);
 				axios
 					.get('http://localhost:1234/maps/user/' + userId.toString(), headers)
 					.then(res => {
 						const mapData = res.data;
-						this.setState({ maps: mapData });
+						
+						
+						this.setState({ maps: mapData });	
 						this.setState({ isLoading: false });
 					})
 					.catch(error => {});
@@ -221,18 +250,20 @@ class MapContainer extends React.Component {
 					message: 'Invalid date parameters'
 				};
 				this.setState({ scanFetchError: error });
+				this.setState({isLoading: false});
+				
 			});
 	}
 
 	//called when user changes scan start date input
 	scanStartChanged(event) {
-		console.log('start changed ' + event.target.value);
+		
 		this.setState({ scanStartDate: event.target.value });
 	}
 
 	//called when user changed scan end date input
 	scanEndChanged(event) {
-		console.log('end changed ' + event.target.value);
+		
 		this.setState({ scanEndDate: event.target.value });
 	}
 
@@ -240,7 +271,7 @@ class MapContainer extends React.Component {
 	//recalls api get /scans route to get scans with
 	//new data parameters
 	getScansWithDates() {
-		console.log('submit clicked');
+		
 		if (!this.state.scanStartDate || !this.state.scanEndDate) {
 			return;
 		}
@@ -280,7 +311,7 @@ class MapContainer extends React.Component {
 		var bearer = this.props.bearer;
 		//current path
 		var currentPath = this.props.location.pathname;
-		console.log(currentPath);
+		
 		if (currentPath !== '/map') {
 			style.overflowY = 'hidden';
 		}
@@ -306,15 +337,21 @@ class MapContainer extends React.Component {
 				</Paper>
 
 				{childrenWithProps}
-
+				{this.state.maps && this.state.maps.length == 0 &&
+					<div>
+						<h2>No maps found</h2>
+					</div>
+				}
 				{this.state.maps !== null &&
 					currentPath === '/map' &&
+					this.state.maps.length > 0 &&
 					this.state.maps.map(data => {
+						
 						return (
 							<Map
 								key={data.name}
 								title={data.name}
-								center={this.getMapCenter(data.shape)}
+								center={this.getMapCenter(data)}
 								geometry={data.shape}
 							/>
 						);

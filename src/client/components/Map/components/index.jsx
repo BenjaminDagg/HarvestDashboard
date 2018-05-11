@@ -126,7 +126,7 @@ class Map extends React.Component {
 	componentDidMount() {
 		const lat = this.props.center[0];
 		const lng = this.props.center[1];
-
+		
 		var zoom = this.props.zoom != null ? this.props.zoom : 2;
 
 		this.map = L.map(this.props.title).setView([lat, lng], zoom);
