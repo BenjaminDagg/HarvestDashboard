@@ -147,7 +147,13 @@ class FieldMaps extends React.Component {
               '
 					}
 				</style>
-
+				{this.state.fields != null &&
+					this.state.fields.length == 0 &&
+					<div>
+						<h3>No fields found for this user</h3>
+					</div>
+				
+				}
 				{this.state.fields != null &&
 					this.state.fields.map((data, index) => {
 						return (
