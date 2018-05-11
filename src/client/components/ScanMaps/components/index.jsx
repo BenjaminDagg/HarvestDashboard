@@ -195,7 +195,7 @@ class ScanMaps extends React.Component {
 
 		var style = {
 			overflowY: 'auto',
-			height: '100%'
+			height: '90%'
 		};
 
 		const styles = {
