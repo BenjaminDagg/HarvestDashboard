@@ -337,7 +337,7 @@ class MapContainer extends React.Component {
 				</Paper>
 
 				{childrenWithProps}
-				{this.state.maps && this.state.maps.length == 0 &&
+				{(this.state.maps == null || this.state.scans == null || this.state.maps.length == 0) &&
 					<div>
 						<h2>No maps found</h2>
 					</div>
