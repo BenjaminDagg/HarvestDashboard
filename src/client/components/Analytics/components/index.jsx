@@ -24,6 +24,12 @@ function format(date) {
 	return year + '-' + month + '-' + day;
 }
 
+/*
+cpdStartDate: moment('2018-01-01T00:00Z')
+				.utc('-8:00')
+				.format(),
+*/
+
 class Analytics extends React.Component {
 	constructor(props) {
 		super(props);
@@ -32,21 +38,19 @@ class Analytics extends React.Component {
 			crateData: null,
 			meanDistData: null,
 			crateTimeData: null,
-			selectedUnit: '',
-			cpdStartDate: moment('2018-01-01T00:00Z')
-				.utc('-8:00')
-				.format(),
+			selectedUnit: 'min',
+			cpdStartDate: moment(moment().utc('-8:00')).subtract(7,'d').toISOString().slice(0,16),
 			cpdEndDate: this.props.user !== null ? this.props.user.createdAt : null,
 			cpdFetchError: false,
 
-			timeStartDate: '2018-01-01T00:00Z',
+			timeStartDate: moment(moment().utc('-8:00')).subtract(7,'d').toISOString().slice(0,16),
 			timeEndDate: this.props.user !== null ? this.props.user.createdAt : null,
 
 			distFetchError: false,
 			distDetailVisible: false,
 			distDetailTarget: null,
-			distUnit: '',
-			distStartDate: this.props.user != null ? this.props.user.createdAt : '2018-01-01T00:00:00Z',
+			distUnit: 'ft',
+			distStartDate: moment(moment().utc('-8:00')).subtract(7,'d').toISOString().slice(0,16),
 			distEndDate: this.props.user != null ? this.props.user.createdAt : null
 		};
 		this.drawMeanDistGraph = this.drawMeanDistGraph.bind(this);
@@ -174,11 +178,12 @@ class Analytics extends React.Component {
 		};
 
 		axios.defaults.headers.Authorization = this.props.bearer;
-
+		
 		var from = this.state.distStartDate.slice(0, 16) + 'Z';
 		var to = this.state.distEndDate.slice(0, 16) + 'Z';
 		var unit = this.state.distUnit;
-
+		console.log('from = ' + from + ' and to = ' + to + ' and unit is ' + unit);
+		console.log('user id = ' + this.props.user._id);
 		//make HTTP request to account service API
 		axios
 			.get(
@@ -553,7 +558,7 @@ class Analytics extends React.Component {
 
 		var style = {
 			overflowY: 'auto',
-			height: '80%'
+			height: '90%'
 		};
 
 		var graphStyle = {
@@ -624,10 +629,10 @@ class Analytics extends React.Component {
 			      <TextField
 			        id="datetime-local"
 			        label="Start Date & Time"
-							value={this.state.cpdStartDate}
+							value={this.state.distStartDate}
 							type="datetime-local"
-							onChange={this.cpdStartChanged}
-			        defaultValue="2018-03-24T10:30"
+							onChange={this.distStartChanged}
+			        
 			        InputLabelProps={{
 			          shrink: true,
 			        }}
@@ -638,10 +643,10 @@ class Analytics extends React.Component {
 			      <TextField
 			        id="datetime-local"
 			        label="End Date & Time"
-							value={this.state.cpdEndDate}
+							value={this.state.distEndDate}
 							type="datetime-local"
-							onChange={this.cpdEndChanged}
-			        defaultValue="2018-03-24T10:30"
+							onChange={this.distEndChanged}
+			        
 			        InputLabelProps={{
 			          shrink: true,
 			        }}
@@ -681,10 +686,10 @@ class Analytics extends React.Component {
 			      <TextField
 			        id="datetime-local"
 			        label="Start Date & Time"
-							value={this.state.cpdStartDate}
+							value={this.state.timeStartDate}
 							type="datetime-local"
-							onChange={this.cpdStartChanged}
-			        defaultValue="2018-03-24T10:30"
+							onChange={this.timeStartChanged}
+			        
 			        InputLabelProps={{
 			          shrink: true,
 			        }}
@@ -695,10 +700,10 @@ class Analytics extends React.Component {
 			      <TextField
 			        id="datetime-local"
 			        label="End Date & Time"
-							value={this.state.cpdEndDate}
+							value={this.state.timeEndDate}
 							type="datetime-local"
-							onChange={this.cpdEndChanged}
-			        defaultValue="2018-03-24T10:30"
+							onChange={this.timeEndChanged}
+			        
 			        InputLabelProps={{
 			          shrink: true,
 			        }}
