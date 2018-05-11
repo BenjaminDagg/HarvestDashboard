@@ -120,7 +120,7 @@ class FieldMaps extends React.Component {
 
 		var style = {
 			overflowY: 'auto',
-			height: '100%'
+			height: '90%'
 		};
 
 		const styles = {
@@ -171,6 +171,10 @@ class FieldMaps extends React.Component {
 									geometry={data.shape}
 									zoom={14}
 								/>
+								<br />
+								<h2>Field Progress</h2>
+								<span>Completion: {this.state.graphs[index].data.columns[0][1]} %</span>
+								<br />
 								<GuageChart
 									color={this.state.graphs[index].color}
 									size={this.state.graphs[index].size}
