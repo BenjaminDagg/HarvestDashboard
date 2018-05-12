@@ -60,6 +60,9 @@ class Map extends React.Component {
 	  		displays object on map no return value
 	*/
 	drawGeometry(geometry) {
+		
+		
+	
 		switch (geometry.type) {
 			//if geometry collection loop through the geometries
 			//list and draw each object
@@ -122,6 +125,40 @@ class Map extends React.Component {
 				return;
 		}
 	}
+	
+	
+	
+	componentWillReceiveProps(nextProps) {
+	
+		//recenter map
+		var lat = this.props.center[0];
+		var lng = this.props.center[1];
+		var zoom = 14;
+		this.map.setView([lat,lng],zoom);
+		
+		//remove drawings from map
+		for (var i in this.map._layers) {
+			if (this.map._layers[i]._path  != undefined) {
+				try {
+					this.map.removeLayer(this.map._layers[i]);
+				}
+				catch(e) {
+				
+				}
+			}
+		}
+		
+		var self = this;
+		//remove markers
+		for (var i = 0; i < this.state.markers.length;i++) {
+			this.map.removeLayer(this.state.markers[i]);
+		}
+		
+		//redraw new geometry
+		this.drawGeometry(nextProps.geometry);
+	
+		
+  	}
 
 	componentDidMount() {
 		const lat = this.props.center[0];
