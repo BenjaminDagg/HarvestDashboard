@@ -7,7 +7,7 @@ import Tabs, { Tab } from 'material-ui/Tabs';
 import { Paper } from 'material-ui';
 import Typography from 'material-ui/Typography';
 import  FieldMapsSelector  from '../../../components/FieldMapsSelector/components';
-
+import Scans from '../../../components/Scans/components';
 
 function TabContainer(props) {
   return (
@@ -110,7 +110,7 @@ class Home extends React.Component {
         		}
         		{this.state.mapValue === 1 &&
         			<TabContainer>
-        				Maps
+        				<Scans user={this.props.user} bearer={this.props.bearer} id={this.props.user._id} />
         			</TabContainer>
         		}
       		</Paper>

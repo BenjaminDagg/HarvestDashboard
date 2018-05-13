@@ -25,7 +25,7 @@ class FieldMapsSelector extends React.Component {
 			bearer: this.props.bearer || null,
 			fields: null, //array of map object of users fields
 			isLoading: true,
-			selectedField: null
+			selectedField: null	//field object of currently seleccted field in the dropdown
 		};
 
 		this.onFieldChanged = this.onFieldChanged.bind(this);
@@ -36,7 +36,9 @@ class FieldMapsSelector extends React.Component {
 	}
 
 	
-
+	/*
+	Gets location to mmake iniitial coordinates of map 
+	*/
 	getMapCenter(geometry) {
 		if (geometry.type == 'GeometryCollection') {
 			return geometry.geometries[0].coordinates[0];
@@ -129,8 +131,11 @@ class FieldMapsSelector extends React.Component {
 	to the selected value
 	*/
 	onFieldChanged(event) {
+	   //get id fro select
 		var id = event.target.value;
 		
+		
+		//search state fields to get the one matching the id
 		var field = null;
 		for (var i = 0; i < this.state.fields.length;i++) {
 			if (this.state.fields[i]._id == id) {
@@ -150,7 +155,7 @@ class FieldMapsSelector extends React.Component {
 		};
 
 		var style = {
-			width: '90%',
+			width: '100%',
 			height: '90%'
 		};
 
