@@ -130,10 +130,14 @@ class Map extends React.Component {
 	
 	componentWillReceiveProps(nextProps) {
 	
+		if (!this.map) {
+			return;
+		}
+		
 		//recenter map
 		var lat = this.props.center[0];
 		var lng = this.props.center[1];
-		var zoom = 14;
+		var zoom = nextProps.zoom;
 		this.map.setView([lat,lng],zoom);
 		
 		//remove drawings from map
