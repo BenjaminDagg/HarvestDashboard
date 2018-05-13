@@ -8,6 +8,7 @@ import { Paper } from 'material-ui';
 import Typography from 'material-ui/Typography';
 import  FieldMapsSelector  from '../../../components/FieldMapsSelector/components';
 import Scans from '../../../components/Scans/components';
+import FieldStats from '../../../components/FieldStats/components';
 
 function TabContainer(props) {
   return (
@@ -28,10 +29,12 @@ class Home extends React.Component {
   	super(props);
   	
   	this.state = {
-  		mapValue: 0 //determines which view is shown in maps container 
+  		mapValue: 0, //determines which view is shown in maps container 
+  		selectedFieldId: ''	//id of field in FieldSeectorComonent to display stats about the field
   	};
   	
   	//methods
+  	this.onFieldSelected = this.onFieldSelected.bind(this);
   	this.greeting = this.greeting.bind(this);
   	this.handleMapChange = this.handleMapChange.bind(this);
   }
@@ -75,6 +78,18 @@ class Home extends React.Component {
   	//update state of mapValue
   	this.setState({mapValue: value});
   };
+  
+  
+  /*
+  Callback used in mapselector component. When initial
+  user field loads or the user selects a new field with 
+  the select, passes the fields id back up to home component
+  
+  id : id of field that was selected
+  */
+  onFieldSelected(id) {
+  	this.setState({selectedFieldId: id});
+  }
 
   render() {
     const { classes } = this.props;
@@ -91,30 +106,55 @@ class Home extends React.Component {
     	'position': 'relative',
     	'float': 'left'
     };
+    
+    var dashboardStyle = {
+    	'width': '100%'
+    	
+    };
+    
+    var fieldStatsStyle = {
+    	'height': '50%',
+    	'width': '45%',
+    	'position': 'relative',
+    	'float': 'right',
+    	'top': '-10px'
+    };
 
     return (
       <main className={ classes.root } >
         {greeting}
         
       	{this.props.isLoggedIn == true && this.props.user &&
-      		<div id="map-container" style={mapContainer}>
-      		<Paper elevation={4}>
-      			 <Tabs value={this.state.mapValue} onChange={this.handleMapChange}>
-        			<Tab label="Fields" />
-        			<Tab label="Maps" />
-        		</Tabs>
-        		{this.state.mapValue === 0 &&
-        			<TabContainer>
-        				<FieldMapsSelector showGraphs={"false"} user={this.props.user} bearer={this.props.bearer} id={this.props.user._id}/>
-        			</TabContainer>
-        		}
-        		{this.state.mapValue === 1 &&
-        			<TabContainer>
-        				<Scans user={this.props.user} bearer={this.props.bearer} id={this.props.user._id} />
-        			</TabContainer>
-        		}
-      		</Paper>
-      	</div>
+      		<div id="dashboard" style={dashboardStyle}>
+      			<div id="map-container" style={mapContainer}>
+      				<Paper elevation={4}>
+      			 		<Tabs value={this.state.mapValue} onChange={this.handleMapChange}>
+        					<Tab label="Fields" />
+        					<Tab label="Maps" />
+        				</Tabs>
+        				{this.state.mapValue === 0 &&
+        					<TabContainer>
+        						<FieldMapsSelector 
+        							sendFieldToParent={this.onFieldSelected}
+        							showGraphs={"false"} 
+        							user={this.props.user} 
+        							bearer={this.props.bearer} 
+        							id={this.props.user._id}/>
+        					</TabContainer>
+        				}
+        				{this.state.mapValue === 1 &&
+        					<TabContainer>
+        						<Scans user={this.props.user} bearer={this.props.bearer} id={this.props.user._id} />
+        					</TabContainer>
+        				}
+      				</Paper>
+      			</div>
+      			<div id="field-container" style={fieldStatsStyle}>
+      				<FieldStats user={this.props.user} 
+        						bearer={this.props.bearer} 
+        						id={this.props.user._id}/>
+      			</div>
+      		</div>
       	
       	}
       </main>

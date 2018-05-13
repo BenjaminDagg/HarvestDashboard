@@ -67,11 +67,13 @@ class FieldMapsSelector extends React.Component {
 		axios
 			.get('http://localhost:1234/maps/fields?id=' + userId.toString(), {}, headers)
 			.then(res => {
-				console.log(res.data);
+				
 
 				var fields = res.data;
 				
 				if (fields.length > 0) {
+					//send id of field to parent
+					this.props.sendFieldToParent(fields[0]._id);
 					this.setState({selectedField: fields[0]});
 				}
 				this.setState({ fields: res.data });
@@ -107,13 +109,13 @@ class FieldMapsSelector extends React.Component {
 		Makes map of currently selected field
 	*/
 	renderSelectedField() {
-		console.log('in render');
+		
 		if (this.state.fields == null || this.state.fields.length == 0 ||
 			  !this.state.selectedField) {
 			
 			return (<div></div>);
 		}
-		console.log(this.state.selectedField);
+		
 		return (
 			<Map
 				title={this.state.selectedField.name}
@@ -139,10 +141,15 @@ class FieldMapsSelector extends React.Component {
 		var field = null;
 		for (var i = 0; i < this.state.fields.length;i++) {
 			if (this.state.fields[i]._id == id) {
-				console.log('found');
+				
 				field = this.state.fields[i];
 			}
 		}
+		
+		//callback to parent comonent (Home)
+		//and pass it id of selected field
+		this.props.sendFieldToParent(id);
+		
 		this.setState({selectedField: field});
 		
 	}
