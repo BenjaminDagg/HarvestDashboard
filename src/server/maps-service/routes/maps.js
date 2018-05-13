@@ -831,11 +831,14 @@ exports.register = function(server, options, next) {
 								
 								
 								var distancePerRow = [];
+								//holds all scans in the field
+								var field_scans = [];
 								for (ii = 0; ii < newMap.data.rows.length;ii++) {
 									var row = turf.polygon([newMap.data.rows[ii].coordinates]);
 									var lines = [];
 									
 									for (var jj = 0; jj < scans.length;jj++) {
+										var exists = false;
 										for (var kk = 0; kk < scans[jj].location.coordinates.length;kk++) {
 											var point = turf.point(scans[jj].location.coordinates[kk]);
 											
@@ -844,7 +847,10 @@ exports.register = function(server, options, next) {
 														type: 'Point',
 														coordinates: scans[jj].location.coordinates[kk]
 												};
-												
+												if (!exists) {
+													field_scans.push(scans[jj]);
+													exists = true;
+												}
 												shape.geometries.push(newGeometryPoint);
 												lines.push(point.geometry.coordinates);
 											}
@@ -870,6 +876,8 @@ exports.register = function(server, options, next) {
 								newMap.data.percentHarvested = percentHarvested;
 								//upate this maps geometry to include points
 								newMap.shape = shape;
+								//add field scans to map
+								newMap.scans = field_scans;
 								maps.push(newMap);
 							
 							}
