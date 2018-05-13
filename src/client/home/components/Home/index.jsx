@@ -9,6 +9,7 @@ import Typography from 'material-ui/Typography';
 import  FieldMapsSelector  from '../../../components/FieldMapsSelector/components';
 import Scans from '../../../components/Scans/components';
 import FieldStats from '../../../components/FieldStats/components';
+import HarvestStatistics from '../../../components/HarvestStatistics/components';
 
 function TabContainer(props) {
   return (
@@ -34,6 +35,7 @@ class Home extends React.Component {
   	};
   	
   	//methods
+  	this.onFieldsLoaded = this.onFieldsLoaded.bind(this);
   	this.onFieldSelected = this.onFieldSelected.bind(this);
   	this.greeting = this.greeting.bind(this);
   	this.handleMapChange = this.handleMapChange.bind(this);
@@ -65,10 +67,7 @@ class Home extends React.Component {
   	}
   }
   
-  
-  getUserData() {
-  	
-  }
+ 
   
   
   
@@ -89,6 +88,23 @@ class Home extends React.Component {
   */
   onFieldSelected(id) {
   	this.setState({selectedFieldId: id});
+  }
+  
+  
+  
+  /*
+  When fields loaded in field selector component
+  it calls back with the amount of fields the user has.
+  If user has no fields display the scans map by default 
+  so user isnt staring at blank screen
+  */
+  onFieldsLoaded(fields) {
+  	if (fields.length < 1) {
+  		this.setState({mapValue: 1});
+  	}
+  	else {
+  		this.setState({mapValue: 0});
+  	}
   }
 
   render() {
@@ -113,11 +129,18 @@ class Home extends React.Component {
     };
     
     var fieldStatsStyle = {
-    	'height': '50%',
+    	'height': '50px',
     	'width': '45%',
-    	'position': 'relative',
+   		'position': 'relative',
     	'float': 'right',
-    	'top': '-10px'
+    	'top': '0px'
+    };
+    
+    var statsStyle = {
+   	    'position': 'relative',
+    	'width': '45%',
+ 		'float': 'right',
+    	'top' : '150px'
     };
 
     return (
@@ -135,6 +158,7 @@ class Home extends React.Component {
         				{this.state.mapValue === 0 &&
         					<TabContainer>
         						<FieldMapsSelector 
+        							fields={this.onFieldsLoaded}
         							sendFieldToParent={this.onFieldSelected}
         							showGraphs={"false"} 
         							user={this.props.user} 
@@ -152,10 +176,18 @@ class Home extends React.Component {
       			<div id="field-container" style={fieldStatsStyle}>
       				<FieldStats user={this.props.user} 
         						bearer={this.props.bearer} 
+        						id={this.props.user._id}
+        						fieldId={this.state.selectedFieldId}/>
+      			</div>
+      			<div id="stats-container" style={statsStyle}>
+      				<HarvestStatistics 
+      							user={this.props.user} 
+        						bearer={this.props.bearer} 
         						id={this.props.user._id}/>
       			</div>
       		</div>
-      	
+      		
+      		
       	}
       </main>
     );

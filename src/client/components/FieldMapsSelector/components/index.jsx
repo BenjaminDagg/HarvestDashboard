@@ -76,6 +76,7 @@ class FieldMapsSelector extends React.Component {
 					this.props.sendFieldToParent(fields[0]._id);
 					this.setState({selectedField: fields[0]});
 				}
+				this.props.fields(fields);
 				this.setState({ fields: res.data });
 				this.setState({ isLoading: false });
 			})
@@ -113,7 +114,7 @@ class FieldMapsSelector extends React.Component {
 		if (this.state.fields == null || this.state.fields.length == 0 ||
 			  !this.state.selectedField) {
 			
-			return (<div></div>);
+			return (<div>No fields found for this user</div>);
 		}
 		
 		return (

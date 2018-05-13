@@ -43,13 +43,18 @@ class FieldStats extends React.Component {
 			bearer: this.props.bearer || null,
 			fields: null, //array of map object of users fields
 			isLoading: true,
-			field: null	//field that was passed in by parent
+			fieldId: this.props.fieldId || ''
 			
 		};
 
-		
+		this.renderStatistics = this.renderStatistics.bind(this);
 		this.getMapCenter = this.getMapCenter.bind(this);
 		this.getUserFields = this.getUserFields.bind(this);
+	}
+	
+	
+	componentDidMount() {
+		this.getUserFields();
 	}
 
 	
@@ -62,6 +67,10 @@ class FieldStats extends React.Component {
 		} else {
 			return geometry.coordinates[0];
 		}
+	}
+	
+	componentWillReceiveProps(nextProps) {
+		this.setState({fieldId: nextProps.fieldId});
 	}
 
 	//get map objects for users fields with GET /maps/fields
@@ -84,15 +93,10 @@ class FieldStats extends React.Component {
 		axios
 			.get('http://localhost:1234/maps/fields?id=' + userId.toString(), {}, headers)
 			.then(res => {
-				console.log(res.data);
+				
 
 				var fields = res.data;
 				
-				if (fields.length > 0) {
-					//send id of field to parent
-					this.props.sendFieldToParent(fields[0]._id);
-					this.setState({selectedField: fields[0]});
-				}
 				this.setState({ fields: res.data });
 				this.setState({ isLoading: false });
 			})
@@ -102,9 +106,38 @@ class FieldStats extends React.Component {
 	}
 	
 	
+	renderStatistics() {
+		if ( this.state.fields == null || this.state.fieldId == null || this.state.fieldId == '') {
+			return (<div>Loading...</div>);
+		}
+		
+		var field = null;
+		for (var i = 0; i < this.state.fields.length;i++) {
+			if (this.state.fields[i]._id == this.state.fieldId) {
+				field = this.state.fields[i];
+			}
+		}
+		
+		const percentHarvested = field.data.percentHarvested.toFixed(2) * 100;
+		var numCrates = field.scans.length;
+		var remainingCrates = Math.ceil((numCrates / field.data.percentHarvested.toFixed(2)));
+		
+		return (
+			<div>
+				<span>Crates Harvested: {field.scans.length}</span>
+				<br /><br />
+				<span>Percent of land harvested: {percentHarvested}%</span>
+				<br /><br />
+				<span>Remaining crates to complete: {remainingCrates}</span>
+			</div>
+		)
+		
+	}
+	
+	
 
 	render() {
-		this.getUserFields();
+		//this.getUserFields();
 
 		var error = {
 			color: 'red'
@@ -112,21 +145,27 @@ class FieldStats extends React.Component {
 
 		var style = {
 			width: '100%',
-			height: '100%'
+			height: '100%',
+			'padding': '10px'
 		};
 
 		const styles = {
 			Paper: { padding: 20, marginTop: 10, marginBottom: 10, textAlign: 'center' }
 		};
 
+		var stats = this.renderStatistics();
 		
-
 		return (
 			<div>	
-				<Paper elevation={4}>
-					<h2>Field Statistics</h2>
-				</Paper>
 				
+				{this.state.fieldId != null && this.state.fields != null &&
+				this.state.fields.length > 0 &&
+					<Paper elevation={4} style={{'padding':'10px'}}>
+						<h2>Field Statistics</h2>
+						{stats}
+						
+					</Paper>
+				}
 			</div>
 		);
 	}
