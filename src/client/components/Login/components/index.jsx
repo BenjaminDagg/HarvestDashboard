@@ -4,6 +4,8 @@ import { withRouter } from 'react-router';
 import { fetchUser } from '../../../actions/loginAction';
 import { connect } from 'react-redux';
 import style from './style.css';
+import Button from 'material-ui/Button';
+import TextField from 'material-ui/TextField';
 
 class Login extends React.Component {
 	constructor(props) {
@@ -68,36 +70,32 @@ class Login extends React.Component {
 			visibility: this.state.error ? 'visible' : 'hidden',
 			'margin': '0 aut0'
 		};
-		
+
 		var formStyle = {
 			width: '300px',
 			height: '200px',
 			margin: '0 auto',
-			
+
 		};
-		
+
 		var spanStyle = {
 			'float': 'left',
 			'font-size': '20px'
-	
+
 		};
-		
+
 		var inputStyle = {
-	
-			'float': 'right',
-			'border': '1px solid #757677',
-    		'border-radius': '4px',
-			'height' : '25px',
-			'background-color': 'white',
+			'display' : 'flex',
+			'margin': '0 auto',
 			'font-size' : '16px'
 		};
-		
+
 		var fieldContainer = {
 			'width': '100%',
 			'height': '50%',
 			'margin-top': '20px'
 		};
-		
+
 		var btnStyle = {
 			'margin': '0 auto',
 			'height': '40px',
@@ -110,7 +108,7 @@ class Login extends React.Component {
 			'display' : 'flex',
 			'padding': '12px'
 		};
-		
+
 		var registerStyle = {
 			'width': '100%',
 			'height': '20px',
@@ -125,32 +123,33 @@ class Login extends React.Component {
 				<h1 className={style.title}>Login</h1>
 				<br />
 				<div style={formStyle}>
-					<div>
-						<span style={spanStyle}>Username:{' '}</span>
-						<input style={inputStyle}
-							id="usernameField"
-							type="text"
-							value={this.state.username}
-							onChange={this.usernameChange.bind(this)}
-						/>
-					</div>
-					<br />
-					<div style={fieldContainer}>
-						<span style={spanStyle}>Password:{' '}</span>
-						<input style={inputStyle}
-						id="passwordField"
-						type="password"
-						value={this.state.password}
-						onChange={this.pswChange.bind(this)}
-					/>
-					</div>
-					<span id="loginError" style={errStyle}>
-						Incorrect Username or Password
-					</span>
-					<button style={btnStyle} onClick={this.onSubmitHandler.bind(this)}>Submit</button>
+						<form noValidate autoComplete="off">
+								<TextField style={inputStyle}
+										id="usernameField"
+										label="Username"
+										type="text"
+										value={this.state.username}
+										onChange={this.usernameChange.bind(this)}
+										margin="normal"
+								/>
+								<br />
+								<div style={fieldContainer}>
+										<TextField style={inputStyle}
+												id="passwordField"
+												type="password"
+												value={this.state.password}
+												onChange={this.pswChange.bind(this)}
+							          label="Password"
+							          autoComplete="current-password"
+							          margin="normal"
+					      		/>
+								</div>
+					 </form>
+					 <span id="loginError" style={errStyle}>
+							Incorrect Username or Password
+					 </span>
+					 <Button variant="raised" style={btnStyle} onClick={this.onSubmitHandler.bind(this)}>Login</Button>
 				</div>
-				<br />
-				
 				<br />
 				<div style={registerStyle}>
 					<span id="loginError" style={errStyle}>
@@ -158,7 +157,7 @@ class Login extends React.Component {
 					</span>
 				</div>
 				<div style={registerStyle}>
-					<a style={{'margin': '0 auto'}} href="/register">Register</a>
+				<Button variant="raised" style={{'margin': '0 auto'}} href="/register">Register</Button>
 				</div>
 			</div>
 		);
