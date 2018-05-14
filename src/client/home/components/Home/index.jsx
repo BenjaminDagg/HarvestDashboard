@@ -117,10 +117,9 @@ class Home extends React.Component {
     
     //CSS for map-container
     var mapContainer = {
-    	'width': '50%',
+    	'width': '100%',
     	'height': '100px',
-    	'position': 'relative',
-    	'float': 'left'
+    	
     };
     
     var dashboardStyle = {
@@ -128,62 +127,82 @@ class Home extends React.Component {
     	
     };
     
-    var fieldStatsStyle = {
-    	'height': '50px',
-    	'width': '45%',
-   		'position': 'relative',
+    var leftColumnStyle = {
+    	'width': '50%',
+    	'height': '100%',
+    	'float': 'left',
+    
+    };
+    
+    var rightColumnStyle = {
+    	'width': '50%',
+    	'height': '100%',
     	'float': 'right',
-    	'top': '0px'
+    	
+    };
+    
+    var fieldStatsStyle = {
+    	'margin': '10px',
+    	'width': '100%',
+   		
     };
     
     var statsStyle = {
-   	    'position': 'relative',
-    	'width': '45%',
- 		'float': 'right',
-    	'top' : '150px'
+   	    'margin' : '10px',
+    	'width': '100%',
+ 		
     };
+    
+    var style = {
+			overflowY: 'auto',
+			height: '90%'
+	};
 
     return (
-      <main className={ classes.root } >
+      <main style={style} className={ classes.root } >
         {greeting}
         
       	{this.props.isLoggedIn == true && this.props.user &&
       		<div id="dashboard" style={dashboardStyle}>
-      			<div id="map-container" style={mapContainer}>
-      				<Paper elevation={4}>
-      			 		<Tabs value={this.state.mapValue} onChange={this.handleMapChange}>
-        					<Tab label="Fields" />
-        					<Tab label="Maps" />
-        				</Tabs>
-        				{this.state.mapValue === 0 &&
-        					<TabContainer>
-        						<FieldMapsSelector 
-        							fields={this.onFieldsLoaded}
-        							sendFieldToParent={this.onFieldSelected}
-        							showGraphs={"false"} 
-        							user={this.props.user} 
-        							bearer={this.props.bearer} 
-        							id={this.props.user._id}/>
-        					</TabContainer>
-        				}
-        				{this.state.mapValue === 1 &&
-        					<TabContainer>
-        						<Scans user={this.props.user} bearer={this.props.bearer} id={this.props.user._id} />
-        					</TabContainer>
-        				}
-      				</Paper>
+      			<div id="left-column" style={leftColumnStyle}>
+      				<div id="map-container" style={mapContainer}>
+      					<Paper elevation={4}>
+      			 			<Tabs value={this.state.mapValue} onChange={this.handleMapChange}>
+        						<Tab label="Fields" />
+        						<Tab label="Maps" />
+        					</Tabs>
+        					{this.state.mapValue === 0 &&
+        						<TabContainer>
+        							<FieldMapsSelector 
+        								fields={this.onFieldsLoaded}
+        								sendFieldToParent={this.onFieldSelected}
+        								showGraphs={"false"} 
+        								user={this.props.user} 
+        								bearer={this.props.bearer} 
+        								id={this.props.user._id}/>
+        						</TabContainer>
+        					}
+        					{this.state.mapValue === 1 &&
+        						<TabContainer>
+        							<Scans user={this.props.user} bearer={this.props.bearer} id={this.props.user._id} />
+        						</TabContainer>
+        					}
+      					</Paper>
+      				</div>
       			</div>
-      			<div id="field-container" style={fieldStatsStyle}>
-      				<FieldStats user={this.props.user} 
+      			<div id="right-column" style={rightColumnStyle}>
+      				<div id="field-container" style={fieldStatsStyle}>
+      					<FieldStats user={this.props.user} 
         						bearer={this.props.bearer} 
         						id={this.props.user._id}
         						fieldId={this.state.selectedFieldId}/>
-      			</div>
-      			<div id="stats-container" style={statsStyle}>
-      				<HarvestStatistics 
+      				</div>
+      				<div id="stats-container" style={statsStyle}>
+      					<HarvestStatistics 
       							user={this.props.user} 
         						bearer={this.props.bearer} 
         						id={this.props.user._id}/>
+      				</div>
       			</div>
       		</div>
       		
