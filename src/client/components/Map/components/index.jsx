@@ -191,7 +191,7 @@ class Map extends React.Component {
 
 		this.map.on('click', this.addMarker);
 		this.map.on('zoomend', function(e) {
-			console.log(e);
+			
 		});
 	}
 

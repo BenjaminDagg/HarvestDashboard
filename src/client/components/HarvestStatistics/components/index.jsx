@@ -6,6 +6,8 @@ import { Paper } from 'material-ui';
 import Typography from 'material-ui/Typography';
 import { Link, withRouter } from 'react-router';
 import CrateStats from '../../CrateStats/components';
+import TimeStats from '../../TimeStats/components';
+import DistStats from '../../DistStats/components';
 
 function TabContainer(props) {
   return (
@@ -69,12 +71,20 @@ class HarvestStatistics extends React.Component {
         		}
         		{this.state.selector === 1 &&
         			<TabContainer>
-        					Mean Time
+        					<TimeStats
+        					id={this.props.id}
+        					user={this.props.user}
+        					bearer={this.props.bearer}
+        					/>
         			</TabContainer>
         		}
         		{this.state.selector === 2 &&
         			<TabContainer>
-        				Mean Dist
+        				<DistStats
+        					id={this.props.id}
+        					user={this.props.user}
+        					bearer={this.props.bearer}
+        					/>
         			</TabContainer>
         		}
       		</Paper>

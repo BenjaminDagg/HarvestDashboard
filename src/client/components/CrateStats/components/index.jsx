@@ -48,7 +48,7 @@ class CrateStats extends React.Component {
 		if (!this.props.id || this.props.bearer === '' || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
-		console.log('in crate stats');
+
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ class CrateStats extends React.Component {
 			)
 			.then(res => {
 				var data = res.data;
-				console.log(data);
+				
 				this.setState({ crateData: data });
 				this.setState({ cpdFetchError: false });
 			})
@@ -94,7 +94,7 @@ class CrateStats extends React.Component {
 		if (!this.props.id || this.props.bearer === '' || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
-		console.log('in crate stats');
+		
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ class CrateStats extends React.Component {
 			)
 			.then(res => {
 				var data = res.data;
-				console.log(data);
+				
 				this.setState({ crateDataToday: data });
 				this.setState({ cpdFetchError: false });
 			})
@@ -140,7 +140,7 @@ class CrateStats extends React.Component {
 		if (!this.props.id || this.props.bearer === '' || this.state.cpdFetchError == true || this.state.crateData != null) {
 			return;
 		}
-		console.log('in crate stats');
+	
 		//get users scans from database
 		var headers = {
 			'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ class CrateStats extends React.Component {
 		
 		var from = moment('2018-01-01').utc('-8:00').toISOString().slice(0,16) + 'Z';
 		var to = moment().utc('-8:00').toISOString().slice(0,16) + 'Z';
-		console.log('to = ' + to + ' from = ' + from);
+		
 
 		//make HTTP request to account service API
 
@@ -168,7 +168,7 @@ class CrateStats extends React.Component {
 			)
 			.then(res => {
 				var data = res.data;
-				console.log(data);
+			
 				this.setState({ crateDataAll: data });
 				this.setState({ cpdFetchError: false });
 			})
@@ -188,12 +188,23 @@ class CrateStats extends React.Component {
 			return <div>Invalid date parameters</div>;
 		}
 
-		if (this.state.crateData == null) {
+		if (this.state.crateData == null || this.state.crateDataToday == null ||
+			this.state.crateDataAll == null) {
 			return <div>Loading data</div>;
 		}
 
-		var crateData = this.state.crateData.cratesPerDay;
-
+		//var crateData = this.state.crateData.cratesPerDay;
+		var crateData;
+		if (this.state.crateDataToday.numCrates > 0) {
+			crateData = this.state.crateDataToday.cratesPerDay;
+		}
+		else if (this.state.crateData.numCrates > 0) {
+			crateData = this.state.crateData.cratesPerDay;
+		}
+		else {
+			crateData = this.state.crateDataAll.cratesPerDay;
+		}
+		
 		var data = {
 			x: 'x',
 			xFormat: '%Y-%m-%dT%H:%M:%S.%LZ',
