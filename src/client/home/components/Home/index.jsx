@@ -169,7 +169,7 @@ class Home extends React.Component {
       					<Paper elevation={4}>
       			 			<Tabs value={this.state.mapValue} onChange={this.handleMapChange}>
         						<Tab label="Fields" />
-        						<Tab label="Maps" />
+        						<Tab label="Scans" />
         					</Tabs>
         					{this.state.mapValue === 0 &&
         						<TabContainer>

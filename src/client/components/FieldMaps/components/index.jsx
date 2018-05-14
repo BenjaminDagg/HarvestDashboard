@@ -22,7 +22,9 @@ class FieldMaps extends React.Component {
 			graphs: null,
 			isLoading: true
 		};
-
+		
+		this.completionEstimate = this.completionEstimate.bind(this);
+		this.remainingCrates = this.remainingCrates.bind(this);
 		this.getMapCenter = this.getMapCenter.bind(this);
 		this.getUserFields = this.getUserFields.bind(this);
 	}
@@ -110,6 +112,59 @@ class FieldMaps extends React.Component {
 				console.log(error);
 			});
 	}
+	
+	
+	remainingCrates(index) {
+		
+		if (this.state.fields == null) {
+			return 0;
+		}
+		
+		var harvestedCrates = this.state.fields[index].scans.length;
+		var percent = this.state.fields[index].data.percentHarvested;
+		var remaining = Math.ceil(harvestedCrates / percent);
+		
+		return remaining;
+	
+	}
+	
+	
+	
+	completionEstimate(index) {
+		if (this.state.fields == null) {
+			return "";
+		}
+		
+		//find date that first crate was harvested
+		var field = this.state.fields[index];
+		
+		//sort by date ascending
+		var scans = field.scans;
+		
+		scans.sort(function(a,b) {
+			return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
+		});
+		
+		var startDate = scans[0].datetime;
+		startDate = moment(startDate).utc('-8:00');
+		
+		var now = moment().utc('-8:00');
+		
+		var diff = now - startDate;
+		var daysPassed = Math.ceil(diff / 86400000);
+		
+		//estimated date to completion is how many days passed / percent complete
+		//whcih gives number of days left. Then add that to current date
+		var percent = field.data.percentHarvested;
+		var daysLeft = Math.ceil(daysPassed / percent);
+		
+		var completionDate = moment(moment().utc('-8:00')).utc('-8:00').add(daysLeft, 'd');
+		
+		
+		
+		return completionDate.toISOString().slice(0,10);
+	}
+	
 
 	render() {
 		this.getUserFields();
@@ -181,6 +236,11 @@ class FieldMaps extends React.Component {
 								<h2>Field Progress</h2>
 								<span>Completion: {this.state.graphs[index].data.columns[0][1]} %</span>
 								<br />
+								<span>Crates Harvested: {this.state.fields[index].scans.length} crates</span>
+								<br/>
+								<span>Remaining Crates: {this.remainingCrates(index)} crates</span>
+								<br />
+								<span>Estimated Completion Date: {this.completionEstimate(index)}</span>
 								<GuageChart
 									color={this.state.graphs[index].color}
 									size={this.state.graphs[index].size}

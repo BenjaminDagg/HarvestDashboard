@@ -47,6 +47,7 @@ class FieldStats extends React.Component {
 			
 		};
 
+		
 		this.renderStatistics = this.renderStatistics.bind(this);
 		this.getMapCenter = this.getMapCenter.bind(this);
 		this.getUserFields = this.getUserFields.bind(this);
@@ -71,7 +72,11 @@ class FieldStats extends React.Component {
 	
 	componentWillReceiveProps(nextProps) {
 		this.setState({fieldId: nextProps.fieldId});
+		
 	}
+	
+	
+	
 
 	//get map objects for users fields with GET /maps/fields
 	getUserFields() {
@@ -118,9 +123,33 @@ class FieldStats extends React.Component {
 			}
 		}
 		
+		//calculates remaining crates
 		const percentHarvested = field.data.percentHarvested.toFixed(2) * 100;
 		var numCrates = field.scans.length;
 		var remainingCrates = Math.ceil((numCrates / field.data.percentHarvested.toFixed(2)));
+		
+		//calculate estimated completion date
+		//sort by date ascending
+		var scans = field.scans;
+		
+		scans.sort(function(a,b) {
+			return (a.datetime < b.datetime) ? -1 : ((a.datetime > b.datetime) ? 1 : 0);
+		});
+		
+		var startDate = scans[0].datetime;
+		startDate = moment(startDate).utc('-8:00');
+		
+		var now = moment().utc('-8:00');
+		
+		var diff = now - startDate;
+		var daysPassed = Math.ceil(diff / 86400000);
+		
+		//estimated date to completion is how many days passed / percent complete
+		//whcih gives number of days left. Then add that to current date
+		var percent = field.data.percentHarvested;
+		var daysLeft = Math.ceil(daysPassed / percent);
+		
+		var completionDate = moment(moment().utc('-8:00')).utc('-8:00').add(daysLeft, 'd').toISOString().slice(0,10);
 		
 		return (
 			<div>
@@ -129,6 +158,8 @@ class FieldStats extends React.Component {
 				<span>Percent of land harvested: {percentHarvested}%</span>
 				<br /><br />
 				<span>Remaining crates to complete: {remainingCrates}</span>
+				<br/><br/>
+				<span>Estimated Completion Date: {completionDate}</span>
 			</div>
 		)
 		
@@ -160,7 +191,7 @@ class FieldStats extends React.Component {
 				
 				{this.state.fieldId != null && this.state.fields != null &&
 				this.state.fields.length > 0 &&
-					<Paper elevation={4} style={{'padding':'10px'}}>
+					<Paper id="field-stats-background" elevation={4} style={{'padding':'10px'}}>
 						<h2>Field Statistics</h2>
 						{stats}
 						
