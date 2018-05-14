@@ -134,6 +134,8 @@ class Map extends React.Component {
 			return;
 		}
 		
+		
+		console.log('in receive props');
 		//recenter map
 		var lat = this.props.center[0];
 		var lng = this.props.center[1];
@@ -158,9 +160,12 @@ class Map extends React.Component {
 			this.map.removeLayer(this.state.markers[i]);
 		}
 		
+		
+		
 		//redraw new geometry
-		this.drawGeometry(nextProps.geometry);
-	
+		if (nextProps.geometry) {
+			this.drawGeometry(nextProps.geometry);
+		}
 		
   	}
 

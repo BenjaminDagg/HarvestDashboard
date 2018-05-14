@@ -10,6 +10,7 @@ import  FieldMapsSelector  from '../../../components/FieldMapsSelector/component
 import Scans from '../../../components/Scans/components';
 import FieldStats from '../../../components/FieldStats/components';
 import HarvestStatistics from '../../../components/HarvestStatistics/components';
+import MapSelector from '../../../components/MapSelector/components';
 
 function TabContainer(props) {
   return (
@@ -118,7 +119,7 @@ class Home extends React.Component {
     //CSS for map-container
     var mapContainer = {
     	'width': '100%',
-    	'height': '100px',
+    	'margin': '10px'
     	
     };
     
@@ -128,7 +129,7 @@ class Home extends React.Component {
     };
     
     var leftColumnStyle = {
-    	'width': '50%',
+    	'width': '45%',
     	'height': '100%',
     	'float': 'left',
     
@@ -156,6 +157,11 @@ class Home extends React.Component {
     var style = {
 			overflowY: 'auto',
 			height: '90%'
+	};
+	
+	var mapSelector = {
+		'width': '100%',
+		'margin' : '10px'
 	};
 
     return (
@@ -188,6 +194,13 @@ class Home extends React.Component {
         						</TabContainer>
         					}
       					</Paper>
+      				</div>
+      				<div style={mapSelector} >
+      					<MapSelector 
+      						user={this.props.user} 
+        								bearer={this.props.bearer} 
+        								id={this.props.user._id}
+      					/>
       				</div>
       			</div>
       			<div id="right-column" style={rightColumnStyle}>
