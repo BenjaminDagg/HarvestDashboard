@@ -80,31 +80,31 @@ class Login extends React.Component {
 
 		var spanStyle = {
 			'float': 'left',
-			'font-size': '20px'
+			'fontSize': '20px'
 
 		};
 
 		var inputStyle = {
 			'display' : 'flex',
 			'margin': '0 auto',
-			'font-size' : '16px'
+			'fontSize' : '16px'
 		};
 
 		var fieldContainer = {
 			'width': '100%',
 			'height': '50%',
-			'margin-top': '20px'
+			'marginTop': '20px'
 		};
 
 		var btnStyle = {
 			'margin': '0 auto',
 			'height': '40px',
 			'width': '70px',
-			'font-family': 'Roboto, Helvetica, Arial, sans-serif',
-			'background-color': 'white',
+			'fontFamily': 'Roboto, Helvetica, Arial, sans-serif',
+			'backgroundColor': 'white',
 			'color': '#838383',
 			'border': '1px solid #838383',
-			'border-radius': '4px',
+			'borderRadius': '4px',
 			'display' : 'flex',
 			'padding': '12px'
 		};
@@ -113,8 +113,8 @@ class Login extends React.Component {
 			'width': '100%',
 			'height': '20px',
 			'margin': '0 auto',
-			'text-align': 'center',
-			'font-size': '20px'
+			'textAlign': 'center',
+			'fontSize': '20px'
 		};
 
 		return (
