@@ -15,7 +15,7 @@
     "lib",
     "dist"
   ],
-  "main": "lib/server/index.js",
+  "main": "src/server/index.js",
   "keywords": [],
   "repository": {
     "type": "git",
